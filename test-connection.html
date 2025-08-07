@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">🔥 Teste de Conexão Firebase</h1>
+        
+        <div class="space-y-4">
+            <!-- Status de Conexão -->
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold text-gray-700 mb-2">Status Atual:</h3>
+                <div id="connectionStatus" class="text-sm">
+                    <span class="flex items-center">
+                        <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                        <i class="fas fa-spinner text-gray-400 animate-spin mr-1"></i>
+                        Inicializando...
+                    </span>
+                </div>
+            </div>
+
+            <!-- Controles de Teste -->
+            <div class="p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-semibold text-blue-700 mb-3">Controles de Teste:</h3>
+                <div class="space-y-2">
+                    <button onclick="testOnline()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mr-2">
+                        🟢 Simular Online
+                    </button>
+                    <button onclick="testOffline()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 mr-2">
+                        🔴 Simular Offline
+                    </button>
+                    <button onclick="testConnecting()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mr-2">
+                        🔵 Simular Conectando
+                    </button>
+                    <button onclick="testSyncing()" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                        🟡 Simular Sincronizando
+                    </button>
+                </div>
+            </div>
+
+            <!-- Log de Eventos -->
+            <div class="p-4 bg-gray-50 rounded-lg">
+                <h3 class="font-semibold text-gray-700 mb-2">Log de Eventos:</h3>
+                <div id="eventLog" class="text-sm text-gray-600 max-h-40 overflow-y-auto">
+                    <div>Sistema inicializado...</div>
+                </div>
+            </div>
+
+            <!-- Informações -->
+            <div class="p-4 bg-green-50 rounded-lg">
+                <h3 class="font-semibold text-green-700 mb-2">Estados Possíveis:</h3>
+                <ul class="text-sm text-green-600 space-y-1">
+                    <li><span class="w-2 h-2 bg-blue-500 rounded-full inline-block mr-2"></span> Conectando... (azul)</li>
+                    <li><span class="w-2 h-2 bg-green-500 rounded-full inline-block mr-2"></span> Online (verde)</li>
+                    <li><span class="w-2 h-2 bg-yellow-500 rounded-full inline-block mr-2"></span> Sincronizando (amarelo)</li>
+                    <li><span class="w-2 h-2 bg-red-500 rounded-full inline-block mr-2"></span> Offline (vermelho)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-6">
+            <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                ← Voltar ao Sistema
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Simular Firebase Service para teste
+        const mockFirebaseService = {
+            getPendingSyncCount: () => Math.floor(Math.random() * 5),
+            
+            updateConnectionStatus: function(status) {
+                const statusElement = document.getElementById("connectionStatus");
+                if (statusElement) {
+                    const pendingCount = this.getPendingSyncCount();
+
+                    switch (status) {
+                        case "connecting":
+                            statusElement.innerHTML = `
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                                    <i class="fas fa-spinner text-blue-500 animate-spin mr-1"></i>
+                                    Conectando...
+                                </span>
+                            `;
+                            statusElement.className = "text-sm text-blue-600";
+                            break;
+
+                        case "online":
+                            statusElement.innerHTML = `
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                    <i class="fas fa-cloud text-green-500 mr-1"></i>
+                                    Online
+                                </span>
+                            `;
+                            statusElement.className = "text-sm text-green-600";
+                            break;
+
+                        case "syncing":
+                            statusElement.innerHTML = `
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
+                                    <i class="fas fa-sync-alt text-yellow-500 animate-spin mr-1"></i>
+                                    Sincronizando (${pendingCount})
+                                </span>
+                            `;
+                            statusElement.className = "text-sm text-yellow-600";
+                            break;
+
+                        case "offline":
+                        default:
+                            const offlineText = pendingCount > 0 ? ` (${pendingCount} pendentes)` : "";
+                            statusElement.innerHTML = `
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    <i class="fas fa-cloud-slash text-red-500 mr-1"></i>
+                                    Offline${offlineText}
+                                </span>
+                            `;
+                            statusElement.className = "text-sm text-red-600";
+                            break;
+                    }
+                }
+            }
+        };
+
+        function addLog(message) {
+            const log = document.getElementById('eventLog');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${time}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function testOnline() {
+            mockFirebaseService.updateConnectionStatus('online');
+            addLog('🟢 Status alterado para: Online');
+        }
+
+        function testOffline() {
+            mockFirebaseService.updateConnectionStatus('offline');
+            addLog('🔴 Status alterado para: Offline');
+        }
+
+        function testConnecting() {
+            mockFirebaseService.updateConnectionStatus('connecting');
+            addLog('🔵 Status alterado para: Conectando');
+        }
+
+        function testSyncing() {
+            mockFirebaseService.updateConnectionStatus('syncing');
+            addLog('🟡 Status alterado para: Sincronizando');
+        }
+
+        // Simular conexão inicial
+        setTimeout(() => {
+            testConnecting();
+            setTimeout(() => {
+                testOnline();
+            }, 2000);
+        }, 1000);
+    </script>
+</body>
+</html>

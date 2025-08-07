@@ -48,8 +48,24 @@ class FirebaseService {
 		this.auth = auth;
 		this.currentUser = null;
 		this.isOnline = navigator.onLine;
+		this.isConnected = false;
 		this.setupAuth();
 		this.setupOnlineListener();
+		this.initializeStatus();
+	}
+
+	// Inicializar status de conexão
+	initializeStatus() {
+		// Mostrar status inicial
+		this.updateConnectionStatus(this.isOnline ? "connecting" : "offline");
+
+		// Timeout para evitar "Conectando..." infinito
+		setTimeout(() => {
+			if (!this.isConnected && this.isOnline) {
+				console.log("⚠️ Timeout de conexão - verificando status");
+				this.updateConnectionStatus("offline");
+			}
+		}, 10000); // 10 segundos timeout
 	}
 
 	// Configurar autenticação anônima
@@ -59,12 +75,20 @@ class FirebaseService {
 			onAuthStateChanged(this.auth, (user) => {
 				this.currentUser = user;
 				if (user) {
-					console.log("Usuário autenticado:", user.uid);
+					console.log("🔥 Firebase conectado - Usuário:", user.uid);
+					this.isConnected = true;
+					this.updateConnectionStatus("online");
 					this.syncData();
+				} else {
+					console.log("❌ Firebase desconectado");
+					this.isConnected = false;
+					this.updateConnectionStatus("offline");
 				}
 			});
 		} catch (error) {
-			console.error("Erro na autenticação:", error);
+			console.error("❌ Erro na autenticação Firebase:", error);
+			this.isConnected = false;
+			this.updateConnectionStatus("offline");
 		}
 	}
 
@@ -72,41 +96,124 @@ class FirebaseService {
 	setupOnlineListener() {
 		window.addEventListener("online", () => {
 			this.isOnline = true;
-			this.updateConnectionStatus("online");
-			this.syncData();
+			console.log("🌐 Conexão de internet restaurada");
+
+			// Mostrar conectando enquanto tenta reconectar ao Firebase
+			if (this.currentUser) {
+				this.updateConnectionStatus("online");
+				// Aguardar um pouco para garantir conexão estável
+				setTimeout(() => {
+					this.syncData();
+				}, 1000);
+			} else {
+				this.updateConnectionStatus("connecting");
+				// Tentar reconectar ao Firebase
+				this.setupAuth();
+			}
 		});
 
 		window.addEventListener("offline", () => {
 			this.isOnline = false;
 			this.updateConnectionStatus("offline");
+			console.log("📱 Modo offline - dados salvos localmente");
 		});
+
+		// Sincronização periódica (a cada 5 minutos se online)
+		setInterval(() => {
+			if (this.isOnline && this.currentUser) {
+				const pendingCount = this.getPendingSyncCount();
+				if (pendingCount > 0) {
+					console.log(
+						`🔄 Sincronização automática: ${pendingCount} registros pendentes`
+					);
+					this.syncData();
+				}
+			}
+		}, 5 * 60 * 1000); // 5 minutos
 	}
 
 	// Atualizar status de conexão na interface
 	updateConnectionStatus(status) {
 		const statusElement = document.getElementById("connectionStatus");
 		if (statusElement) {
-			if (status === "online") {
-				statusElement.innerHTML =
-					'<i class="fas fa-cloud text-green-500"></i> Online';
-				statusElement.className = "text-sm text-green-600";
-			} else {
-				statusElement.innerHTML =
-					'<i class="fas fa-cloud-slash text-red-500"></i> Offline';
-				statusElement.className = "text-sm text-red-600";
+			const pendingCount = this.getPendingSyncCount();
+
+			switch (status) {
+				case "connecting":
+					// Conectando - bolinha azul pulsando
+					statusElement.innerHTML = `
+						<span class="flex items-center">
+							<span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+							<i class="fas fa-spinner text-blue-500 animate-spin mr-1"></i>
+							Conectando...
+						</span>
+					`;
+					statusElement.className = "text-sm text-blue-600";
+					break;
+
+				case "online":
+					if (pendingCount > 0) {
+						// Sincronizando - bolinha amarela pulsando
+						statusElement.innerHTML = `
+							<span class="flex items-center">
+								<span class="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
+								<i class="fas fa-sync-alt text-yellow-500 animate-spin mr-1"></i>
+								Sincronizando (${pendingCount})
+							</span>
+						`;
+						statusElement.className = "text-sm text-yellow-600";
+					} else {
+						// Online - bolinha verde
+						statusElement.innerHTML = `
+							<span class="flex items-center">
+								<span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+								<i class="fas fa-cloud text-green-500 mr-1"></i>
+								Online
+							</span>
+						`;
+						statusElement.className = "text-sm text-green-600";
+					}
+					break;
+
+				case "offline":
+				default:
+					// Offline - bolinha vermelha
+					const offlineText =
+						pendingCount > 0 ? ` (${pendingCount} pendentes)` : "";
+					statusElement.innerHTML = `
+						<span class="flex items-center">
+							<span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+							<i class="fas fa-cloud-slash text-red-500 mr-1"></i>
+							Offline${offlineText}
+						</span>
+					`;
+					statusElement.className = "text-sm text-red-600";
+					break;
 			}
 		}
 	}
 
+	// Contar registros pendentes de sincronização
+	getPendingSyncCount() {
+		const localRecords = this.loadFromLocalStorage();
+		return localRecords.filter((record) => !record.firebaseId).length;
+	}
+
 	// Salvar registro no Firebase
 	async saveRecord(record) {
+		// SEMPRE salva localmente primeiro (UX instantânea)
+		this.saveToLocalStorage(record);
+
 		if (!this.isOnline || !this.currentUser) {
-			// Salvar localmente se offline
-			this.saveToLocalStorage(record);
+			console.log("📱 Registro salvo localmente (offline)");
+			this.updateConnectionStatus("offline");
 			return;
 		}
 
 		try {
+			// Marcar como "sincronizando"
+			this.updateConnectionStatus("online");
+
 			const docRef = await addDoc(collection(this.db, "records"), {
 				...record,
 				userId: this.currentUser.uid,
@@ -114,17 +221,29 @@ class FirebaseService {
 				updatedAt: serverTimestamp(),
 			});
 
-			console.log("Registro salvo no Firebase:", docRef.id);
+			console.log("☁️ Registro sincronizado no Firebase:", docRef.id);
 
 			// Atualizar o ID local com o ID do Firebase
 			record.firebaseId = docRef.id;
 			this.saveToLocalStorage(record);
 
+			// Atualizar status
+			this.updateConnectionStatus("online");
+
 			return docRef.id;
 		} catch (error) {
-			console.error("Erro ao salvar no Firebase:", error);
-			// Fallback para localStorage
-			this.saveToLocalStorage(record);
+			console.error("❌ Erro ao sincronizar no Firebase:", error);
+			console.log(
+				"📱 Registro mantido localmente para sincronização posterior"
+			);
+
+			// Não é erro crítico - dados estão seguros localmente
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast(
+					"Dados salvos localmente. Sincronização pendente.",
+					"info"
+				);
+			}
 		}
 	}
 
@@ -253,11 +372,40 @@ class FirebaseService {
 		const localRecords = this.loadFromLocalStorage();
 		const pendingSync = localRecords.filter((record) => !record.firebaseId);
 
-		for (const record of pendingSync) {
-			await this.saveRecord(record);
+		if (pendingSync.length === 0) {
+			console.log("✅ Todos os dados já estão sincronizados");
+			return;
 		}
 
-		console.log(`${pendingSync.length} registros sincronizados`);
+		console.log(`🔄 Sincronizando ${pendingSync.length} registros...`);
+
+		// Sincronizar em paralelo para melhor performance
+		const syncPromises = pendingSync.map((record) =>
+			this.saveRecord(record)
+		);
+
+		try {
+			await Promise.all(syncPromises);
+			console.log(
+				`✅ ${pendingSync.length} registros sincronizados com sucesso`
+			);
+
+			// Notificar usuário
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast(
+					`${pendingSync.length} registros sincronizados na nuvem`,
+					"success"
+				);
+			}
+		} catch (error) {
+			console.error("❌ Erro na sincronização:", error);
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast(
+					"Erro na sincronização. Tentando novamente...",
+					"warning"
+				);
+			}
+		}
 	}
 
 	// Funções auxiliares para localStorage
