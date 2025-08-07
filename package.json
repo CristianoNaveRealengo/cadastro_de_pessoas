@@ -1,0 +1,13 @@
+{
+	"name": "cadastro-pessoas",
+	"version": "1.0.0",
+	"description": "Sistema de Cadastro Pessoal",
+	"scripts": {
+		"build": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir .",
+		"watch": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir . --watch",
+		"dev": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir . --watch"
+	},
+	"devDependencies": {
+		"typescript": "^5.0.0"
+	}
+}

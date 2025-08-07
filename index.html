@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="author" content="Cristiano Machado">
+        <meta name="description" content="Este é um programa foi criado pra cadastro de pessoas.">
+        <title>Sistema de Cadastro Pessoal</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="style.css">
+        <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
+    </head>
+
+    <body>
+
+        <body class="bg-gray-50 min-h-screen">
+            <div class="container mx-auto px-4 py-8">
+                <!-- Header -->
+                <header class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                                <i class="fas fa-address-book text-blue-500 mr-3"></i> Sistema de Cadastro Pessoal
+                            </h1>
+                            <p class="text-gray-600 flex items-center">
+                                <i class="fas fa-database mr-2 text-gray-400"></i> Gerencie seus registros de forma
+                                simples
+                                e eficiente
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg flex items-center">
+                                <i class="fas fa-database mr-2"></i>
+                                <span id="totalRecords" class="font-semibold mr-2">0</span> registros
+                            </div>
+                            <button id="syncBtn"
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Sincronizar
+                            </button>
+                            <button id="exportBtn"
+                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+                                <i class="fas fa-file-export mr-2"></i> Exportar
+                            </button>
+                            <label for="importInput"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center cursor-pointer">
+                                <i class="fas fa-file-import mr-2"></i> Importar
+                                <input type="file" id="importInput" accept=".json" class="file-input">
+                            </label>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Painel de Sincronização -->
+                <div id="syncPanel" class="bg-white rounded-lg custom-shadow p-6 mb-6" style="display: none;">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-network-wired mr-2 text-purple-500"></i> Sincronização P2P
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Informações do Peer -->
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">Seu ID de Sincronização:</h4>
+                            <div class="flex items-center space-x-2">
+                                <input type="text" id="myPeerId" readonly
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
+                                <button id="copyPeerIdBtn"
+                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Compartilhe este ID com outros usuários para
+                                sincronizar
+                            </p>
+                        </div>
+
+                        <!-- Conectar a outro Peer -->
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-2">Conectar a outro usuário:</h4>
+                            <div class="flex items-center space-x-2">
+                                <input type="text" id="targetPeerId" placeholder="Digite o ID do usuário"
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                <button id="connectBtn"
+                                    class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md text-sm">
+                                    Conectar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status e Conexões -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-medium text-gray-700">Conexões Ativas:</h4>
+                            <span id="syncStatus" class="text-sm px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                Desconectado
+                            </span>
+                        </div>
+                        <div id="connectionsList" class="space-y-2">
+                            <p class="text-sm text-gray-500">Nenhuma conexão ativa</p>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between">
+                            <button id="disconnectAllBtn"
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm"
+                                style="display: none;">
+                                <i class="fas fa-unlink mr-1"></i> Desconectar Todos
+                            </button>
+                            <span id="lastSyncTime" class="text-xs text-gray-500"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content - Two Columns -->
+                <div class="flex flex-wrap responsive-columns -mx-2">
+                    <!-- Coluna 1: Formulário de Cadastro -->
+                    <div class="w-full md:w-1/2 px-2 mb-4">
+                        <div class="bg-white rounded-lg custom-shadow p-6 h-full">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+                                <i class="fas fa-user-plus mr-2 text-blue-500"></i>Formulário de Cadastro
+                            </h2>
+
+                            <form id="registrationForm" class="space-y-4">
+                                <!-- Full Name -->
+                                <div>
+                                    <label for="fullName"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-user mr-2 text-blue-500"></i> Nome Completo *
+                                    </label>
+                                    <input type="text" id="fullName" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+
+                                <!-- Origin Dropdown -->
+                                <div>
+                                    <label for="origin"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-2 text-blue-500"></i> Origem *
+                                    </label>
+                                    <select id="origin" required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">Selecione...</option>
+                                        <option value="MSE">MSE</option>
+                                        <option value="MP">MP</option>
+                                        <option value="EP">EP</option>
+                                        <option value="EPT">EPT</option>
+                                    </select>
+                                </div>
+
+                                <!-- Date of Birth and Age -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="dob"
+                                            class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                            <i class="fas fa-calendar-alt mr-2 text-blue-500"></i> Data de Nascimento *
+                                        </label>
+                                        <input type="date" id="dob" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="age"
+                                            class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                            <i class="fas fa-birthday-cake mr-2 text-blue-500"></i> Idade
+                                        </label>
+                                        <input type="number" id="age" readonly
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
+                                    </div>
+                                </div>
+
+                                <!-- City and Neighborhood -->
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="city"
+                                            class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                            <i class="fas fa-city mr-2 text-blue-500"></i> Cidade *
+                                        </label>
+                                        <select id="city" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Selecione...</option>
+                                            <option value="Rio de Janeiro">Rio de Janeiro</option>
+                                            <option value="Angra dos Reis">Angra dos Reis</option>
+                                            <option value="Aperibé">Aperibé</option>
+                                            <option value="Araruama">Araruama</option>
+                                            <option value="Areal">Areal</option>
+                                            <option value="Armação dos Búzios">Armação dos Búzios</option>
+                                            <option value="Arraial do Cabo">Arraial do Cabo</option>
+                                            <option value="Barra do Piraí">Barra do Piraí</option>
+                                            <option value="Barra Mansa">Barra Mansa</option>
+                                            <option value="Belford Roxo">Belford Roxo</option>
+                                            <option value="Bom Jardim">Bom Jardim</option>
+                                            <option value="Bom Jesus do Itabapoana">Bom Jesus do Itabapoana</option>
+                                            <option value="Cabo Frio">Cabo Frio</option>
+                                            <option value="Cachoeiras de Macacu">Cachoeiras de Macacu</option>
+                                            <option value="Cambuci">Cambuci</option>
+                                            <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+                                            <option value="Cantagalo">Cantagalo</option>
+                                            <option value="Carapebus">Carapebus</option>
+                                            <option value="Cardoso Moreira">Cardoso Moreira</option>
+                                            <option value="Carmo">Carmo</option>
+                                            <option value="Casimiro de Abreu">Casimiro de Abreu</option>
+                                            <option value="Comendador Levy Gasparian">Comendador Levy Gasparian</option>
+                                            <option value="Conceição de Macabu">Conceição de Macabu</option>
+                                            <option value="Cordeiro">Cordeiro</option>
+                                            <option value="Duas Barras">Duas Barras</option>
+                                            <option value="Duque de Caxias">Duque de Caxias</option>
+                                            <option value="Engenheiro Paulo de Frontin">Engenheiro Paulo de Frontin
+                                            </option>
+                                            <option value="Guapimirim">Guapimirim</option>
+                                            <option value="Iguaba Grande">Iguaba Grande</option>
+                                            <option value="Itaboraí">Itaboraí</option>
+                                            <option value="Itaguaí">Itaguaí</option>
+                                            <option value="Italva">Italva</option>
+                                            <option value="Itaocara">Itaocara</option>
+                                            <option value="Itaperuna">Itaperuna</option>
+                                            <option value="Itatiaia">Itatiaia</option>
+                                            <option value="Japeri">Japeri</option>
+                                            <option value="Laje do Muriaé">Laje do Muriaé</option>
+                                            <option value="Macaé">Macaé</option>
+                                            <option value="Macuco">Macuco</option>
+                                            <option value="Magé">Magé</option>
+                                            <option value="Mangaratiba">Mangaratiba</option>
+                                            <option value="Maricá">Maricá</option>
+                                            <option value="Mendes">Mendes</option>
+                                            <option value="Mesquita">Mesquita</option>
+                                            <option value="Miguel Pereira">Miguel Pereira</option>
+                                            <option value="Miracema">Miracema</option>
+                                            <option value="Natividade">Natividade</option>
+                                            <option value="Nilópolis">Nilópolis</option>
+                                            <option value="Niterói">Niterói</option>
+                                            <option value="Nova Friburgo">Nova Friburgo</option>
+                                            <option value="Nova Iguaçu">Nova Iguaçu</option>
+                                            <option value="Paracambi">Paracambi</option>
+                                            <option value="Paraíba do Sul">Paraíba do Sul</option>
+                                            <option value="Paraty">Paraty</option>
+                                            <option value="Paty do Alferes">Paty do Alferes</option>
+                                            <option value="Petrópolis">Petrópolis</option>
+                                            <option value="Pinheiral">Pinheiral</option>
+                                            <option value="Piraí">Piraí</option>
+                                            <option value="Porciúncula">Porciúncula</option>
+                                            <option value="Porto Real">Porto Real</option>
+                                            <option value="Quatis">Quatis</option>
+                                            <option value="Queimados">Queimados</option>
+                                            <option value="Quissamã">Quissamã</option>
+                                            <option value="Resende">Resende</option>
+                                            <option value="Rio Bonito">Rio Bonito</option>
+                                            <option value="Rio Claro">Rio Claro</option>
+                                            <option value="Rio das Flores">Rio das Flores</option>
+                                            <option value="Rio das Ostras">Rio das Ostras</option>
+                                            <option value="Santa Maria Madalena">Santa Maria Madalena</option>
+                                            <option value="Santo Antônio de Pádua">Santo Antônio de Pádua</option>
+                                            <option value="São Fidélis">São Fidélis</option>
+                                            <option value="São Francisco de Itabapoana">São Francisco de Itabapoana
+                                            </option>
+                                            <option value="São Gonçalo">São Gonçalo</option>
+                                            <option value="São João da Barra">São João da Barra</option>
+                                            <option value="São João de Meriti">São João de Meriti</option>
+                                            <option value="São José de Ubá">São José de Ubá</option>
+                                            <option value="São José do Vale do Rio Preto">São José do Vale do Rio Preto
+                                            </option>
+                                            <option value="São Pedro da Aldeia">São Pedro da Aldeia</option>
+                                            <option value="São Sebastião do Alto">São Sebastião do Alto</option>
+                                            <option value="Sapucaia">Sapucaia</option>
+                                            <option value="Saquarema">Saquarema</option>
+                                            <option value="Seropédica">Seropédica</option>
+                                            <option value="Silva Jardim">Silva Jardim</option>
+                                            <option value="Sumidouro">Sumidouro</option>
+                                            <option value="Tanguá">Tanguá</option>
+                                            <option value="Teresópolis">Teresópolis</option>
+                                            <option value="Trajano de Moraes">Trajano de Moraes</option>
+                                            <option value="Três Rios">Três Rios</option>
+                                            <option value="Valença">Valença</option>
+                                            <option value="Varre-Sai">Varre-Sai</option>
+                                            <option value="Vassouras">Vassouras</option>
+                                            <option value="Volta Redonda">Volta Redonda</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="neighborhood"
+                                            class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                            <i class="fas fa-map-marker mr-2 text-blue-500"></i> Bairro *
+                                        </label>
+                                        <select id="neighborhood" required
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Selecione a cidade primeiro</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Nível de Escolaridade -->
+                                <div>
+                                    <label for="education"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-graduation-cap mr-2 text-blue-500"></i> Escolaridade
+                                    </label>
+                                    <select id="education"
+                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border transition-all">
+                                        <option value="">Selecione...</option>
+                                        <optgroup label="Ensino Fundamental">
+                                            <option value="1ª série EF">1ª série EF</option>
+                                            <option value="2ª série EF">2ª série EF</option>
+                                            <option value="3ª série EF">3ª série EF</option>
+                                            <option value="4ª série EF">4ª série EF</option>
+                                            <option value="5ª série EF">5ª série EF</option>
+                                            <option value="6ª série EF">6ª série EF</option>
+                                            <option value="7ª série EF">7ª série EF</option>
+                                            <option value="8ª série EF">8ª série EF</option>
+                                            <option value="9ª série EF">9ª série EF</option>
+                                            <option value="Fundamental Completo">Fundamental Completo</option>
+                                        </optgroup>
+                                        <optgroup label="Ensino Médio">
+                                            <option value="1º ano EM">1º ano EM</option>
+                                            <option value="2º ano EM">2º ano EM</option>
+                                            <option value="3º ano EM">3º ano EM</option>
+                                            <option value="Médio Completo">Médio Completo</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <!-- Status -->
+                                <div>
+                                    <label for="status"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-info-circle mr-2 text-blue-500"></i> Status
+                                    </label>
+                                    <select id="status"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="Em Análise">Em Análise</option>
+                                        <option value="Contratado">Contratado</option>
+                                        <option value="Não Contratado">Não Contratado</option>
+                                    </select>
+                                </div>
+
+                                <!-- New Fields -->
+                                <div>
+                                    <label for="referenceName"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-user-friends mr-2 text-blue-500"></i> Nome da Referência
+                                    </label>
+                                    <input type="text" id="referenceName"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+
+                                <div>
+                                    <label for="forwarding"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-share-square mr-2 text-blue-500"></i> Encaminhamento
+                                    </label>
+                                    <input type="text" id="forwarding"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+
+                                <div>
+                                    <label for="observation"
+                                        class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                        <i class="fas fa-sticky-note mr-2 text-blue-500"></i> Observação
+                                    </label>
+                                    <textarea id="observation" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                                </div>
+
+                                <!-- otões do Formulário -->
+                                <div class="flex space-x-3 pt-4">
+                                    <button type="submit"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-save mr-2"></i> Salvar
+                                    </button>
+                                    <button type="button" id="clearFormBtn"
+                                        class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-broom mr-2"></i> Limpar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Coluna 2: Busca e Registros com Aba de Estatísticas -->
+                    <div class="w-full md:w-1/2 px-2 mb-4">
+                        <div class="bg-white rounded-lg custom-shadow p-6 h-full">
+                            <div class="flex border-b mb-4">
+                                <button id="searchTabBtn" required
+                                    class="flex-1 py-2 font-medium tab-active flex items-center justify-center">
+                                    <i class="fas fa-search mr-2"></i> Busca
+                                </button>
+                                <button id="statsTabBtn"
+                                    class="flex-1 py-2 font-medium text-gray-500 flex items-center justify-center">
+                                    <i class="fas fa-chart-bar mr-2"></i> Estatísticas
+                                </button>
+                            </div>
+
+                            <!-- Conteúdo de Busca -->
+                            <div id="searchContent">
+                                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                                    <i class="fas fa-search mr-2 text-green-500"></i>Busca de Registros
+                                </h2>
+
+                                <!-- Filtros de Busca -->
+                                <div class="mb-6 space-y-4">
+                                    <div>
+                                        <label for="searchName"
+                                            class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                            <i class="fas fa-user mr-2 text-green-500"></i> Nome
+                                        </label>
+                                        <div class="relative">
+                                            <input type="text" id="searchName" placeholder="Buscar por nome"
+                                                class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="searchCity"
+                                                class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                <i class="fas fa-city mr-2 text-green-500"></i> Cidade
+                                            </label>
+                                            <div class="relative">
+                                                <select id="searchCity"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todas</option>
+                                                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                                                    <option value="Angra dos Reis">Angra dos Reis</option>
+                                                    <option value="Aperibé">Aperibé</option>
+                                                    <option value="Araruama">Araruama</option>
+                                                    <option value="Areal">Areal</option>
+                                                    <option value="Armação dos Búzios">Armação dos Búzios</option>
+                                                    <option value="Arraial do Cabo">Arraial do Cabo</option>
+                                                    <option value="Barra do Piraí">Barra do Piraí</option>
+                                                    <option value="Barra Mansa">Barra Mansa</option>
+                                                    <option value="Belford Roxo">Belford Roxo</option>
+                                                    <option value="Bom Jardim">Bom Jardim</option>
+                                                    <option value="Bom Jesus do Itabapoana">Bom Jesus do Itabapoana
+                                                    </option>
+                                                    <option value="Cabo Frio">Cabo Frio</option>
+                                                    <option value="Cachoeiras de Macacu">Cachoeiras de Macacu</option>
+                                                    <option value="Cambuci">Cambuci</option>
+                                                    <option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+                                                    <option value="Cantagalo">Cantagalo</option>
+                                                    <option value="Carapebus">Carapebus</option>
+                                                    <option value="Cardoso Moreira">Cardoso Moreira</option>
+                                                    <option value="Carmo">Carmo</option>
+                                                    <option value="Casimiro de Abreu">Casimiro de Abreu</option>
+                                                    <option value="Comendador Levy Gasparian">Comendador Levy Gasparian
+                                                    </option>
+                                                    <option value="Conceição de Macabu">Conceição de Macabu</option>
+                                                    <option value="Cordeiro">Cordeiro</option>
+                                                    <option value="Duas Barras">Duas Barras</option>
+                                                    <option value="Duque de Caxias">Duque de Caxias</option>
+                                                    <option value="Engenheiro Paulo de Frontin">Engenheiro Paulo de
+                                                        Frontin
+                                                    </option>
+                                                    <option value="Guapimirim">Guapimirim</option>
+                                                    <option value="Iguaba Grande">Iguaba Grande</option>
+                                                    <option value="Itaboraí">Itaboraí</option>
+                                                    <option value="Itaguaí">Itaguaí</option>
+                                                    <option value="Italva">Italva</option>
+                                                    <option value="Itaocara">Itaocara</option>
+                                                    <option value="Itaperuna">Itaperuna</option>
+                                                    <option value="Itatiaia">Itatiaia</option>
+                                                    <option value="Japeri">Japeri</option>
+                                                    <option value="Laje do Muriaé">Laje do Muriaé</option>
+                                                    <option value="Macaé">Macaé</option>
+                                                    <option value="Macuco">Macuco</option>
+                                                    <option value="Magé">Magé</option>
+                                                    <option value="Mangaratiba">Mangaratiba</option>
+                                                    <option value="Maricá">Maricá</option>
+                                                    <option value="Mendes">Mendes</option>
+                                                    <option value="Mesquita">Mesquita</option>
+                                                    <option value="Miguel Pereira">Miguel Pereira</option>
+                                                    <option value="Miracema">Miracema</option>
+                                                    <option value="Natividade">Natividade</option>
+                                                    <option value="Nilópolis">Nilópolis</option>
+                                                    <option value="Niterói">Niterói</option>
+                                                    <option value="Nova Friburgo">Nova Friburgo</option>
+                                                    <option value="Nova Iguaçu">Nova Iguaçu</option>
+                                                    <option value="Paracambi">Paracambi</option>
+                                                    <option value="Paraíba do Sul">Paraíba do Sul</option>
+                                                    <option value="Paraty">Paraty</option>
+                                                    <option value="Paty do Alferes">Paty do Alferes</option>
+                                                    <option value="Petrópolis">Petrópolis</option>
+                                                    <option value="Pinheiral">Pinheiral</option>
+                                                    <option value="Piraí">Piraí</option>
+                                                    <option value="Porciúncula">Porciúncula</option>
+                                                    <option value="Porto Real">Porto Real</option>
+                                                    <option value="Quatis">Quatis</option>
+                                                    <option value="Queimados">Queimados</option>
+                                                    <option value="Quissamã">Quissamã</option>
+                                                    <option value="Resende">Resende</option>
+                                                    <option value="Rio Bonito">Rio Bonito</option>
+                                                    <option value="Rio Claro">Rio Claro</option>
+                                                    <option value="Rio das Flores">Rio das Flores</option>
+                                                    <option value="Rio das Ostras">Rio das Ostras</option>
+                                                    <option value="Santa Maria Madalena">Santa Maria Madalena</option>
+                                                    <option value="Santo Antônio de Pádua">Santo Antônio de Pádua
+                                                    </option>
+                                                    <option value="São Fidélis">São Fidélis</option>
+                                                    <option value="São Francisco de Itabapoana">São Francisco de
+                                                        Itabapoana
+                                                    </option>
+                                                    <option value="São Gonçalo">São Gonçalo</option>
+                                                    <option value="São João da Barra">São João da Barra</option>
+                                                    <option value="São João de Meriti">São João de Meriti</option>
+                                                    <option value="São José de Ubá">São José de Ubá</option>
+                                                    <option value="São José do Vale do Rio Preto">São José do Vale do
+                                                        Rio
+                                                        Preto
+                                                    </option>
+                                                    <option value="São Pedro da Aldeia">São Pedro da Aldeia</option>
+                                                    <option value="São Sebastião do Alto">São Sebastião do Alto</option>
+                                                    <option value="Sapucaia">Sapucaia</option>
+                                                    <option value="Saquarema">Saquarema</option>
+                                                    <option value="Seropédica">Seropédica</option>
+                                                    <option value="Silva Jardim">Silva Jardim</option>
+                                                    <option value="Sumidouro">Sumidouro</option>
+                                                    <option value="Tanguá">Tanguá</option>
+                                                    <option value="Teresópolis">Teresópolis</option>
+                                                    <option value="Trajano de Moraes">Trajano de Moraes</option>
+                                                    <option value="Três Rios">Três Rios</option>
+                                                    <option value="Valença">Valença</option>
+                                                    <option value="Varre-Sai">Varre-Sai</option>
+                                                    <option value="Vassouras">Vassouras</option>
+                                                    <option value="Volta Redonda">Volta Redonda</option>
+                                                </select>
+                                                <div class="absolute left-3 top-2.5 text-gray-400">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="searchNeighborhood"
+                                                class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                <i class="fas fa-map-marker-alt mr-2 text-green-500"></i> Bairro
+                                            </label>
+                                            <div class="relative">
+                                                <select id="searchNeighborhood"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todos</option>
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="searchOrigin"
+                                                class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                <i class="fas fa-map-pin mr-2 text-green-500"></i> Origem
+                                            </label>
+                                            <div class="relative">
+                                                <select id="searchOrigin"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todas</option>
+                                                    <option value="MSE">MSE</option>
+                                                    <option value="MP">MP</option>
+                                                    <option value="EP">EP</option>
+                                                    <option value="EPT">EPT</option>
+                                                </select>
+
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label for="searchStatus"
+                                                class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                <i class="fas fa-info-circle mr-2 text-green-500"></i> Status
+                                            </label>
+                                            <div class="relative">
+                                                <select id="searchStatus"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todos</option>
+                                                    <option value="Em Análise">Em Análise</option>
+                                                    <option value="Contratado">Contratado</option>
+                                                    <option value="Não Contratado">Não Contratado</option>
+                                                </select>
+                                            </div>
+
+                                        </div>
+                                        <div>
+                                            <label for="searchEducation"
+                                                class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                <i class="fas fa-graduation-cap mr-2 text-green-500"></i> Escolaridade
+                                            </label>
+                                            <select id="searchEducation"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                <option value="">Todas</option>
+                                                <optgroup label="Ensino Fundamental">
+                                                    <option value="1ª série EF">1ª série EF</option>
+                                                    <option value="2ª série EF">2ª série EF</option>
+                                                    <option value="3ª série EF">3ª série EF</option>
+                                                    <option value="4ª série EF">4ª série EF</option>
+                                                    <option value="5ª série EF">5ª série EF</option>
+                                                    <option value="6ª série EF">6ª série EF</option>
+                                                    <option value="7ª série EF">7ª série EF</option>
+                                                    <option value="8ª série EF">8ªescola série EF</option>
+                                                    <option value="9ª série EF">9ª série EF</option>
+                                                    <option value="Fundamental Completo">Fundamental Completo</option>
+                                                </optgroup>
+                                                <optgroup label="Ensino Médio">
+                                                    <option value="1º ano EM">1º ano EM</option>
+                                                    <option value="2º ano EM">2º ano EM</option>
+                                                    <option value="3º ano EM">3º ano EM</option>
+                                                    <option value="Médio Completo">Médio Completo</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <!-- Dentro da div com classe "mb-6 space-y-4" na seção de busca -->
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <!-- Filtro por Ano -->
+                                            <div>
+                                                <label for="searchYear"
+                                                    class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                    <i class="fas fa-calendar mr-2 text-green-500"></i> Ano de Cadastro
+                                                </label>
+                                                <select id="searchYear"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todos</option>
+                                                </select>
+                                            </div>
+
+                                            <!-- Filtro por Encaminhamento -->
+                                            <div>
+                                                <label for="searchForwarding"
+                                                    class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                                    <i class="fas fa-share-square mr-2 text-green-500"></i>
+                                                    Encaminhamento
+                                                </label>
+                                                <select id="searchForwarding"
+                                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                    <option value="">Todos</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-4 items-center w-full">
+                                        <button id="searchBtn"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center flex-grow justify-center">
+                                            <i class="fas fa-search mr-2"></i> Buscar
+                                        </button>
+                                        <button id="clearSearchBtn"
+                                            class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center flex-grow justify-center">
+                                            <i class="fas fa-broom mr-2"></i> Limpar
+                                        </button>
+                                    </div>
+
+                                </div>
+
+                                <!-- Tabela de Registros-->
+                                <div class="overflow-x-auto">
+                                    <table class="w-full records-table">
+                                        <thead>
+                                            <tr class="text-left text-sm text-gray-600 uppercase">
+                                                <th class="py-3 px-4">Nome</th>
+                                                <th class="py-3 px-4">Município</th>
+                                                <th class="py-3 px-4">Status</th>
+                                                <th class="py-3 px-4">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="recordsTableBody" class="text-sm text-gray-700">
+                                            <!-- Linhas serão inseridas dinamicamente pelo JavaScript -->
+                                        </tbody>
+                                    </table>
+
+                                    <!-- Paginação -->
+                                    <div id="pagination" class="pagination mt-6 mb-4 hidden">
+                                        <ul class="flex items-center">
+                                            <li class="page-item disabled" id="prevPage">
+                                                <a class="page-link" href="#" tabindex="-1">
+                                                    <i class="fas fa-chevron-left"></i>
+                                                </a>
+                                            </li>
+                                            <li class="page-item active">
+                                                <a class="page-link" href="#">1</a>
+                                            </li>
+                                            <li class="page-item" id="nextPage">
+                                                <a class="page-link" href="#">
+                                                    <i class="fas fa-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Conteúdo de Estatísticas (Oculto por padrão) -->
+                            <div id="statsContent" class="hidden">
+                                <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                                    <i class="fas fa-chart-pie mr-2 text-purple-500"></i>Estatísticas
+                                </h2>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <!-- Cartão de Total de Registros -->
+                                    <div
+                                        class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+                                                <i class="fas fa-users text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Total de Registros</p>
+                                                <p class="text-2xl font-bold" id="statsTotalRecords">0</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Average Age Card -->
+                                    <div
+                                        class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500 hover:shadow-md transition-shadow">
+                                        <div class="flex items-center">
+                                            <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+                                                <i class="fas fa-birthday-cake text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-500">Idade Média</p>
+                                                <p class="text-2xl font-bold" id="statsAvgAge">0</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <!-- Card por Status -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-chart-pie mr-2 text-purple-500"></i> Por Status
+                                        </h3>
+                                        <div id="statsByStatus" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Card por Origem -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-map-marker-alt mr-2 text-blue-500"></i> Por Origem
+                                        </h3>
+                                        <div id="statsByOrigin" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <!-- Card por Cidade -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-city mr-2 text-green-500"></i> Por Cidade
+                                        </h3>
+                                        <div id="statsByCity" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Card Por Escolaridade -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-graduation-cap mr-2 text-blue-500"></i> Por Escolaridade
+                                        </h3>
+                                        <div id="statsByEducation" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                    <!-- Estatísticas por Ano -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-calendar-alt mr-2 text-purple-500"></i> Por Ano de Cadastro
+                                        </h3>
+                                        <div id="statsByYear" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Estatísticas por Encaminhamento -->
+                                    <div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+                                        <h3
+                                            class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+                                            <i class="fas fa-share-square mr-2 text-blue-500"></i> Por Encaminhamento
+                                        </h3>
+                                        <div id="statsByForwarding" class="space-y-2">
+                                            <div class="text-center text-gray-500 py-4">
+                                                <i class="fas fa-chart-bar text-2xl mb-1"></i>
+                                                <p>Nenhum dado disponível</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--  Modal de Detalhes do Registro -->
+            <div id="recordModal"
+                class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden modal">
+                <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal-content relative">
+                    <!-- Botão de fechar -->
+                    <button class="close-modal" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+
+                    <div class="p-6 print-content">
+                        <div class="print-header">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                                        <i class="fas fa-user-circle text-blue-500 mr-2"></i> Detalhes do Registro
+                                    </h3>
+                                    <p class="text-sm text-gray-500">Sistema de Cadastro Pessoal</p>
+                                </div>
+                                <div class="text-sm text-gray-500 mr-7">
+                                    <p>Data: <span id="printDate"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- Nome Completo -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Nome Completo</div>
+                                    <div id="modalFullName" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Origem -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Origem</div>
+                                    <div id="modalOrigin" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Data de Nascimento -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Data de Nascimento</div>
+                                    <div id="modalDob" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Idade -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-birthday-cake"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Idade</div>
+                                    <div id="modalAge" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Cidade -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-city"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Cidade</div>
+                                    <div id="modalCity" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Bairro -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-map-marker"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Bairro</div>
+                                    <div id="modalNeighborhood" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Escolaridade -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Escolaridade</div>
+                                    <div id="modalEducation" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Status</div>
+                                    <div id="modalStatus" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Nome da Referência -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Nome da Referência</div>
+                                    <div id="modalReferenceName" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Encaminhamento -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-share-square"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Encaminhamento</div>
+                                    <div id="modalForwarding" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Observação -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-sticky-note"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Observação</div>
+                                    <div id="modalObservation" class="detail-value">-</div>
+                                </div>
+                            </div>
+
+                            <!-- Data de Cadastro -->
+                            <div class="detail-item">
+                                <div class="detail-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div class="detail-content">
+                                    <div class="detail-label">Data de Cadastro</div>
+                                    <div id="modalCreatedAt" class="detail-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-4 flex justify-end space-x-3 ">
+                            <button onclick="printRecord()"
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center no-print">
+                                <i class="fas fa-print mr-2"></i> Imprimir
+                            </button>
+                            <button onclick="enableEditMode()" id="editBtn"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                                <i class="fas fa-edit mr-2"></i> Editar
+                            </button>
+                            <button onclick="saveChanges()" id="saveBtn"
+                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center hidden">
+                                <i class="fas fa-save mr-2"></i> Salvar
+                            </button>
+                            <button onclick="deleteRecord()"
+                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center">
+                                <i class="fas fa-trash mr-2"></i> Excluir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </body>
+        <script src="script.js"></script>
+
+
+</html>

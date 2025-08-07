@@ -1,0 +1,2709 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="Cristiano Machado">
+		<meta name="description" content="Este é um programa foi criado pra cadastro de pessoas.">
+		<title>Sistema de Cadastro Pessoal</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+		<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+		<style>
+			/* Estilos personalizados */
+			.custom-shadow {
+				box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+			}
+
+			.tab-active {
+				border-bottom: 3px solid #3b82f6;
+				color: #3b82f6;
+				font-weight: 600;
+			}
+
+			/* Estilos para a tabela de registros */
+			.records-table {
+				width: 100%;
+				border-collapse: separate;
+				border-spacing: 0;
+			}
+
+			.records-table thead th {
+				position: sticky;
+				top: 0;
+				background-color: #f8fafc;
+				z-index: 10;
+				box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+			}
+
+			.records-table tbody tr:hover {
+				background-color: #f8fafc;
+			}
+
+			.records-table td,
+			.records-table th {
+				padding: 12px 15px;
+				text-align: left;
+				border-bottom: 1px solid #e2e8f0;
+			}
+
+			.avatar {
+				width: 40px;
+				height: 40px;
+				border-radius: 50%;
+				background-color: #e2e8f0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #64748b;
+				font-weight: bold;
+			}
+
+			.action-btn {
+				padding: 6px 10px;
+				border-radius: 4px;
+				margin-left: 5px;
+				transition: all 0.2s;
+			}
+
+			.action-btn:hover {
+				transform: translateY(-1px);
+			}
+
+			/* Estilos responsivos */
+			@media (max-width: 768px) {
+				.responsive-columns {
+					flex-direction: column;
+				}
+
+				.records-table thead {
+					display: none;
+				}
+
+				.records-table tr {
+					display: block;
+					margin-bottom: 1rem;
+					border-radius: 8px;
+					box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+				}
+
+				.records-table td {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					padding: 10px;
+					border-bottom: none;
+				}
+
+				.records-table td::before {
+					content: attr(data-label);
+					font-weight: bold;
+					margin-right: 1rem;
+					color: #64748b;
+				}
+
+				.mobile-actions {
+					display: flex;
+					justify-content: flex-end;
+					width: 100%;
+				}
+			}
+
+			/* Estilos do modal */
+			.modal {
+				transition: opacity 0.3s ease;
+			}
+
+			.modal-content {
+				transform: translateY(0);
+				transition: transform 0.3s ease;
+				max-height: 90vh;
+				overflow-y: auto;
+			}
+
+			.modal-enter {
+				opacity: 0;
+			}
+
+			.modal-enter .modal-content {
+				transform: translateY(-20px);
+			}
+
+			.modal-leave {
+				opacity: 1;
+			}
+
+			.modal-leave .modal-content {
+				transform: translateY(0);
+			}
+
+			.modal-leave-to {
+				opacity: 0;
+			}
+
+			.modal-leave-to .modal-content {
+				transform: translateY(-20px);
+			}
+
+			/* Estilos de impressão */
+			@media print {
+				@page {
+					size: A4;
+					margin: 15mm 10mm;
+				}
+
+				body * {
+					visibility: hidden;
+					margin: 0 !important;
+					padding: 0 !important;
+				}
+
+				#recordModal,
+				#recordModal * {
+					visibility: visible;
+				}
+
+				#recordModal {
+					position: absolute !important;
+					top: 0 !important;
+					left: 0 !important;
+					width: 190mm !important;
+					/* Largura útil A4 */
+					min-height: 277mm !important;
+					/* Altura útil A4 */
+					margin: 0 !important;
+					padding: 5mm !important;
+					background: white;
+					box-shadow: none;
+					font-size: 12px !important;
+				}
+
+				.modal-content {
+					display: grid !important;
+					grid-template-columns: 1fr 1fr;
+					gap: 4mm;
+					transform: none !important;
+					padding: 0 !important;
+				}
+
+				.detail-item {
+					display: flex !important;
+					margin-bottom: 2mm !important;
+					page-break-inside: avoid;
+				}
+
+				.detail-icon {
+					min-width: 25px !important;
+				}
+
+				.detail-label {
+					font-size: 11px !important;
+					margin-right: 3mm !important;
+				}
+
+				.detail-value {
+					font-size: 12px !important;
+					border-bottom: 0.5px solid #ccc !important;
+				}
+
+				.print-header {
+					grid-column: 1 / -1;
+					margin-bottom: 5mm !important;
+					padding-bottom: 3mm !important;
+					border-bottom: 1px solid #000 !important;
+				}
+
+				.no-print,
+				.close-modal,
+				.modal-actions,
+				.fa-times {
+					display: none !important;
+				}
+
+				/* Garantir quebra correta em dois grupos */
+				.grid-cols-1.md\:grid-cols-2 {
+					grid-template-columns: repeat(2, 1fr) !important;
+				}
+			}
+
+			/* Estilo do campo de envio de arquivo */
+			.file-input {
+				display: none;
+			}
+
+			/*Animação para botões */
+			@keyframes pulse {
+				0% {
+					transform: scale(1);
+				}
+
+				50% {
+					transform: scale(1.05);
+				}
+
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			.animate-pulse {
+				animation: pulse 1.5s infinite;
+			}
+
+			/* Estilos da paginação */
+			.pagination {
+				display: flex;
+				justify-content: center;
+				margin-top: 20px;
+			}
+
+			.page-item {
+				margin: 0 5px;
+			}
+
+			.page-link {
+				padding: 5px 10px;
+				border: 1px solid #ddd;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+
+			.page-link:hover {
+				background-color: #f1f1f1;
+			}
+
+			.page-item.active .page-link {
+				background-color: #3b82f6;
+				color: white;
+				border-color: #3b82f6;
+			}
+
+			.page-item.disabled .page-link {
+				color: #6c757d;
+				pointer-events: none;
+				background-color: #fff;
+				border-color: #dee2e6;
+			}
+
+			/* Botão de fechar o modal */
+			.close-modal {
+				position: absolute;
+				top: 15px;
+				right: 15px;
+				background: #f1f5f9;
+				border: none;
+				width: 30px;
+				height: 30px;
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				cursor: pointer;
+				color: #64748b;
+				transition: all 0.2s;
+			}
+
+			.close-modal:hover {
+				background: #e2e8f0;
+				color: #334155;
+			}
+
+			/* Item de detalhe no modal */
+			.detail-item {
+				display: flex;
+				align-items: center;
+				margin-bottom: 12px;
+			}
+
+			.detail-icon {
+				width: 30px;
+				color: #64748b;
+				margin-right: 10px;
+				text-align: center;
+			}
+
+			.detail-content {
+				flex: 1;
+			}
+
+			.detail-label {
+				font-size: 0.8rem;
+				color: #64748b;
+			}
+
+			.detail-value {
+				font-weight: 500;
+				color: #334155;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-50 min-h-screen">
+		<div class="container mx-auto px-4 py-8">
+			<!-- Header -->
+			<header class="mb-8">
+				<div class="flex items-center justify-between">
+					<div>
+						<h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+							<i class="fas fa-address-book text-blue-500 mr-3"></i> Sistema de Cadastro Pessoal
+						</h1>
+						<p class="text-gray-600 flex items-center">
+							<i class="fas fa-database mr-2 text-gray-400"></i> Gerencie seus registros de forma simples
+							e eficiente
+						</p>
+					</div>
+					<div class="flex items-center space-x-4">
+						<div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg flex items-center">
+							<i class="fas fa-database mr-2"></i>
+							<span id="totalRecords" class="font-semibold mr-2">0</span> registros
+						</div>
+						<button id="syncBtn"
+							class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center">
+							<i class="fas fa-sync-alt mr-2"></i> Sincronizar
+						</button>
+						<button id="exportBtn"
+							class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+							<i class="fas fa-file-export mr-2"></i> Exportar
+						</button>
+						<label for="importInput"
+							class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center cursor-pointer">
+							<i class="fas fa-file-import mr-2"></i> Importar
+							<input type="file" id="importInput" accept=".json" class="file-input">
+						</label>
+					</div>
+				</div>
+			</header>
+
+			<!-- Painel de Sincronização -->
+			<div id="syncPanel" class="bg-white rounded-lg custom-shadow p-6 mb-6" style="display: none;">
+				<h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+					<i class="fas fa-network-wired mr-2 text-purple-500"></i> Sincronização P2P
+				</h3>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<!-- Informações do Peer -->
+					<div>
+						<h4 class="font-medium text-gray-700 mb-2">Seu ID de Sincronização:</h4>
+						<div class="flex items-center space-x-2">
+							<input type="text" id="myPeerId" readonly
+								class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
+							<button id="copyPeerIdBtn"
+								class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm">
+								<i class="fas fa-copy"></i>
+							</button>
+						</div>
+						<p class="text-xs text-gray-500 mt-1">Compartilhe este ID com outros usuários para sincronizar
+						</p>
+					</div>
+
+					<!-- Conectar a outro Peer -->
+					<div>
+						<h4 class="font-medium text-gray-700 mb-2">Conectar a outro usuário:</h4>
+						<div class="flex items-center space-x-2">
+							<input type="text" id="targetPeerId" placeholder="Digite o ID do usuário"
+								class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+							<button id="connectBtn"
+								class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md text-sm">
+								Conectar
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Status e Conexões -->
+				<div class="mt-4">
+					<div class="flex items-center justify-between mb-2">
+						<h4 class="font-medium text-gray-700">Conexões Ativas:</h4>
+						<span id="syncStatus" class="text-sm px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+							Desconectado
+						</span>
+					</div>
+					<div id="connectionsList" class="space-y-2">
+						<p class="text-sm text-gray-500">Nenhuma conexão ativa</p>
+					</div>
+
+					<div class="mt-4 flex items-center justify-between">
+						<button id="disconnectAllBtn"
+							class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm"
+							style="display: none;">
+							<i class="fas fa-unlink mr-1"></i> Desconectar Todos
+						</button>
+						<span id="lastSyncTime" class="text-xs text-gray-500"></span>
+					</div>
+				</div>
+			</div>
+
+			<!-- Main Content - Two Columns -->
+			<div class="flex flex-wrap responsive-columns -mx-2">
+				<!-- Coluna 1: Formulário de Cadastro -->
+				<div class="w-full md:w-1/2 px-2 mb-4">
+					<div class="bg-white rounded-lg custom-shadow p-6 h-full">
+						<h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
+							<i class="fas fa-user-plus mr-2 text-blue-500"></i>Formulário de Cadastro
+						</h2>
+
+						<form id="registrationForm" class="space-y-4">
+							<!-- Full Name -->
+							<div>
+								<label for="fullName"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-user mr-2 text-blue-500"></i> Nome Completo *
+								</label>
+								<input type="text" id="fullName" required
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+							</div>
+
+							<!-- Origin Dropdown -->
+							<div>
+								<label for="origin"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-map-marker-alt mr-2 text-blue-500"></i> Origem *
+								</label>
+								<select id="origin" required
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+									<option value="">Selecione...</option>
+									<option value="MSE">MSE</option>
+									<option value="MP">MP</option>
+									<option value="EP">EP</option>
+									<option value="EPT">EPT</option>
+								</select>
+							</div>
+
+							<!-- Date of Birth and Age -->
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<label for="dob"
+										class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+										<i class="fas fa-calendar-alt mr-2 text-blue-500"></i> Data de Nascimento *
+									</label>
+									<input type="date" id="dob" required
+										class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+								</div>
+								<div>
+									<label for="age"
+										class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+										<i class="fas fa-birthday-cake mr-2 text-blue-500"></i> Idade
+									</label>
+									<input type="number" id="age" readonly
+										class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100">
+								</div>
+							</div>
+
+							<!-- City and Neighborhood -->
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<label for="city"
+										class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+										<i class="fas fa-city mr-2 text-blue-500"></i> Cidade *
+									</label>
+									<select id="city" required
+										class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+										<option value="">Selecione...</option>
+										<option value="Rio de Janeiro">Rio de Janeiro</option>
+										<option value="Angra dos Reis">Angra dos Reis</option>
+										<option value="Aperibé">Aperibé</option>
+										<option value="Araruama">Araruama</option>
+										<option value="Areal">Areal</option>
+										<option value="Armação dos Búzios">Armação dos Búzios</option>
+										<option value="Arraial do Cabo">Arraial do Cabo</option>
+										<option value="Barra do Piraí">Barra do Piraí</option>
+										<option value="Barra Mansa">Barra Mansa</option>
+										<option value="Belford Roxo">Belford Roxo</option>
+										<option value="Bom Jardim">Bom Jardim</option>
+										<option value="Bom Jesus do Itabapoana">Bom Jesus do Itabapoana</option>
+										<option value="Cabo Frio">Cabo Frio</option>
+										<option value="Cachoeiras de Macacu">Cachoeiras de Macacu</option>
+										<option value="Cambuci">Cambuci</option>
+										<option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+										<option value="Cantagalo">Cantagalo</option>
+										<option value="Carapebus">Carapebus</option>
+										<option value="Cardoso Moreira">Cardoso Moreira</option>
+										<option value="Carmo">Carmo</option>
+										<option value="Casimiro de Abreu">Casimiro de Abreu</option>
+										<option value="Comendador Levy Gasparian">Comendador Levy Gasparian</option>
+										<option value="Conceição de Macabu">Conceição de Macabu</option>
+										<option value="Cordeiro">Cordeiro</option>
+										<option value="Duas Barras">Duas Barras</option>
+										<option value="Duque de Caxias">Duque de Caxias</option>
+										<option value="Engenheiro Paulo de Frontin">Engenheiro Paulo de Frontin</option>
+										<option value="Guapimirim">Guapimirim</option>
+										<option value="Iguaba Grande">Iguaba Grande</option>
+										<option value="Itaboraí">Itaboraí</option>
+										<option value="Itaguaí">Itaguaí</option>
+										<option value="Italva">Italva</option>
+										<option value="Itaocara">Itaocara</option>
+										<option value="Itaperuna">Itaperuna</option>
+										<option value="Itatiaia">Itatiaia</option>
+										<option value="Japeri">Japeri</option>
+										<option value="Laje do Muriaé">Laje do Muriaé</option>
+										<option value="Macaé">Macaé</option>
+										<option value="Macuco">Macuco</option>
+										<option value="Magé">Magé</option>
+										<option value="Mangaratiba">Mangaratiba</option>
+										<option value="Maricá">Maricá</option>
+										<option value="Mendes">Mendes</option>
+										<option value="Mesquita">Mesquita</option>
+										<option value="Miguel Pereira">Miguel Pereira</option>
+										<option value="Miracema">Miracema</option>
+										<option value="Natividade">Natividade</option>
+										<option value="Nilópolis">Nilópolis</option>
+										<option value="Niterói">Niterói</option>
+										<option value="Nova Friburgo">Nova Friburgo</option>
+										<option value="Nova Iguaçu">Nova Iguaçu</option>
+										<option value="Paracambi">Paracambi</option>
+										<option value="Paraíba do Sul">Paraíba do Sul</option>
+										<option value="Paraty">Paraty</option>
+										<option value="Paty do Alferes">Paty do Alferes</option>
+										<option value="Petrópolis">Petrópolis</option>
+										<option value="Pinheiral">Pinheiral</option>
+										<option value="Piraí">Piraí</option>
+										<option value="Porciúncula">Porciúncula</option>
+										<option value="Porto Real">Porto Real</option>
+										<option value="Quatis">Quatis</option>
+										<option value="Queimados">Queimados</option>
+										<option value="Quissamã">Quissamã</option>
+										<option value="Resende">Resende</option>
+										<option value="Rio Bonito">Rio Bonito</option>
+										<option value="Rio Claro">Rio Claro</option>
+										<option value="Rio das Flores">Rio das Flores</option>
+										<option value="Rio das Ostras">Rio das Ostras</option>
+										<option value="Santa Maria Madalena">Santa Maria Madalena</option>
+										<option value="Santo Antônio de Pádua">Santo Antônio de Pádua</option>
+										<option value="São Fidélis">São Fidélis</option>
+										<option value="São Francisco de Itabapoana">São Francisco de Itabapoana</option>
+										<option value="São Gonçalo">São Gonçalo</option>
+										<option value="São João da Barra">São João da Barra</option>
+										<option value="São João de Meriti">São João de Meriti</option>
+										<option value="São José de Ubá">São José de Ubá</option>
+										<option value="São José do Vale do Rio Preto">São José do Vale do Rio Preto
+										</option>
+										<option value="São Pedro da Aldeia">São Pedro da Aldeia</option>
+										<option value="São Sebastião do Alto">São Sebastião do Alto</option>
+										<option value="Sapucaia">Sapucaia</option>
+										<option value="Saquarema">Saquarema</option>
+										<option value="Seropédica">Seropédica</option>
+										<option value="Silva Jardim">Silva Jardim</option>
+										<option value="Sumidouro">Sumidouro</option>
+										<option value="Tanguá">Tanguá</option>
+										<option value="Teresópolis">Teresópolis</option>
+										<option value="Trajano de Moraes">Trajano de Moraes</option>
+										<option value="Três Rios">Três Rios</option>
+										<option value="Valença">Valença</option>
+										<option value="Varre-Sai">Varre-Sai</option>
+										<option value="Vassouras">Vassouras</option>
+										<option value="Volta Redonda">Volta Redonda</option>
+									</select>
+								</div>
+								<div>
+									<label for="neighborhood"
+										class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+										<i class="fas fa-map-marker mr-2 text-blue-500"></i> Bairro *
+									</label>
+									<select id="neighborhood" required
+										class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+										<option value="">Selecione a cidade primeiro</option>
+									</select>
+								</div>
+							</div>
+
+							<!-- Nível de Escolaridade -->
+							<div>
+								<label for="education"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-graduation-cap mr-2 text-blue-500"></i> Escolaridade
+								</label>
+								<select id="education"
+									class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border transition-all">
+									<option value="">Selecione...</option>
+									<optgroup label="Ensino Fundamental">
+										<option value="1ª série EF">1ª série EF</option>
+										<option value="2ª série EF">2ª série EF</option>
+										<option value="3ª série EF">3ª série EF</option>
+										<option value="4ª série EF">4ª série EF</option>
+										<option value="5ª série EF">5ª série EF</option>
+										<option value="6ª série EF">6ª série EF</option>
+										<option value="7ª série EF">7ª série EF</option>
+										<option value="8ª série EF">8ª série EF</option>
+										<option value="9ª série EF">9ª série EF</option>
+										<option value="Fundamental Completo">Fundamental Completo</option>
+									</optgroup>
+									<optgroup label="Ensino Médio">
+										<option value="1º ano EM">1º ano EM</option>
+										<option value="2º ano EM">2º ano EM</option>
+										<option value="3º ano EM">3º ano EM</option>
+										<option value="Médio Completo">Médio Completo</option>
+									</optgroup>
+								</select>
+							</div>
+
+							<!-- Status -->
+							<div>
+								<label for="status"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-info-circle mr-2 text-blue-500"></i> Status
+								</label>
+								<select id="status"
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+									<option value="Em Análise">Em Análise</option>
+									<option value="Contratado">Contratado</option>
+									<option value="Não Contratado">Não Contratado</option>
+								</select>
+							</div>
+
+							<!-- New Fields -->
+							<div>
+								<label for="referenceName"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-user-friends mr-2 text-blue-500"></i> Nome da Referência
+								</label>
+								<input type="text" id="referenceName"
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+							</div>
+
+							<div>
+								<label for="forwarding"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-share-square mr-2 text-blue-500"></i> Encaminhamento
+								</label>
+								<input type="text" id="forwarding"
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+							</div>
+
+							<div>
+								<label for="observation"
+									class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+									<i class="fas fa-sticky-note mr-2 text-blue-500"></i> Observação
+								</label>
+								<textarea id="observation" rows="3"
+									class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+							</div>
+
+							<!-- otões do Formulário -->
+							<div class="flex space-x-3 pt-4">
+								<button type="submit"
+									class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+									<i class="fas fa-save mr-2"></i> Salvar
+								</button>
+								<button type="button" id="clearFormBtn"
+									class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center justify-center">
+									<i class="fas fa-broom mr-2"></i> Limpar
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Coluna 2: Busca e Registros com Aba de Estatísticas -->
+				<div class="w-full md:w-1/2 px-2 mb-4">
+					<div class="bg-white rounded-lg custom-shadow p-6 h-full">
+						<div class="flex border-b mb-4">
+							<button id="searchTabBtn" required
+								class="flex-1 py-2 font-medium tab-active flex items-center justify-center">
+								<i class="fas fa-search mr-2"></i> Busca
+							</button>
+							<button id="statsTabBtn"
+								class="flex-1 py-2 font-medium text-gray-500 flex items-center justify-center">
+								<i class="fas fa-chart-bar mr-2"></i> Estatísticas
+							</button>
+						</div>
+
+						<!-- Conteúdo de Busca -->
+						<div id="searchContent">
+							<h2 class="text-xl font-semibold text-gray-800 mb-4">
+								<i class="fas fa-search mr-2 text-green-500"></i>Busca de Registros
+							</h2>
+
+							<!-- Filtros de Busca -->
+							<div class="mb-6 space-y-4">
+								<div>
+									<label for="searchName"
+										class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+										<i class="fas fa-user mr-2 text-green-500"></i> Nome
+									</label>
+									<div class="relative">
+										<input type="text" id="searchName" placeholder="Buscar por nome"
+											class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+									</div>
+								</div>
+
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<label for="searchCity"
+											class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+											<i class="fas fa-city mr-2 text-green-500"></i> Cidade
+										</label>
+										<div class="relative">
+											<select id="searchCity"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todas</option>
+												<option value="Rio de Janeiro">Rio de Janeiro</option>
+												<option value="Angra dos Reis">Angra dos Reis</option>
+												<option value="Aperibé">Aperibé</option>
+												<option value="Araruama">Araruama</option>
+												<option value="Areal">Areal</option>
+												<option value="Armação dos Búzios">Armação dos Búzios</option>
+												<option value="Arraial do Cabo">Arraial do Cabo</option>
+												<option value="Barra do Piraí">Barra do Piraí</option>
+												<option value="Barra Mansa">Barra Mansa</option>
+												<option value="Belford Roxo">Belford Roxo</option>
+												<option value="Bom Jardim">Bom Jardim</option>
+												<option value="Bom Jesus do Itabapoana">Bom Jesus do Itabapoana</option>
+												<option value="Cabo Frio">Cabo Frio</option>
+												<option value="Cachoeiras de Macacu">Cachoeiras de Macacu</option>
+												<option value="Cambuci">Cambuci</option>
+												<option value="Campos dos Goytacazes">Campos dos Goytacazes</option>
+												<option value="Cantagalo">Cantagalo</option>
+												<option value="Carapebus">Carapebus</option>
+												<option value="Cardoso Moreira">Cardoso Moreira</option>
+												<option value="Carmo">Carmo</option>
+												<option value="Casimiro de Abreu">Casimiro de Abreu</option>
+												<option value="Comendador Levy Gasparian">Comendador Levy Gasparian
+												</option>
+												<option value="Conceição de Macabu">Conceição de Macabu</option>
+												<option value="Cordeiro">Cordeiro</option>
+												<option value="Duas Barras">Duas Barras</option>
+												<option value="Duque de Caxias">Duque de Caxias</option>
+												<option value="Engenheiro Paulo de Frontin">Engenheiro Paulo de Frontin
+												</option>
+												<option value="Guapimirim">Guapimirim</option>
+												<option value="Iguaba Grande">Iguaba Grande</option>
+												<option value="Itaboraí">Itaboraí</option>
+												<option value="Itaguaí">Itaguaí</option>
+												<option value="Italva">Italva</option>
+												<option value="Itaocara">Itaocara</option>
+												<option value="Itaperuna">Itaperuna</option>
+												<option value="Itatiaia">Itatiaia</option>
+												<option value="Japeri">Japeri</option>
+												<option value="Laje do Muriaé">Laje do Muriaé</option>
+												<option value="Macaé">Macaé</option>
+												<option value="Macuco">Macuco</option>
+												<option value="Magé">Magé</option>
+												<option value="Mangaratiba">Mangaratiba</option>
+												<option value="Maricá">Maricá</option>
+												<option value="Mendes">Mendes</option>
+												<option value="Mesquita">Mesquita</option>
+												<option value="Miguel Pereira">Miguel Pereira</option>
+												<option value="Miracema">Miracema</option>
+												<option value="Natividade">Natividade</option>
+												<option value="Nilópolis">Nilópolis</option>
+												<option value="Niterói">Niterói</option>
+												<option value="Nova Friburgo">Nova Friburgo</option>
+												<option value="Nova Iguaçu">Nova Iguaçu</option>
+												<option value="Paracambi">Paracambi</option>
+												<option value="Paraíba do Sul">Paraíba do Sul</option>
+												<option value="Paraty">Paraty</option>
+												<option value="Paty do Alferes">Paty do Alferes</option>
+												<option value="Petrópolis">Petrópolis</option>
+												<option value="Pinheiral">Pinheiral</option>
+												<option value="Piraí">Piraí</option>
+												<option value="Porciúncula">Porciúncula</option>
+												<option value="Porto Real">Porto Real</option>
+												<option value="Quatis">Quatis</option>
+												<option value="Queimados">Queimados</option>
+												<option value="Quissamã">Quissamã</option>
+												<option value="Resende">Resende</option>
+												<option value="Rio Bonito">Rio Bonito</option>
+												<option value="Rio Claro">Rio Claro</option>
+												<option value="Rio das Flores">Rio das Flores</option>
+												<option value="Rio das Ostras">Rio das Ostras</option>
+												<option value="Santa Maria Madalena">Santa Maria Madalena</option>
+												<option value="Santo Antônio de Pádua">Santo Antônio de Pádua</option>
+												<option value="São Fidélis">São Fidélis</option>
+												<option value="São Francisco de Itabapoana">São Francisco de Itabapoana
+												</option>
+												<option value="São Gonçalo">São Gonçalo</option>
+												<option value="São João da Barra">São João da Barra</option>
+												<option value="São João de Meriti">São João de Meriti</option>
+												<option value="São José de Ubá">São José de Ubá</option>
+												<option value="São José do Vale do Rio Preto">São José do Vale do Rio
+													Preto
+												</option>
+												<option value="São Pedro da Aldeia">São Pedro da Aldeia</option>
+												<option value="São Sebastião do Alto">São Sebastião do Alto</option>
+												<option value="Sapucaia">Sapucaia</option>
+												<option value="Saquarema">Saquarema</option>
+												<option value="Seropédica">Seropédica</option>
+												<option value="Silva Jardim">Silva Jardim</option>
+												<option value="Sumidouro">Sumidouro</option>
+												<option value="Tanguá">Tanguá</option>
+												<option value="Teresópolis">Teresópolis</option>
+												<option value="Trajano de Moraes">Trajano de Moraes</option>
+												<option value="Três Rios">Três Rios</option>
+												<option value="Valença">Valença</option>
+												<option value="Varre-Sai">Varre-Sai</option>
+												<option value="Vassouras">Vassouras</option>
+												<option value="Volta Redonda">Volta Redonda</option>
+											</select>
+											<div class="absolute left-3 top-2.5 text-gray-400">
+
+											</div>
+										</div>
+									</div>
+									<div>
+										<label for="searchNeighborhood"
+											class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+											<i class="fas fa-map-marker-alt mr-2 text-green-500"></i> Bairro
+										</label>
+										<div class="relative">
+											<select id="searchNeighborhood"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todos</option>
+											</select>
+
+										</div>
+									</div>
+								</div>
+
+								<div class="grid grid-cols-2 gap-4">
+									<div>
+										<label for="searchOrigin"
+											class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+											<i class="fas fa-map-pin mr-2 text-green-500"></i> Origem
+										</label>
+										<div class="relative">
+											<select id="searchOrigin"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todas</option>
+												<option value="MSE">MSE</option>
+												<option value="MP">MP</option>
+												<option value="EP">EP</option>
+												<option value="EPT">EPT</option>
+											</select>
+
+										</div>
+									</div>
+									<div>
+										<label for="searchStatus"
+											class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+											<i class="fas fa-info-circle mr-2 text-green-500"></i> Status
+										</label>
+										<div class="relative">
+											<select id="searchStatus"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todos</option>
+												<option value="Em Análise">Em Análise</option>
+												<option value="Contratado">Contratado</option>
+												<option value="Não Contratado">Não Contratado</option>
+											</select>
+										</div>
+
+									</div>
+									<div>
+										<label for="searchEducation"
+											class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+											<i class="fas fa-graduation-cap mr-2 text-green-500"></i> Escolaridade
+										</label>
+										<select id="searchEducation"
+											class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+											<option value="">Todas</option>
+											<optgroup label="Ensino Fundamental">
+												<option value="1ª série EF">1ª série EF</option>
+												<option value="2ª série EF">2ª série EF</option>
+												<option value="3ª série EF">3ª série EF</option>
+												<option value="4ª série EF">4ª série EF</option>
+												<option value="5ª série EF">5ª série EF</option>
+												<option value="6ª série EF">6ª série EF</option>
+												<option value="7ª série EF">7ª série EF</option>
+												<option value="8ª série EF">8ªescola série EF</option>
+												<option value="9ª série EF">9ª série EF</option>
+												<option value="Fundamental Completo">Fundamental Completo</option>
+											</optgroup>
+											<optgroup label="Ensino Médio">
+												<option value="1º ano EM">1º ano EM</option>
+												<option value="2º ano EM">2º ano EM</option>
+												<option value="3º ano EM">3º ano EM</option>
+												<option value="Médio Completo">Médio Completo</option>
+											</optgroup>
+										</select>
+									</div>
+									<!-- Dentro da div com classe "mb-6 space-y-4" na seção de busca -->
+									<div class="grid grid-cols-2 gap-4">
+										<!-- Filtro por Ano -->
+										<div>
+											<label for="searchYear"
+												class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+												<i class="fas fa-calendar mr-2 text-green-500"></i> Ano de Cadastro
+											</label>
+											<select id="searchYear"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todos</option>
+											</select>
+										</div>
+
+										<!-- Filtro por Encaminhamento -->
+										<div>
+											<label for="searchForwarding"
+												class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+												<i class="fas fa-share-square mr-2 text-green-500"></i> Encaminhamento
+											</label>
+											<select id="searchForwarding"
+												class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+												<option value="">Todos</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="flex gap-4 items-center w-full">
+									<button id="searchBtn"
+										class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center flex-grow justify-center">
+										<i class="fas fa-search mr-2"></i> Buscar
+									</button>
+									<button id="clearSearchBtn"
+										class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center flex-grow justify-center">
+										<i class="fas fa-broom mr-2"></i> Limpar
+									</button>
+								</div>
+
+							</div>
+
+							<!-- Tabela de Registros-->
+							<div class="overflow-x-auto">
+								<table class="w-full records-table">
+									<thead>
+										<tr class="text-left text-sm text-gray-600 uppercase">
+											<th class="py-3 px-4">Nome</th>
+											<th class="py-3 px-4">Município</th>
+											<th class="py-3 px-4">Status</th>
+											<th class="py-3 px-4">Ações</th>
+										</tr>
+									</thead>
+									<tbody id="recordsTableBody" class="text-sm text-gray-700">
+										<!-- Linhas serão inseridas dinamicamente pelo JavaScript -->
+									</tbody>
+								</table>
+
+								<!-- Paginação -->
+								<div id="pagination" class="pagination mt-6 mb-4 hidden">
+									<ul class="flex items-center">
+										<li class="page-item disabled" id="prevPage">
+											<a class="page-link" href="#" tabindex="-1">
+												<i class="fas fa-chevron-left"></i>
+											</a>
+										</li>
+										<li class="page-item active">
+											<a class="page-link" href="#">1</a>
+										</li>
+										<li class="page-item" id="nextPage">
+											<a class="page-link" href="#">
+												<i class="fas fa-chevron-right"></i>
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+
+						<!-- Conteúdo de Estatísticas (Oculto por padrão) -->
+						<div id="statsContent" class="hidden">
+							<h2 class="text-xl font-semibold text-gray-800 mb-4">
+								<i class="fas fa-chart-pie mr-2 text-purple-500"></i>Estatísticas
+							</h2>
+
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+								<!-- Cartão de Total de Registros -->
+								<div
+									class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+									<div class="flex items-center">
+										<div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
+											<i class="fas fa-users text-xl"></i>
+										</div>
+										<div>
+											<p class="text-sm text-gray-500">Total de Registros</p>
+											<p class="text-2xl font-bold" id="statsTotalRecords">0</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Average Age Card -->
+								<div
+									class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500 hover:shadow-md transition-shadow">
+									<div class="flex items-center">
+										<div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
+											<i class="fas fa-birthday-cake text-xl"></i>
+										</div>
+										<div>
+											<p class="text-sm text-gray-500">Idade Média</p>
+											<p class="text-2xl font-bold" id="statsAvgAge">0</p>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+								<!-- Card por Status -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-chart-pie mr-2 text-purple-500"></i> Por Status
+									</h3>
+									<div id="statsByStatus" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Card por Origem -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-map-marker-alt mr-2 text-blue-500"></i> Por Origem
+									</h3>
+									<div id="statsByOrigin" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+
+							</div>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+								<!-- Card por Cidade -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-city mr-2 text-green-500"></i> Por Cidade
+									</h3>
+									<div id="statsByCity" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+								<!-- Card Por Escolaridade -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-graduation-cap mr-2 text-blue-500"></i> Por Escolaridade
+									</h3>
+									<div id="statsByEducation" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+
+							</div>
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+								<!-- Estatísticas por Ano -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-calendar-alt mr-2 text-purple-500"></i> Por Ano de Cadastro
+									</h3>
+									<div id="statsByYear" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+
+								<!-- Estatísticas por Encaminhamento -->
+								<div class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
+									<h3
+										class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3 flex items-center">
+										<i class="fas fa-share-square mr-2 text-blue-500"></i> Por Encaminhamento
+									</h3>
+									<div id="statsByForwarding" class="space-y-2">
+										<div class="text-center text-gray-500 py-4">
+											<i class="fas fa-chart-bar text-2xl mb-1"></i>
+											<p>Nenhum dado disponível</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!--  Modal de Detalhes do Registro -->
+		<div id="recordModal"
+			class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden modal">
+			<div class="bg-white rounded-lg shadow-xl w-full max-w-2xl modal-content relative">
+				<!-- Botão de fechar -->
+				<button class="close-modal" onclick="closeModal()">
+					<i class="fas fa-times"></i>
+				</button>
+
+				<div class="p-6 print-content">
+					<div class="print-header">
+						<div class="flex justify-between items-start mb-2">
+							<div>
+								<h3 class="text-xl font-bold text-gray-800 flex items-center">
+									<i class="fas fa-user-circle text-blue-500 mr-2"></i> Detalhes do Registro
+								</h3>
+								<p class="text-sm text-gray-500">Sistema de Cadastro Pessoal</p>
+							</div>
+							<div class="text-sm text-gray-500 mr-7">
+								<p>Data: <span id="printDate"></span></p>
+							</div>
+						</div>
+					</div>
+
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+						<!-- Nome Completo -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-user"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Nome Completo</div>
+								<div id="modalFullName" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Origem -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-map-marker-alt"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Origem</div>
+								<div id="modalOrigin" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Data de Nascimento -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-calendar-alt"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Data de Nascimento</div>
+								<div id="modalDob" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Idade -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-birthday-cake"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Idade</div>
+								<div id="modalAge" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Cidade -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-city"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Cidade</div>
+								<div id="modalCity" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Bairro -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-map-marker"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Bairro</div>
+								<div id="modalNeighborhood" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Escolaridade -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-graduation-cap"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Escolaridade</div>
+								<div id="modalEducation" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Status -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-info-circle"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Status</div>
+								<div id="modalStatus" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Nome da Referência -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-user-friends"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Nome da Referência</div>
+								<div id="modalReferenceName" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Encaminhamento -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-share-square"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Encaminhamento</div>
+								<div id="modalForwarding" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Observação -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-sticky-note"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Observação</div>
+								<div id="modalObservation" class="detail-value">-</div>
+							</div>
+						</div>
+
+						<!-- Data de Cadastro -->
+						<div class="detail-item">
+							<div class="detail-icon">
+								<i class="fas fa-calendar"></i>
+							</div>
+							<div class="detail-content">
+								<div class="detail-label">Data de Cadastro</div>
+								<div id="modalCreatedAt" class="detail-value">-</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="border-t pt-4 flex justify-end space-x-3 ">
+						<button onclick="printRecord()"
+							class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center no-print">
+							<i class="fas fa-print mr-2"></i> Imprimir
+						</button>
+						<button onclick="enableEditMode()" id="editBtn"
+							class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+							<i class="fas fa-edit mr-2"></i> Editar
+						</button>
+						<button onclick="saveChanges()" id="saveBtn"
+							class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center hidden">
+							<i class="fas fa-save mr-2"></i> Salvar
+						</button>
+						<button onclick="deleteRecord()"
+							class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center">
+							<i class="fas fa-trash mr-2"></i> Excluir
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+		<script>
+			// ==============================================
+			// VARIÁVEIS GLOBAIS E CONFIGURAÇÕES INICIAIS
+			// ==============================================
+
+			const appData = {
+				records: [],
+				neighborhoods: {
+					'Rio de Janeiro': [
+						'Centro', 'Cidade Nova', 'Estácio', 'Catumbi', 'Caju', 'Gamboa', 'Lapa', 'Mangueira', 'Paquetá', 'Rio Comprido',
+						'Santa Teresa', 'Santo Cristo', 'Saúde', 'Vasco da Gama', 'Botafogo', 'Catete', 'Copacabana', 'Cosme Velho',
+						'Flamengo', 'Gávea', 'Glória', 'Humaitá', 'Ipanema', 'Jardim Botânico', 'Lagoa', 'Laranjeiras', 'Leblon', 'Leme',
+						'Rocinha', 'São Conrado', 'Urca', 'Vidigal', 'Abolição', 'Água Santa', 'Anchieta', 'Andaraí', 'Bancários', 'Barros Filho',
+						'Bento Ribeiro', 'Bonsucesso', 'Brás de Pina', 'Cachambi', 'Cacuia', 'Campinho', 'Cascadura', 'Cavalcanti', 'Cidade Universitária',
+						'Cocotá', 'Coelho Neto', 'Colégio', 'Complexo do Alemão', 'Cordovil', 'Costa Barros', 'Del Castilho', 'Encantado', 'Engenheiro Leal',
+						'Engenho da Rainha', 'Engenho de Dentro', 'Engenho Novo', 'Freguesia', 'Galeão', 'Grajaú', 'Guadalupe', 'Higienópolis', 'Honório Gurgel',
+						'Inhaúma', 'Irajá', 'Jacaré', 'Jacarezinho', 'Jardim América', 'Jardim Carioca', 'Jardim Guanabara', 'Lins de Vasconcelos', 'Madureira',
+						'Manguinhos', 'Maracanã', 'Maré', 'Marechal Hermes', 'Maria da Graça', 'Méier', 'Moneró', 'Olaria', 'Oswaldo Cruz', 'Parada de Lucas',
+						'Parque Anchieta', 'Parque Colúmbia', 'Pavuna', 'Penha', 'Penha Circular', 'Piedade', 'Pilares', 'Quintino Bocaiúva', 'Ramos', 'Riachuelo',
+						'Ricardo de Albuquerque', 'Rocha', 'Rocha Miranda', 'Sampaio', 'São Francisco Xavier', 'Todos os Santos', 'Tomás Coelho', 'Turiaçu',
+						'Vaz Lobo', 'Vicente de Carvalho', 'Vigário Geral', 'Vila da Penha', 'Vila Kosmos', 'Vista Alegre', 'Barra de Guaratiba', 'Campo Grande',
+						'Cosmos', 'Guaratiba', 'Ilha de Guaratiba', 'Inhoaíba', 'Paciência', 'Pedra de Guaratiba', 'Santa Cruz', 'Santíssimo', 'Senador Vasconcelos',
+						'Sepetiba', 'Bangu', 'Xerém', 'Jardim 25 de Agosto', 'Parque Alegre', 'Saracuruna', 'São Bento', 'Neves', 'Comendador Soares',
+						'Porto da Pedra', 'Barro Vermelho', 'Zé Garoto', 'Jardim Catarina', 'Boa Esperança', 'Itaipuaçu', 'Vila São José', 'Areal',
+						'Peró', 'São Cristóvão', 'Palmeiras', 'Monte Alegre', 'Parque Leopoldina', 'Santo Amaro', 'Guarus', 'Maria Tereza', 'Cavaleiros',
+						'Retiro', 'Niterói', 'Icaraí', 'São Francisco', 'Ingá', 'Charitas', 'Boa Viagem', 'Jardim Icaraí', 'Piabetá', 'Três Rios', 'Mauá',
+						'Suruí', 'Santo Aleixo', 'Boa Sorte', 'Xavantes', 'Vila Valqueire', 'São Vicente', 'Nova Aurora', 'Austin', 'Comendador Soares',
+						'Edson Passos', 'Kamel', 'Paciência', 'Parada Independência', 'Presidente Juscelino', 'Três Pontes', 'Santa Sofia', 'Campo Lindo',
+						'Alto', 'Várzea', 'São Pedro', 'Meia Pataca', 'Fonte Santa', 'Itaipava', 'Araras', 'Cascatinha', 'Valparaíso', 'Vista Alegre',
+						'Barra Mansa', 'Paraíso', 'Vista Alegre', 'Centro', 'Caxito', 'Inoã', 'São José do Imbassaí', 'Muriqui', 'Conceição de Jacareí',
+						'Costazul', 'Cidade Beira Mar', 'Jardim Mariléa', 'Nova Cidade', 'Iguabinha', 'Barbudo', 'Salinas', 'Espírito Santo', 'Piratininga'
+					],
+					'Angra dos Reis': [
+						'Centro', 'Japuíba', 'Belém', 'Frade', 'Parque Mambucaba'
+					],
+					'Aperibé': ['Centro'],
+					'Araruama': [
+						'Centro', 'Praia Seca', 'Iguabinha', 'Barbudo', 'Salinas'
+					],
+					'Areal': ['Centro'],
+					'Armação dos Búzios': ['Centro'],
+					'Arraial do Cabo': ['Centro'],
+					'Barra do Piraí': ['Centro'],
+					'Barra Mansa': [
+						'Centro', 'Paraíso', 'Vista Alegre'
+					],
+					'Belford Roxo': [
+						'Centro', 'Vila Valqueire', 'Parque Amorim', 'Bom Pastor', 'Xavantes', 'Sargento Roncalli', 'São Vicente', 'Nova Aurora'
+					],
+					'Bom Jardim': ['Centro'],
+					'Bom Jesus do Itabapoana': ['Centro'],
+					'Cabo Frio': [
+						'Centro', 'Peró', 'São Cristóvão', 'Braga', 'Palmeiras', 'Monte Alegre'
+					],
+					'Cachoeiras de Macacu': ['Centro'],
+					'Cambuci': ['Centro'],
+					'Campos dos Goytacazes': [
+						'Centro', 'Jardim Carioca', 'Parque Leopoldina', 'Santo Amaro', 'Guarus', 'Maria Tereza'
+					],
+					'Cantagalo': ['Centro'],
+					'Carapebus': ['Centro'],
+					'Cardoso Moreira': ['Centro'],
+					'Carmo': ['Centro'],
+					'Casimiro de Abreu': ['Centro'],
+					'Comendador Levy Gasparian': ['Centro'],
+					'Conceição de Macabu': ['Centro'],
+					'Cordeiro': ['Centro'],
+					'Duas Barras': ['Centro'],
+					'Duque de Caxias': [
+						'Centro', 'Xerém', 'Jardim 25 de Agosto', 'Parque Alegre', 'Campo da Mangueira', 'Saracuruna', 'São Bento'
+					],
+					'Engenheiro Paulo de Frontin': ['Centro'],
+					'Guapimirim': ['Centro'],
+					'Iguaba Grande': ['Centro'],
+					'Itaboraí': [
+						'Centro', 'Boa Esperança', 'Itaipuaçu', 'Vila São José', 'Areal'
+					],
+					'Itaguaí': ['Centro'],
+					'Italva': ['Centro'],
+					'Itaocara': ['Centro'],
+					'Itaperuna': ['Centro'],
+					'Itatiaia': ['Centro'],
+					'Japeri': ['Centro'],
+					'Laje do Muriaé': ['Centro'],
+					'Macaé': [
+						'Centro', 'Barra de Macaé', 'Cavaleiros', 'Parque Aeroporto', 'Novo Cavaleiros'
+					],
+					'Macuco': ['Centro'],
+					'Magé': [
+						'Centro', 'Piabetá', 'Três Rios', 'Mauá', 'Suruí', 'Santo Aleixo'
+					],
+					'Mangaratiba': [
+						'Centro', 'Muriqui', 'Conceição de Jacareí'
+					],
+					'Maricá': [
+						'Centro', 'Ponta Negra', 'Caxito', 'Inoã', 'São José do Imbassaí'
+					],
+					'Mendes': ['Centro'],
+					'Mesquita': ['Centro'],
+					'Miguel Pereira': ['Centro'],
+					'Miracema': ['Centro'],
+					'Natividade': ['Centro'],
+					'Nilópolis': ['Centro'],
+					'Niterói': [
+						'Centro', 'Icaraí', 'São Francisco', 'Ingá', 'Charitas', 'Boa Viagem', 'Jardim Icaraí'
+					],
+					'Nova Friburgo': ['Centro'],
+					'Nova Iguaçu': [
+						'Centro', 'Austin', 'Comendador Soares', 'Edson Passos', 'Kamel', 'Paciência', 'Parada Independência', 'Presidente Juscelino', 'Três Pontes'
+					],
+					'Paracambi': ['Centro'],
+					'Paraíba do Sul': ['Centro'],
+					'Paraty': ['Centro'],
+					'Paty do Alferes': ['Centro'],
+					'Petrópolis': [
+						'Centro', 'Itaipava', 'Araras', 'Cascatinha', 'Valparaíso'
+					],
+					'Pinheiral': ['Centro'],
+					'Piraí': ['Centro'],
+					'Porciúncula': ['Centro'],
+					'Porto Real': ['Centro'],
+					'Quatis': ['Centro'],
+					'Queimados': [
+						'Centro', 'São Jorge', 'Fanchem', 'Ouro Verde'
+					],
+					'Quissamã': ['Centro'],
+					'Resende': ['Centro'],
+					'Rio Bonito': ['Centro'],
+					'Rio Claro': [
+						'Centro', 'Piratininga'
+					],
+					'Rio das Flores': ['Centro'],
+					'Rio das Ostras': [
+						'Centro', 'Costazul', 'Cidade Beira Mar', 'Jardim Mariléa', 'Nova Cidade'
+					],
+					'Santa Maria Madalena': ['Centro'],
+					'Santo Antônio de Pádua': ['Centro'],
+					'São Fidélis': ['Centro'],
+					'São Francisco de Itabapoana': ['Centro'],
+					'São Gonçalo': [
+						'Centro', 'Neves', 'Comendador Soares', 'Porto da Pedra', 'Barro Vermelho', 'Zé Garoto', 'Jardim Catarina'
+					],
+					'São João da Barra': ['Centro'],
+					'São João de Meriti': [
+						'Centro', 'Jardim Meriti', 'Vilar dos Teles', 'Parque São José', 'Cova da Onça'
+					],
+					'São José de Ubá': ['Centro'],
+					'São José do Vale do Rio Preto': ['Centro'],
+					'São Pedro da Aldeia': ['Centro'],
+					'São Sebastião do Alto': ['Centro'],
+					'Sapucaia': ['Centro'],
+					'Saquarema': ['Centro'],
+					'Seropédica': [
+						'Centro', 'Santa Sofia', 'Campo Lindo'
+					],
+					'Silva Jardim': [
+						'Centro', 'Espírito Santo'
+					],
+					'Sumidouro': ['Centro'],
+					'Tanguá': ['Centro'],
+					'Teresópolis': [
+						'Alto', 'Várzea', 'São Pedro', 'Meia Pataca', 'Fonte Santa'
+					],
+					'Trajano de Moraes': ['Centro'],
+					'Três Rios': ['Centro'],
+					'Valença': ['Centro'],
+					'Varre-Sai': ['Centro'],
+					'Vassouras': ['Centro'],
+					'Volta Redonda': [
+						'Centro', 'Aterrado', 'Retiro', 'Volta Grande', 'Niterói', 'Jardim Jalisco'
+					]
+				},
+				currentRecordId: null,
+				isEditMode: false,
+				currentPage: 1,
+				recordsPerPage: 6,
+				// Propriedades para sincronização peer-to-peer
+				peer: null,
+				peerId: null,
+				connections: [],
+				syncEnabled: false,
+				lastSyncTime: null
+			};
+
+			// ==============================================
+			// INICIALIZAÇÃO
+			// ==============================================
+
+			document.addEventListener('DOMContentLoaded', function () {
+				loadData();
+				updateUI();
+				updateYearFilterOptions();
+				updateForwardingFilterOptions();
+
+				// Configura os dropdowns de bairro
+				document.getElementById('city').addEventListener('change', updateNeighborhoods);
+				document.getElementById('searchCity').addEventListener('change', updateSearchNeighborhoods);
+
+				// Configura o cálculo da idade
+				document.getElementById('dob').addEventListener('change', calculateAge);
+
+				// Configura o formulário
+				document.getElementById('registrationForm').addEventListener('submit', handleFormSubmit);
+				document.getElementById('clearFormBtn').addEventListener('click', clearForm);
+
+				// Configura a busca
+				document.getElementById('searchBtn').addEventListener('click', applyFilters);
+				document.getElementById('clearSearchBtn').addEventListener('click', clearSearchFilters);
+
+				// Configura as abas
+				document.getElementById('searchTabBtn').addEventListener('click', showSearchTab);
+				document.getElementById('statsTabBtn').addEventListener('click', showStatsTab);
+
+				// Configura exportação e importação
+				document.getElementById('exportBtn').addEventListener('click', exportData);
+				document.getElementById('importInput').addEventListener('change', importData);
+
+				// Configura paginação
+				document.getElementById('prevPage').addEventListener('click', goToPrevPage);
+				document.getElementById('nextPage').addEventListener('click', goToNextPage);
+
+				// Configura sincronização
+				document.getElementById('syncBtn').addEventListener('click', toggleSyncPanel);
+				document.getElementById('connectBtn').addEventListener('click', connectToPeer);
+				document.getElementById('disconnectAllBtn').addEventListener('click', disconnectFromPeers);
+			});
+
+			// ==============================================
+			// FUNÇÕES DE DADOS
+			// ==============================================
+
+			function loadData() {
+				const savedData = localStorage.getItem('personalRecords');
+				if (savedData) {
+					appData.records = JSON.parse(savedData);
+					updateTotalRecords();
+				}
+			}
+
+			function saveData() {
+				localStorage.setItem('personalRecords', JSON.stringify(appData.records));
+				updateTotalRecords();
+				updateStatistics();
+				updateYearFilterOptions();
+				updateForwardingFilterOptions();
+				updateStatsByYear();
+			}
+
+			function updateTotalRecords() {
+				const total = appData.records.length;
+				document.getElementById('totalRecords').textContent = total;
+				document.getElementById('statsTotalRecords').textContent = total;
+			}
+
+			// ==============================================
+			// FUNÇÕES DE EXPORTAÇÃO/IMPORTAÇÃO
+			// ==============================================
+
+			function exportData() {
+				if (appData.records.length === 0) {
+					alert('Não há dados para exportar.');
+					return;
+				}
+
+				const dataStr = JSON.stringify(appData.records, null, 2);
+				const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+				const exportFileDefaultName = `cadastro-pessoal-${new Date().toISOString().slice(0, 10)}.json`;
+
+				const linkElement = document.createElement('a');
+				linkElement.setAttribute('href', dataUri);
+				linkElement.setAttribute('download', exportFileDefaultName);
+				linkElement.click();
+
+				// Feedback visual
+				const exportBtn = document.getElementById('exportBtn');
+				exportBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Exportado!';
+				exportBtn.classList.remove('bg-green-600');
+				exportBtn.classList.add('bg-green-700');
+				exportBtn.classList.add('animate-pulse');
+
+				setTimeout(() => {
+					exportBtn.innerHTML = '<i class="fas fa-file-export mr-2"></i> Exportar';
+					exportBtn.classList.remove('bg-green-700', 'animate-pulse');
+					exportBtn.classList.add('bg-green-600');
+				}, 2000);
+			}
+
+			function importData(event) {
+				const file = event.target.files[0];
+				if (!file) return;
+
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					try {
+						const importedData = JSON.parse(e.target.result);
+
+						if (!Array.isArray(importedData)) {
+							throw new Error('O arquivo não contém um array de registros válido.');
+						}
+
+						// Verifica a estrutura básica dos dados
+						const sampleRecord = importedData[0];
+						if (!sampleRecord || !sampleRecord.fullName || !sampleRecord.dob) {
+							throw new Error('O arquivo não contém registros no formato esperado.');
+						}
+
+						if (confirm(`Deseja importar ${importedData.length} registros? Os dados atuais serão substituídos.`)) {
+							appData.records = importedData;
+							saveData();
+							updateUI();
+
+							// Feedback visual
+							const importBtn = document.querySelector('label[for="importInput"]');
+							importBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Importado!';
+							importBtn.classList.remove('bg-blue-600');
+							importBtn.classList.add('bg-blue-700');
+							importBtn.classList.add('animate-pulse');
+
+							setTimeout(() => {
+								importBtn.innerHTML = '<i class="fas fa-file-import mr-2"></i> Importar';
+								importBtn.classList.remove('bg-blue-700', 'animate-pulse');
+								importBtn.classList.add('bg-blue-600');
+							}, 2000);
+						}
+					} catch (error) {
+						alert('Erro ao importar dados: ' + error.message);
+						console.error(error);
+					}
+
+					// Limpa o input para permitir nova importação do mesmo arquivo
+					event.target.value = '';
+				};
+				reader.readAsText(file);
+			}
+
+			// ==============================================
+			// FUNÇÕES DO FORMULÁRIO
+			// ==============================================
+
+			function handleFormSubmit(e) {
+				e.preventDefault();
+
+				const formData = {
+					id: Date.now().toString(),
+					fullName: document.getElementById('fullName').value.trim(),
+					origin: document.getElementById('origin').value,
+					dob: document.getElementById('dob').value,
+					age: parseInt(document.getElementById('age').value) || 0,
+					city: document.getElementById('city').value,
+					neighborhood: document.getElementById('neighborhood').value,
+					education: document.getElementById('education').value,
+					status: document.getElementById('status').value,
+					referenceName: document.getElementById('referenceName').value.trim(),
+					forwarding: document.getElementById('forwarding').value.trim(),
+					observation: document.getElementById('observation').value.trim(),
+					createdAt: new Date().toISOString(),
+					timestamp: new Date().toISOString()
+				};
+
+				// Validação básica
+				if (!formData.fullName || !formData.origin || !formData.dob || !formData.city || !formData.neighborhood) {
+					alert('Por favor, preencha todos os campos obrigatórios.');
+					return;
+				}
+
+				// Verifica por duplicatas
+				const isDuplicate = appData.records.some(record => {
+					return record.fullName.toLowerCase() === formData.fullName.toLowerCase() &&
+						record.dob === formData.dob;
+				});
+
+				if (isDuplicate) {
+					alert('Já existe um registro com este nome e data de nascimento.');
+					return;
+				}
+
+				// Adiciona o novo registro
+				appData.records.unshift(formData);
+				saveData();
+				updateUI();
+				clearForm();
+
+				// Feedback visual
+				const submitBtn = document.querySelector('#registrationForm button[type="submit"]');
+				submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i> Salvo!';
+				submitBtn.classList.remove('bg-blue-600');
+				submitBtn.classList.add('bg-green-600');
+
+				setTimeout(() => {
+					submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Salvar';
+					submitBtn.classList.remove('bg-green-600');
+					submitBtn.classList.add('bg-blue-600');
+				}, 2000);
+			}
+
+			function clearForm() {
+				document.getElementById('registrationForm').reset();
+				document.getElementById('age').value = '';
+				document.getElementById('neighborhood').innerHTML = '<option value="">Selecione a cidade primeiro</option>';
+			}
+
+			function calculateAge() {
+				const dob = document.getElementById('dob').value;
+				if (!dob) return;
+
+				const birthDate = new Date(dob);
+				const today = new Date();
+				let age = today.getFullYear() - birthDate.getFullYear();
+				const monthDiff = today.getMonth() - birthDate.getMonth();
+
+				if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+					age--;
+				}
+
+				document.getElementById('age').value = age;
+			}
+
+			function updateNeighborhoods() {
+				const citySelect = document.getElementById('city');
+				const neighborhoodSelect = document.getElementById('neighborhood');
+				const selectedCity = citySelect.value;
+
+				neighborhoodSelect.innerHTML = '<option value="">Selecione...</option>';
+
+				if (selectedCity && appData.neighborhoods[selectedCity]) {
+					appData.neighborhoods[selectedCity].forEach(neighborhood => {
+						const option = document.createElement('option');
+						option.value = neighborhood;
+						option.textContent = neighborhood;
+						neighborhoodSelect.appendChild(option);
+					});
+				}
+			}
+
+			function updateSearchNeighborhoods() {
+				const citySelect = document.getElementById('searchCity');
+				const neighborhoodSelect = document.getElementById('searchNeighborhood');
+				const selectedCity = citySelect.value;
+
+				neighborhoodSelect.innerHTML = '<option value="">Todos</option>';
+
+				if (selectedCity && appData.neighborhoods[selectedCity]) {
+					appData.neighborhoods[selectedCity].forEach(neighborhood => {
+						const option = document.createElement('option');
+						option.value = neighborhood;
+						option.textContent = neighborhood;
+						neighborhoodSelect.appendChild(option);
+					});
+				}
+			}
+			function updateYearFilterOptions() {
+				const yearSelect = document.getElementById('searchYear');
+				const years = new Set(appData.records.map(record =>
+					new Date(record.createdAt).getFullYear()
+				));
+
+				yearSelect.innerHTML = '<option value="">Todos</option>';
+				Array.from(years).sort((a, b) => b - a).forEach(year => {
+					const option = document.createElement('option');
+					option.value = year;
+					option.textContent = year;
+					yearSelect.appendChild(option);
+				});
+			}
+
+			function updateForwardingFilterOptions() {
+				const forwardingSelect = document.getElementById('searchForwarding');
+				const forwardings = new Set(appData.records
+					.map(record => record.forwarding)
+					.filter(f => f)); // Remove valores vazios
+
+				forwardingSelect.innerHTML = '<option value="">Todos</option>';
+				Array.from(forwardings).sort().forEach(forwarding => {
+					const option = document.createElement('option');
+					option.value = forwarding;
+					option.textContent = forwarding;
+					forwardingSelect.appendChild(option);
+				});
+			}
+
+			// ==============================================
+			// FUNÇÕES DE BUSCA
+			// ==============================================
+
+			function applyFilters() {
+				appData.currentPage = 1; // Reset to first page when applying new filters
+				updateUI();
+			}
+
+			function clearSearchFilters() {
+				document.getElementById('searchName').value = '';
+				document.getElementById('searchCity').value = '';
+				document.getElementById('searchNeighborhood').value = '';
+				document.getElementById('searchOrigin').value = '';
+				document.getElementById('searchStatus').value = '';
+
+				updateSearchNeighborhoods();
+				appData.currentPage = 1; // Redefinir para a primeira página ao limpar filtros
+				updateUI();
+			}
+			function getFilteredRecords() {
+				const nameFilter = document.getElementById('searchName').value.toLowerCase();
+				const cityFilter = document.getElementById('searchCity').value;
+				const neighborhoodFilter = document.getElementById('searchNeighborhood').value;
+				const originFilter = document.getElementById('searchOrigin').value;
+				const statusFilter = document.getElementById('searchStatus').value;
+				const educationFilter = document.getElementById('searchEducation').value;
+				const yearFilter = document.getElementById('searchYear').value;
+				const forwardingFilter = document.getElementById('searchForwarding').value;
+
+				return appData.records.filter(record => {
+					if (nameFilter && !record.fullName.toLowerCase().includes(nameFilter)) return false;
+					if (cityFilter && record.city !== cityFilter) return false;
+					if (neighborhoodFilter && record.neighborhood !== neighborhoodFilter) return false;
+					if (originFilter && record.origin !== originFilter) return false;
+					if (statusFilter && record.status !== statusFilter) return false;
+					if (educationFilter && record.education !== educationFilter) return false;
+					if (yearFilter && new Date(record.createdAt).getFullYear().toString() !== yearFilter) return false;
+					if (forwardingFilter && record.forwarding !== forwardingFilter) return false;
+					return true;
+				});
+			}
+
+			// ==============================================
+			// FUNÇÕES DE PAGINAÇÃO
+			// ==============================================
+
+			function goToPrevPage() {
+				if (appData.currentPage > 1) {
+					appData.currentPage--;
+					updateUI();
+				}
+			}
+
+			function goToNextPage() {
+				const filteredRecords = getFilteredRecords();
+				const totalPages = Math.ceil(filteredRecords.length / appData.recordsPerPage);
+
+				if (appData.currentPage < totalPages) {
+					appData.currentPage++;
+					updateUI();
+				}
+			}
+
+			function updatePagination(filteredRecords) {
+				const paginationElement = document.getElementById('pagination');
+				const totalRecords = filteredRecords.length;
+				const totalPages = Math.ceil(totalRecords / appData.recordsPerPage);
+
+				if (totalRecords <= appData.recordsPerPage) {
+					paginationElement.classList.add('hidden');
+					return;
+				}
+
+				paginationElement.classList.remove('hidden');
+
+				// Botão Atualizar anterior
+				const prevPageElement = document.getElementById('prevPage');
+				if (appData.currentPage === 1) {
+					prevPageElement.classList.add('disabled');
+				} else {
+					prevPageElement.classList.remove('disabled');
+				}
+
+				// Atualizar próximo botão
+				const nextPageElement = document.getElementById('nextPage');
+				if (appData.currentPage === totalPages) {
+					nextPageElement.classList.add('disabled');
+				} else {
+					nextPageElement.classList.remove('disabled');
+				}
+
+				// Atualizar números de página
+				const paginationList = paginationElement.querySelector('ul');
+				const existingPageItems = paginationList.querySelectorAll('.page-item:not(#prevPage):not(#nextPage)');
+				existingPageItems.forEach(item => item.remove());
+
+				// Adicionar números de página
+				const maxVisiblePages = 5; // número máximo de páginas visíveis de cada lado
+				const startPage = Math.max(1, appData.currentPage - 2);
+				const endPage = Math.min(totalPages, appData.currentPage + 2);
+
+				for (let i = startPage; i <= endPage; i++) {
+					const pageItem = document.createElement('li');
+					pageItem.className = `page-item ${i === appData.currentPage ? 'active' : ''}`;
+
+					const pageLink = document.createElement('a');
+					pageLink.className = 'page-link';
+					pageLink.href = '#';
+					pageLink.textContent = i;
+					pageLink.addEventListener('click', () => {
+						appData.currentPage = i;
+						updateUI();
+					});
+
+					pageItem.appendChild(pageLink);
+					paginationList.insertBefore(pageItem, nextPageElement);
+				}
+			}
+
+			// ==============================================
+			// FUNÇÕES DE INTERFACE
+			// ==============================================
+
+			function updateUI() {
+				const filteredRecords = getFilteredRecords();
+				updateRecordsTable(filteredRecords);
+				updatePagination(filteredRecords);
+			}
+
+			function updateRecordsTable(records) {
+				const tableBody = document.getElementById('recordsTableBody');
+				const totalRecords = records.length;
+
+				if (totalRecords === 0) {
+					tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-gray-500 py-10">
+                            <i class="fas fa-database text-4xl mb-2"></i>
+                            <p>Nenhum registro encontrado</p>
+                        </td>
+                    </tr>
+                `;
+					return;
+				}
+
+				// Calculate pagination
+				const startIndex = (appData.currentPage - 1) * appData.recordsPerPage;
+				const endIndex = Math.min(startIndex + appData.recordsPerPage, totalRecords);
+				const paginatedRecords = records.slice(startIndex, endIndex);
+
+				let html = '';
+
+				paginatedRecords.forEach(record => {
+					// Pega a primeira letra do nome para o avatar
+					const initials = record.fullName.charAt(0).toUpperCase();
+
+					// Formata a data de criação
+					const createdAt = formatDate(record.createdAt);
+
+					html += `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <!-- Coluna Nome -->
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="avatar mr-3">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-800">${record.fullName}</div>
+                                    <div class="text-xs text-gray-500">${record.origin}</div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Coluna Município -->
+                        <td class="py-3 px-4">
+                            <div class="text-gray-700">${record.city}</div>
+                        </td>
+                        
+                        <!-- Coluna Status -->
+                        <td class="py-3 px-4">
+                            <span class="text-xs px-2 py-1 rounded-full ${getStatusColorClass(record.status)}">
+                                ${record.status}
+                            </span>
+                        </td>
+                        
+                        <!-- Coluna Ações -->
+                        <td class="py-3 px-4">
+                            <div class="flex justify-end">
+                                <button onclick="viewRecord('${record.id}')" class="action-btn text-blue-600 hover:bg-blue-200">
+                                    <i class="fas fa-eye"></i>
+                                    
+                                </button>
+                                <button onclick="editRecordFromTable('${record.id}')" class="action-btn text-yellow-600 hover:bg-yellow-200">
+                                    <i class="fas fa-edit"></i>
+                                    
+                                </button>
+                                <button onclick="deleteRecordFromTable('${record.id}')" class="action-btn text-red-600 hover:bg-red-200">
+                                    <i class="fas fa-trash"></i>
+                                    
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+				});
+
+				tableBody.innerHTML = html;
+			}
+
+			function editRecordFromTable(id) {
+				viewRecord(id);
+				setTimeout(() => {
+					enableEditMode();
+				}, 300);
+			}
+
+			function deleteRecordFromTable(id) {
+				appData.currentRecordId = id;
+				deleteRecord(); s
+			}
+
+			function getStatusColorClass(status) {
+				switch (status) {
+					case 'Contratado': return 'bg-green-100 text-green-800';
+					case 'Não Contratado': return 'bg-red-100 text-red-800';
+					default: return 'bg-yellow-100 text-yellow-800';
+				}
+			}
+
+			function updateStatistics() {
+				updateTotalRecords();
+				updateStatsByCity();
+				updateStatsByOrigin();
+				updateStatsByStatus();
+				updateAverageAge();
+				updateStatsByEducation();
+				updateStatsByYear();
+				updateStatsByForwarding();
+
+			}
+
+			function updateAverageAge() {
+				if (appData.records.length === 0) {
+					document.getElementById('statsAvgAge').textContent = '0';
+					return;
+				}
+
+				const totalAge = appData.records.reduce((sum, record) => sum + (record.age || 0), 0);
+				const avgAge = Math.round(totalAge / appData.records.length);
+				document.getElementById('statsAvgAge').textContent = avgAge;
+			}
+
+			function updateStatsByCity() {
+				const statsElement = document.getElementById('statsByCity');
+				const cities = {};
+
+				appData.records.forEach(record => {
+					cities[record.city] = (cities[record.city] || 0) + 1;
+				});
+
+				if (Object.keys(cities).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const city in cities) {
+					const count = cities[city];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="truncate">${city}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+
+			function updateStatsByOrigin() {
+				const statsElement = document.getElementById('statsByOrigin');
+				const origins = {};
+
+				appData.records.forEach(record => {
+					origins[record.origin] = (origins[record.origin] || 0) + 1;
+				});
+
+				if (Object.keys(origins).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const origin in origins) {
+					const count = origins[origin];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1>
+                            <span class="truncate">${origin}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+
+			function updateStatsByEducation() {
+				const statsElement = document.getElementById('statsByEducation');
+				const educations = {};
+
+				appData.records.forEach(record => {
+					educations[record.education] = (educations[record.origin] || 0) + 1;
+				});
+
+				if (Object.keys(educations).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const education in educations) {
+					const count = educations[education];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="truncate">${education}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+
+			function updateStatsByStatus() {
+				const statsElement = document.getElementById('statsByStatus');
+				const statuses = {};
+
+				appData.records.forEach(record => {
+					statuses[record.status] = (statuses[record.status] || 0) + 1;
+				});
+
+				if (Object.keys(statuses).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const status in statuses) {
+					const count = statuses[status];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="truncate">${status}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="${getStatusBarColorClass(status)} h-2 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+			function updateStatsByYear() {
+				const statsElement = document.getElementById('statsByYear');
+				const years = {};
+
+				appData.records.forEach(record => {
+					const year = new Date(record.createdAt).getFullYear();
+					years[year] = (years[year] || 0) + 1;
+				});
+
+				if (Object.keys(years).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const year in years) {
+					const count = years[year];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="truncate">${year}</span>
+                    <span>${count} (${percentage}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-purple-500 h-2 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+
+			function updateStatsByForwarding() {
+				const statsElement = document.getElementById('statsByForwarding');
+				const forwardings = {};
+
+				appData.records.forEach(record => {
+					const forwarding = record.forwarding || 'Não informado';
+					forwardings[forwarding] = (forwardings[forwarding] || 0) + 1;
+				});
+
+				if (Object.keys(forwardings).length === 0) {
+					statsElement.innerHTML = '<div class="text-center text-gray-500 py-4">Nenhum dado disponível</div>';
+					return;
+				}
+
+				let html = '';
+				for (const forwarding in forwardings) {
+					const count = forwardings[forwarding];
+					const percentage = (count / appData.records.length * 100).toFixed(1);
+
+					html += `
+            <div>
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="truncate">${forwarding}</span>
+                    <span>${count} (${percentage}%)</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            </div>
+        `;
+				}
+
+				statsElement.innerHTML = html;
+			}
+
+
+			function getStatusBarColorClass(status) {
+				switch (status) {
+					case 'Contratado': return 'bg-green-500';
+					case 'Não Contratado': return 'bg-red-500';
+					default: return 'bg-yellow-500';
+				}
+			}
+
+			// ==============================================
+			// FUNÇÕES DAS ABAS
+			// ==============================================
+
+			function showSearchTab() {
+				document.getElementById('searchContent').classList.remove('hidden');
+				document.getElementById('statsContent').classList.add('hidden');
+				document.getElementById('searchTabBtn').classList.add('tab-active');
+				document.getElementById('statsTabBtn').classList.remove('tab-active');
+			}
+
+			function showStatsTab() {
+				document.getElementById('searchContent').classList.add('hidden');
+				document.getElementById('statsContent').classList.remove('hidden');
+				document.getElementById('searchTabBtn').classList.remove('tab-active');
+				document.getElementById('statsTabBtn').classList.add('tab-active');
+				updateStatistics();
+			}
+
+			// ==============================================
+			// FUNÇÕES DO MODAL DE REGISTRO
+			// ==============================================
+
+			function viewRecord(id) {
+				const record = appData.records.find(r => r.id === id);
+				if (!record) return;
+
+				appData.currentRecordId = id;
+				appData.isEditMode = false;
+
+				// Preenche os dados no modal
+				document.getElementById('modalFullName').textContent = record.fullName;
+				document.getElementById('modalOrigin').textContent = record.origin;
+				document.getElementById('modalDob').textContent = formatDate(record.dob);
+				document.getElementById('modalAge').textContent = record.age;
+				document.getElementById('modalCity').textContent = record.city;
+				document.getElementById('modalNeighborhood').textContent = record.neighborhood;
+				document.getElementById('modalEducation').textContent = record.education || '-';
+				document.getElementById('modalStatus').textContent = record.status;
+				document.getElementById('modalReferenceName').textContent = record.referenceName || '-';
+				document.getElementById('modalForwarding').textContent = record.forwarding || '-';
+				document.getElementById('modalObservation').textContent = record.observation || '-';
+				document.getElementById('modalCreatedAt').textContent = formatDateTime(record.createdAt);
+				document.getElementById('printDate').textContent = formatDateTime(new Date());
+
+				// Mostra o modal
+				document.getElementById('recordModal').classList.remove('hidden');
+				document.getElementById('editBtn').classList.remove('hidden');
+				document.getElementById('saveBtn').classList.add('hidden');
+			}
+
+			function enableEditMode() {
+				if (!appData.currentRecordId) return;
+
+				const record = appData.records.find(r => r.id === appData.currentRecordId);
+				if (!record) return;
+
+				appData.isEditMode = true;
+
+				// Transforma os campos em editáveis
+				document.getElementById('modalFullName').innerHTML = `<input type="text" id="editFullName" value="${record.fullName}" class="w-full px-2 py-1 border rounded">`;
+				document.getElementById('modalOrigin').innerHTML = `
+                <select id="editOrigin" class="w-full px-2 py-1 border rounded">
+                    <option value="MSE" ${record.origin === 'MSE' ? 'selected' : ''}>MSE</option>
+                    <option value="MP" ${record.origin === 'MP' ? 'selected' : ''}>MP</option>
+                    <option value="EP" ${record.origin === 'EP' ? 'selected' : ''}>EP</option>
+                    <option value="EPT" ${record.origin === 'EPT' ? 'selected' : ''}>EPT</option>
+                </select>
+            `;
+				document.getElementById('modalDob').innerHTML = `<input type="date" id="editDob" value="${record.dob}" class="w-full px-2 py-1 border rounded">`;
+				document.getElementById('modalCity').innerHTML = `
+                <select id="editCity" class="w-full px-2 py-1 border rounded">
+                    <option value="Angra dos Reis" ${record.city === 'Angra dos Reis' ? 'selected' : ''}>Angra dos Reis</option>
+					<option value="Araruama" ${record.city === 'Araruama' ? 'selected' : ''}>Araruama</option>
+					<option value="Barra Mansa" ${record.city === 'Barra Mansa' ? 'selected' : ''}>Barra Mansa</option>
+					<option value="Belford Roxo" ${record.city === 'Belford Roxo' ? 'selected' : ''}>Belford Roxo</option>
+					<option value="Cabo Frio" ${record.city === 'Cabo Frio' ? 'selected' : ''}>Cabo Frio</option>
+					<option value="Campos dos Goytacazes" ${record.city === 'Campos dos Goytacazes' ? 'selected' : ''}>Campos dos Goytacazes</option>
+					<option value="Duque de Caxias" ${record.city === 'Duque de Caxias' ? 'selected' : ''}>Duque de Caxias</option>
+					<option value="Itaboraí" ${record.city === 'Itaboraí' ? 'selected' : ''}>Itaboraí</option>
+					<option value="Macaé" ${record.city === 'Macaé' ? 'selected' : ''}>Macaé</option>
+					<option value="Magé" ${record.city === 'Magé' ? 'selected' : ''}>Magé</option>
+					<option value="Mangaratiba" ${record.city === 'Mangaratiba' ? 'selected' : ''}>Mangaratiba</option>
+					<option value="Maricá" ${record.city === 'Maricá' ? 'selected' : ''}>Maricá</option>
+					<option value="Niterói" ${record.city === 'Niterói' ? 'selected' : ''}>Niterói</option>
+					<option value="Nova Iguaçu" ${record.city === 'Nova Iguaçu' ? 'selected' : ''}>Nova Iguaçu</option>
+					<option value="Petrópolis" ${record.city === 'Petrópolis' ? 'selected' : ''}>Petrópolis</option>
+					<option value="Queimados" ${record.city === 'Queimados' ? 'selected' : ''}>Queimados</option>
+					<option value="Rio Claro" ${record.city === 'Rio Claro' ? 'selected' : ''}>Rio Claro</option>
+					<option value="Rio das Ostras" ${record.city === 'Rio das Ostras' ? 'selected' : ''}>Rio das Ostras</option>
+					<option value="Rio de Janeiro" ${record.city === 'Rio de Janeiro' ? 'selected' : ''}>Rio de Janeiro</option>
+					<option value="São Gonçalo" ${record.city === 'São Gonçalo' ? 'selected' : ''}>São Gonçalo</option>
+					<option value="São João de Meriti" ${record.city === 'São João de Meriti' ? 'selected' : ''}>São João de Meriti</option>
+					<option value="Seropédica" ${record.city === 'Seropédica' ? 'selected' : ''}>Seropédica</option>
+					<option value="Silva Jardim" ${record.city === 'Silva Jardim' ? 'selected' : ''}>Silva Jardim</option>
+					<option value="Teresópolis" ${record.city === 'Teresópolis' ? 'selected' : ''}>Teresópolis</option>
+					<option value="Volta Redonda" ${record.city === 'Volta Redonda' ? 'selected' : ''}>Volta Redonda</option>
+                </select>
+            `;
+				document.getElementById('modalNeighborhood').innerHTML = `
+                <select id="editNeighborhood" class="w-full px-2 py-1 border rounded">
+                    ${appData.neighborhoods[record.city].map(n =>
+					`<option value="${n}" ${record.neighborhood === n ? 'selected' : ''}>${n}</option>`
+				).join('')}
+                </select>
+            `;
+				document.getElementById('modalEducation').innerHTML =
+					`<select id="editEducation" class="w-full px-2 py-1 border rounded">
+					<option value="" ${!record.education ? 'selected' : ''}>Selecione...</option>
+					<option value="1ª série EF" ${record.education === '1ª série EF' ? 'selected' : ''}>1ª série EF</option>
+					<option value="2ª série EF" ${record.education === '2ª série EF' ? 'selected' : ''}>2ª série EF</option>
+					<option value="3ª série EF" ${record.education === '3ª série EF' ? 'selected' : ''}>3ª série EF</option>
+					<option value="4ª série EF" ${record.education === '4ª série EF' ? 'selected' : ''}>4ª série EF</option>
+					<option value="5ª série EF" ${record.education === '5ª série EF' ? 'selected' : ''}>5ª série EF</option>
+					<option value="6ª série EF" ${record.education === '6ª série EF' ? 'selected' : ''}>6ª série EF</option>
+					<option value="7ª série EF" ${record.education === '7ª série EF' ? 'selected' : ''}>7ª série EF</option>
+					<option value="8ª série EF" ${record.education === '8ª série EF' ? 'selected' : ''}>8ª série EF</option>
+					<option value="9ª série EF" ${record.education === '9ª série EF' ? 'selected' : ''}>9ª série EF</option>
+					<option value="1º ano EM" ${record.education === '1º ano EM' ? 'selected' : ''}>1º ano EM</option>
+					<option value="2º ano EM" ${record.education === '2º ano EM' ? 'selected' : ''}>2º ano EM</option>
+					<option value="3º ano EM" ${record.education === '3º ano EM' ? 'selected' : ''}>3º ano EM</option>
+				</select>`;
+
+				document.getElementById('modalStatus').innerHTML = `
+                <select id="editStatus" class="w-full px-2 py-1 border rounded">
+                    <option value="Em Análise" ${record.status === 'Em Análise' ? 'selected' : ''}>Em Análise</option>
+                    <option value="Contratado" ${record.status === 'Contratado' ? 'selected' : ''}>Contratado</option>
+                    <option value="Não Contratado" ${record.status === 'Não Contratado' ? 'selected' : ''}>Não Contratado</option>
+                </select>
+            `;
+				document.getElementById('modalReferenceName').innerHTML = `<input type="text" id="editReferenceName" value="${record.referenceName || ''}" class="w-full px-2 py-1 border rounded">`;
+				document.getElementById('modalForwarding').innerHTML = `<input type="text" id="editForwarding" value="${record.forwarding || ''}" class="w-full px-2 py-1 border rounded">`;
+				document.getElementById('modalObservation').innerHTML = `<textarea id="editObservation" class="w-full px-2 py-1 border rounded">${record.observation || ''}</textarea>`;
+
+				// Atualiza os botões
+				document.getElementById('editBtn').classList.add('hidden');
+				document.getElementById('saveBtn').classList.remove('hidden');
+			}
+
+			function saveChanges() {
+				if (!appData.currentRecordId || !appData.isEditMode) return;
+
+				const recordIndex = appData.records.findIndex(r => r.id === appData.currentRecordId);
+				if (recordIndex === -1) return;
+
+				// Calcula a nova idade se a data de nascimento mudou
+				let newAge = appData.records[recordIndex].age;
+				const dobInput = document.getElementById('editDob');
+				if (dobInput) {
+					const birthDate = new Date(dobInput.value);
+					const today = new Date();
+					let age = today.getFullYear() - birthDate.getFullYear();
+					const monthDiff = today.getMonth() - birthDate.getMonth();
+
+					if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+						age--;
+					}
+					newAge = age;
+				}
+
+				// Atualiza o registro
+				appData.records[recordIndex] = {
+					...appData.records[recordIndex],
+					fullName: document.getElementById('editFullName').value,
+					origin: document.getElementById('editOrigin').value,
+					dob: dobInput.value,
+					age: newAge,
+					city: document.getElementById('editCity').value,
+					neighborhood: document.getElementById('editNeighborhood').value,
+					education: document.getElementById('editEducation').value,
+					status: document.getElementById('editStatus').value,
+					referenceName: document.getElementById('editReferenceName').value.trim(),
+					forwarding: document.getElementById('editForwarding').value.trim(),
+					observation: document.getElementById('editObservation').value.trim(),
+					timestamp: new Date().toISOString()
+				};
+
+				// Salva as alterações
+				saveData();
+				updateUI();
+
+				// Sai do modo de edição
+				appData.isEditMode = false;
+				closeModal();
+			}
+
+			function deleteRecord() {
+				if (!appData.currentRecordId) return;
+
+				if (confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.')) {
+					appData.records = appData.records.filter(r => r.id !== appData.currentRecordId);
+					saveData();
+					updateUI();
+					closeModal();
+				}
+			}
+
+			function printRecord() {
+				document.getElementById('printDate').textContent = new Date().toLocaleString();
+				// A modal precisa estar aberta (sem class="hidden")
+				const modal = document.getElementById('recordModal');
+				if (modal.classList.contains('hidden')) {
+					alert("Abra o registro antes de imprimir.");
+					return;
+				}
+				setTimeout(() => {
+					window.print();
+				}, 100);
+			}
+
+			function closeModal() {
+				document.getElementById('recordModal').classList.add('hidden');
+				appData.currentRecordId = null;
+				appData.isEditMode = false;
+			}
+
+			// ==============================================
+			// FUNÇÕES AUXILIARES
+			// ==============================================
+
+			function formatDate(dateString) {
+				const date = new Date(dateString);
+				return date.toLocaleDateString('pt-BR');
+			}
+
+			function formatDateTime(dateString) {
+				const date = new Date(dateString);
+				return date.toLocaleString('pt-BR');
+			}
+
+			// ===== FUNÇÕES DE SINCRONIZAÇÃO P2P =====
+
+			// Inicializa o sistema de sincronização
+			function initSyncSystem() {
+				try {
+					// Gera um ID único para este peer
+					const peerId = 'cadastro-' + Math.random().toString(36).substr(2, 9);
+
+					// Inicializa o peer
+					appData.peer = new Peer(peerId);
+					appData.peerId = peerId;
+
+					// Eventos do peer
+					appData.peer.on('open', function (id) {
+						console.log('Peer conectado com ID:', id);
+						appData.syncEnabled = true;
+						document.getElementById('myPeerId').value = id;
+						document.getElementById('syncStatus').textContent = 'Pronto para conectar';
+						document.getElementById('syncStatus').className = 'text-sm px-2 py-1 rounded-full bg-green-100 text-green-600';
+					});
+
+					appData.peer.on('connection', function (conn) {
+						console.log('Nova conexão recebida:', conn.peer);
+						handleNewConnection(conn);
+					});
+
+					appData.peer.on('error', function (err) {
+						console.error('Erro no peer:', err);
+						alert('Erro na sincronização: ' + err.message);
+					});
+
+					// Configura o botão de copiar ID
+					document.getElementById('copyPeerIdBtn').addEventListener('click', function () {
+						const peerIdInput = document.getElementById('myPeerId');
+						peerIdInput.select();
+						document.execCommand('copy');
+						alert('ID copiado para a área de transferência!');
+					});
+
+				} catch (error) {
+					console.error('Erro ao inicializar sincronização:', error);
+					alert('Erro ao inicializar sistema de sincronização. Verifique se o PeerJS está carregado.');
+				}
+			}
+
+			// Alterna a visibilidade do painel de sincronização
+			function toggleSyncPanel() {
+				const panel = document.getElementById('syncPanel');
+				if (panel.style.display === 'none') {
+					panel.style.display = 'block';
+					if (!appData.syncEnabled) {
+						initSyncSystem();
+					}
+				} else {
+					panel.style.display = 'none';
+				}
+			}
+
+			// Conecta a outro peer
+			function connectToPeer() {
+				const targetId = document.getElementById('targetPeerId').value.trim();
+				if (!targetId) {
+					alert('Digite o ID do usuário para conectar');
+					return;
+				}
+
+				if (!appData.peer) {
+					alert('Sistema de sincronização não inicializado');
+					return;
+				}
+
+				try {
+					const conn = appData.peer.connect(targetId);
+					handleNewConnection(conn);
+					document.getElementById('targetPeerId').value = '';
+				} catch (error) {
+					console.error('Erro ao conectar:', error);
+					alert('Erro ao conectar com o usuário: ' + error.message);
+				}
+			}
+
+			// Gerencia uma nova conexão
+			function handleNewConnection(conn) {
+				conn.on('open', function () {
+					console.log('Conexão estabelecida com:', conn.peer);
+					appData.connections.push(conn);
+					updateConnectionsList();
+
+					// Envia dados iniciais
+					sendDataToPeer(conn, {
+						type: 'initial_sync',
+						data: appData.records,
+						timestamp: new Date().toISOString()
+					});
+				});
+
+				conn.on('data', function (receivedData) {
+					console.log('Dados recebidos:', receivedData);
+
+					if (receivedData.type === 'initial_sync' || receivedData.type === 'data_update') {
+						mergeRecords(receivedData.data);
+						appData.lastSyncTime = new Date().toISOString();
+						document.getElementById('lastSyncTime').textContent =
+							'Última sincronização: ' + formatDateTime(appData.lastSyncTime);
+					}
+				});
+
+				conn.on('close', function () {
+					console.log('Conexão fechada com:', conn.peer);
+					appData.connections = appData.connections.filter(c => c.peer !== conn.peer);
+					updateConnectionsList();
+				});
+
+				conn.on('error', function (err) {
+					console.error('Erro na conexão:', err);
+					appData.connections = appData.connections.filter(c => c.peer !== conn.peer);
+					updateConnectionsList();
+				});
+			}
+
+			// Atualiza a lista de conexões na interface
+			function updateConnectionsList() {
+				const connectionsList = document.getElementById('connectionsList');
+				const disconnectBtn = document.getElementById('disconnectAllBtn');
+
+				if (appData.connections.length === 0) {
+					connectionsList.innerHTML = '<p class="text-sm text-gray-500">Nenhuma conexão ativa</p>';
+					disconnectBtn.style.display = 'none';
+					document.getElementById('syncStatus').textContent = 'Pronto para conectar';
+					document.getElementById('syncStatus').className = 'text-sm px-2 py-1 rounded-full bg-green-100 text-green-600';
+				} else {
+					connectionsList.innerHTML = appData.connections.map(conn =>
+						`<div class="flex items-center justify-between bg-gray-50 p-2 rounded">
+							<span class="text-sm font-medium">${conn.peer}</span>
+							<span class="text-xs text-green-600">Conectado</span>
+						</div>`
+					).join('');
+					disconnectBtn.style.display = 'block';
+					document.getElementById('syncStatus').textContent = `${appData.connections.length} conexão(ões) ativa(s)`;
+					document.getElementById('syncStatus').className = 'text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-600';
+				}
+			}
+
+			// Envia dados para um peer específico
+			function sendDataToPeer(conn, data) {
+				try {
+					if (conn.open) {
+						conn.send(data);
+					}
+				} catch (error) {
+					console.error('Erro ao enviar dados:', error);
+				}
+			}
+
+			// Envia dados para todos os peers conectados
+			function sendDataToAllPeers(data) {
+				appData.connections.forEach(conn => {
+					sendDataToPeer(conn, data);
+				});
+			}
+
+			// Mescla registros recebidos com os locais
+			function mergeRecords(receivedRecords) {
+				let hasChanges = false;
+
+				receivedRecords.forEach(receivedRecord => {
+					const existingIndex = appData.records.findIndex(r => r.id === receivedRecord.id);
+
+					if (existingIndex === -1) {
+						// Novo registro
+						appData.records.push(receivedRecord);
+						hasChanges = true;
+					} else {
+						// Verifica se o registro recebido é mais recente
+						const existingRecord = appData.records[existingIndex];
+						const receivedTime = new Date(receivedRecord.timestamp || 0);
+						const existingTime = new Date(existingRecord.timestamp || 0);
+
+						if (receivedTime > existingTime) {
+							appData.records[existingIndex] = receivedRecord;
+							hasChanges = true;
+						}
+					}
+				});
+
+				if (hasChanges) {
+					saveData();
+					updateTable();
+					updateStats();
+					console.log('Dados sincronizados e atualizados');
+				}
+			}
+
+			// Desconecta de todos os peers
+			function disconnectFromPeers() {
+				appData.connections.forEach(conn => {
+					try {
+						conn.close();
+					} catch (error) {
+						console.error('Erro ao fechar conexão:', error);
+					}
+				});
+				appData.connections = [];
+				updateConnectionsList();
+			}
+
+			// Modifica a função saveData para enviar atualizações
+			const originalSaveData = saveData;
+			saveData = function () {
+				originalSaveData();
+
+				// Envia atualização para peers conectados
+				if (appData.connections.length > 0) {
+					sendDataToAllPeers({
+						type: 'data_update',
+						data: appData.records,
+						timestamp: new Date().toISOString()
+					});
+				}
+			};
+		</script>
+	</body>
+
+</html>

@@ -1,0 +1,326 @@
+/* Estilos personalizados */
+.custom-shadow {
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+		0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.tab-active {
+	border-bottom: 3px solid #3b82f6;
+	color: #3b82f6;
+	font-weight: 600;
+}
+
+/* Estilos para a tabela de registros */
+.records-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.records-table thead th {
+	position: sticky;
+	top: 0;
+	background-color: #f8fafc;
+	z-index: 10;
+	box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.records-table tbody tr:hover {
+	background-color: #f8fafc;
+}
+
+.records-table td,
+.records-table th {
+	padding: 12px 15px;
+	text-align: left;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background-color: #e2e8f0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #64748b;
+	font-weight: bold;
+}
+
+.action-btn {
+	padding: 6px 10px;
+	border-radius: 4px;
+	margin-left: 5px;
+	transition: all 0.2s;
+}
+
+.action-btn:hover {
+	transform: translateY(-1px);
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+	.responsive-columns {
+		flex-direction: column;
+	}
+
+	.records-table thead {
+		display: none;
+	}
+
+	.records-table tr {
+		display: block;
+		margin-bottom: 1rem;
+		border-radius: 8px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	}
+
+	.records-table td {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 10px;
+		border-bottom: none;
+	}
+
+	.records-table td::before {
+		content: attr(data-label);
+		font-weight: bold;
+		margin-right: 1rem;
+		color: #64748b;
+	}
+
+	.mobile-actions {
+		display: flex;
+		justify-content: flex-end;
+		width: 100%;
+	}
+}
+
+/* Estilos do modal */
+.modal {
+	transition: opacity 0.3s ease;
+}
+
+.modal-content {
+	transform: translateY(0);
+	transition: transform 0.3s ease;
+	max-height: 90vh;
+	overflow-y: auto;
+}
+
+.modal-enter {
+	opacity: 0;
+}
+
+.modal-enter .modal-content {
+	transform: translateY(-20px);
+}
+
+.modal-leave {
+	opacity: 1;
+}
+
+.modal-leave .modal-content {
+	transform: translateY(0);
+}
+
+.modal-leave-to {
+	opacity: 0;
+}
+
+.modal-leave-to .modal-content {
+	transform: translateY(-20px);
+}
+
+/* Estilos de impressão */
+@media print {
+	@page {
+		size: A4;
+		margin: 15mm 10mm;
+	}
+
+	body * {
+		visibility: hidden;
+		margin: 0 !important;
+		padding: 0 !important;
+	}
+
+	#recordModal,
+	#recordModal * {
+		visibility: visible;
+	}
+
+	#recordModal {
+		position: absolute !important;
+		top: 0 !important;
+		left: 0 !important;
+		width: 190mm !important;
+		/* Largura útil A4 */
+		min-height: 277mm !important;
+		/* Altura útil A4 */
+		margin: 0 !important;
+		padding: 5mm !important;
+		background: white;
+		box-shadow: none;
+		font-size: 12px !important;
+	}
+
+	.modal-content {
+		display: grid !important;
+		grid-template-columns: 1fr 1fr;
+		gap: 4mm;
+		transform: none !important;
+		padding: 0 !important;
+	}
+
+	.detail-item {
+		display: flex !important;
+		margin-bottom: 2mm !important;
+		page-break-inside: avoid;
+	}
+
+	.detail-icon {
+		min-width: 25px !important;
+	}
+
+	.detail-label {
+		font-size: 11px !important;
+		margin-right: 3mm !important;
+	}
+
+	.detail-value {
+		font-size: 12px !important;
+		border-bottom: 0.5px solid #ccc !important;
+	}
+
+	.print-header {
+		grid-column: 1 / -1;
+		margin-bottom: 5mm !important;
+		padding-bottom: 3mm !important;
+		border-bottom: 1px solid #000 !important;
+	}
+
+	.no-print,
+	.close-modal,
+	.modal-actions,
+	.fa-times {
+		display: none !important;
+	}
+
+	/* Garantir quebra correta em dois grupos */
+	.grid-cols-1.md\:grid-cols-2 {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+}
+
+/* Estilo do campo de envio de arquivo */
+.file-input {
+	display: none;
+}
+
+/*Animação para botões */
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+
+	50% {
+		transform: scale(1.05);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+.animate-pulse {
+	animation: pulse 1.5s infinite;
+}
+
+/* Estilos da paginação */
+.pagination {
+	display: flex;
+	justify-content: center;
+	margin-top: 20px;
+}
+
+.page-item {
+	margin: 0 5px;
+}
+
+.page-link {
+	padding: 5px 10px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.page-link:hover {
+	background-color: #f1f1f1;
+}
+
+.page-item.active .page-link {
+	background-color: #3b82f6;
+	color: white;
+	border-color: #3b82f6;
+}
+
+.page-item.disabled .page-link {
+	color: #6c757d;
+	pointer-events: none;
+	background-color: #fff;
+	border-color: #dee2e6;
+}
+
+/* Botão de fechar o modal */
+.close-modal {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	background: #f1f5f9;
+	border: none;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	color: #64748b;
+	transition: all 0.2s;
+}
+
+.close-modal:hover {
+	background: #e2e8f0;
+	color: #334155;
+}
+
+/* Item de detalhe no modal */
+.detail-item {
+	display: flex;
+	align-items: center;
+	margin-bottom: 12px;
+}
+
+.detail-icon {
+	width: 30px;
+	color: #64748b;
+	margin-right: 10px;
+	text-align: center;
+}
+
+.detail-content {
+	flex: 1;
+}
+
+.detail-label {
+	font-size: 0.8rem;
+	color: #64748b;
+}
+
+.detail-value {
+	font-weight: 500;
+	color: #334155;
+}
