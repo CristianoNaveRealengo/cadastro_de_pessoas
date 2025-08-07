@@ -1,31 +1,27 @@
 {
-	"name": "cadastro-pessoas-firebase",
+	"name": "sistema-cadastro-pessoas",
 	"version": "1.0.0",
-	"description": "Sistema de Cadastro Pessoal com Firebase e TypeScript",
-	"main": "dist/script.js",
+	"description": "Sistema de Cadastro Pessoal com Firebase - JavaScript Vanilla",
+	"main": "index.html",
 	"scripts": {
-		"build": "tsc",
-		"dev": "tsc --watch",
-		"start": "live-server --port=3000",
-		"dev-server": "concurrently \"npm run dev\" \"npm run start\"",
-		"firebase:init": "firebase init",
-		"firebase:deploy": "npm run build && firebase deploy"
+		"start": "echo 'Abra index.html no navegador' && start index.html",
+		"serve": "python -m http.server 8000 || php -S localhost:8000 || echo 'Instale Python ou PHP para servidor local'"
 	},
 	"keywords": [
-		"typescript",
+		"javascript",
 		"firebase",
 		"cadastro",
-		"pessoas"
+		"pessoas",
+		"vanilla-js"
 	],
-	"author": "Seu Nome",
+	"author": "Cristiano Machado",
 	"license": "MIT",
-	"devDependencies": {
-		"typescript": "^5.3.3",
-		"live-server": "^1.2.2",
-		"concurrently": "^8.2.2",
-		"@types/node": "^20.10.5"
+	"engines": {
+		"node": ">=14.0.0"
 	},
-	"dependencies": {
-		"firebase": "^10.7.1"
-	}
+	"repository": {
+		"type": "git",
+		"url": "."
+	},
+	"homepage": "index.html"
 }
