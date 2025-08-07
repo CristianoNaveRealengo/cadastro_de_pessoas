@@ -1,5 +1,5 @@
 // ==============================================
-// CONFIGURAÇÃO DO FIREBASE
+// CONFIGURAÇÃO DO FIREBASE - DADOS COMPARTILHADOS
 // ==============================================
 
 // Importe as funções necessárias do Firebase
@@ -23,7 +23,7 @@ import {
 	updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// SUBSTITUA ESTAS CONFIGURAÇÕES PELAS SUAS DO FIREBASE
+// Configuração do Firebase
 const firebaseConfig = {
 	apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
 	authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
@@ -39,7 +39,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 // ==============================================
-// FUNÇÕES DO FIREBASE
+// FIREBASE SERVICE - DADOS COMPARTILHADOS
 // ==============================================
 
 class FirebaseService {
@@ -56,16 +56,14 @@ class FirebaseService {
 
 	// Inicializar status de conexão
 	initializeStatus() {
-		// Mostrar status inicial
 		this.updateConnectionStatus(this.isOnline ? "connecting" : "offline");
 
-		// Timeout para evitar "Conectando..." infinito
 		setTimeout(() => {
 			if (!this.isConnected && this.isOnline) {
 				console.log("⚠️ Timeout de conexão - verificando status");
 				this.updateConnectionStatus("offline");
 			}
-		}, 10000); // 10 segundos timeout
+		}, 10000);
 	}
 
 	// Configurar autenticação anônima
@@ -75,7 +73,9 @@ class FirebaseService {
 			onAuthStateChanged(this.auth, (user) => {
 				this.currentUser = user;
 				if (user) {
-					console.log("🔥 Firebase conectado - Usuário:", user.uid);
+					console.log(
+						"🔥 Firebase conectado - Dados COMPARTILHADOS habilitados"
+					);
 					this.isConnected = true;
 					this.updateConnectionStatus("online");
 					this.syncData();
@@ -98,16 +98,13 @@ class FirebaseService {
 			this.isOnline = true;
 			console.log("🌐 Conexão de internet restaurada");
 
-			// Mostrar conectando enquanto tenta reconectar ao Firebase
 			if (this.currentUser) {
 				this.updateConnectionStatus("online");
-				// Aguardar um pouco para garantir conexão estável
 				setTimeout(() => {
 					this.syncData();
 				}, 1000);
 			} else {
 				this.updateConnectionStatus("connecting");
-				// Tentar reconectar ao Firebase
 				this.setupAuth();
 			}
 		});
@@ -129,7 +126,7 @@ class FirebaseService {
 					this.syncData();
 				}
 			}
-		}, 5 * 60 * 1000); // 5 minutos
+		}, 5 * 60 * 1000);
 	}
 
 	// Atualizar status de conexão na interface
@@ -140,7 +137,6 @@ class FirebaseService {
 
 			switch (status) {
 				case "connecting":
-					// Conectando - bolinha azul pulsando
 					statusElement.innerHTML = `
 						<span class="flex items-center">
 							<span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
@@ -153,7 +149,6 @@ class FirebaseService {
 
 				case "online":
 					if (pendingCount > 0) {
-						// Sincronizando - bolinha amarela pulsando
 						statusElement.innerHTML = `
 							<span class="flex items-center">
 								<span class="w-2 h-2 bg-yellow-500 rounded-full mr-2 animate-pulse"></span>
@@ -163,12 +158,11 @@ class FirebaseService {
 						`;
 						statusElement.className = "text-sm text-yellow-600";
 					} else {
-						// Online - bolinha verde
 						statusElement.innerHTML = `
 							<span class="flex items-center">
 								<span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-								<i class="fas fa-cloud text-green-500 mr-1"></i>
-								Online
+								<i class="fas fa-users text-green-500 mr-1"></i>
+								Online - Dados Compartilhados
 							</span>
 						`;
 						statusElement.className = "text-sm text-green-600";
@@ -177,7 +171,6 @@ class FirebaseService {
 
 				case "offline":
 				default:
-					// Offline - bolinha vermelha
 					const offlineText =
 						pendingCount > 0 ? ` (${pendingCount} pendentes)` : "";
 					statusElement.innerHTML = `
@@ -199,7 +192,7 @@ class FirebaseService {
 		return localRecords.filter((record) => !record.firebaseId).length;
 	}
 
-	// Salvar registro no Firebase
+	// Salvar registro no Firebase - COMPARTILHADO
 	async saveRecord(record) {
 		// SEMPRE salva localmente primeiro (UX instantânea)
 		this.saveToLocalStorage(record);
@@ -211,25 +204,25 @@ class FirebaseService {
 		}
 
 		try {
-			// Marcar como "sincronizando"
 			this.updateConnectionStatus("online");
 
 			const docRef = await addDoc(collection(this.db, "records"), {
 				...record,
-				// Removido userId para permitir compartilhamento
+				// SEM userId - dados compartilhados entre todos os usuários
 				createdAt: serverTimestamp(),
 				updatedAt: serverTimestamp(),
 			});
 
-			console.log("☁️ Registro sincronizado no Firebase:", docRef.id);
+			console.log(
+				"☁️ Registro compartilhado salvo no Firebase:",
+				docRef.id
+			);
 
 			// Atualizar o ID local com o ID do Firebase
 			record.firebaseId = docRef.id;
 			this.saveToLocalStorage(record);
 
-			// Atualizar status
 			this.updateConnectionStatus("online");
-
 			return docRef.id;
 		} catch (error) {
 			console.error("❌ Erro ao sincronizar no Firebase:", error);
@@ -237,7 +230,6 @@ class FirebaseService {
 				"📱 Registro mantido localmente para sincronização posterior"
 			);
 
-			// Não é erro crítico - dados estão seguros localmente
 			if (typeof UIUtils !== "undefined") {
 				UIUtils.showToast(
 					"Dados salvos localmente. Sincronização pendente.",
@@ -261,10 +253,13 @@ class FirebaseService {
 				updatedAt: serverTimestamp(),
 			});
 
-			console.log("Registro atualizado no Firebase:", record.firebaseId);
+			console.log(
+				"☁️ Registro compartilhado atualizado no Firebase:",
+				record.firebaseId
+			);
 			this.saveToLocalStorage(record);
 		} catch (error) {
-			console.error("Erro ao atualizar no Firebase:", error);
+			console.error("❌ Erro ao atualizar no Firebase:", error);
 			this.saveToLocalStorage(record);
 		}
 	}
@@ -274,17 +269,19 @@ class FirebaseService {
 		if (this.isOnline && this.currentUser && firebaseId) {
 			try {
 				await deleteDoc(doc(this.db, "records", firebaseId));
-				console.log("Registro deletado do Firebase:", firebaseId);
+				console.log(
+					"☁️ Registro compartilhado deletado do Firebase:",
+					firebaseId
+				);
 			} catch (error) {
-				console.error("Erro ao deletar do Firebase:", error);
+				console.error("❌ Erro ao deletar do Firebase:", error);
 			}
 		}
 
-		// Remover do localStorage também
 		this.removeFromLocalStorage(recordId);
 	}
 
-	// Carregar registros do Firebase
+	// Carregar registros do Firebase - TODOS OS REGISTROS COMPARTILHADOS
 	async loadRecords() {
 		if (!this.isOnline || !this.currentUser) {
 			return this.loadFromLocalStorage();
@@ -301,31 +298,33 @@ class FirebaseService {
 
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				if (data.userId === this.currentUser.uid) {
-					records.push({
-						...data,
-						firebaseId: doc.id,
-						createdAt:
-							data.createdAt?.toDate?.()?.toISOString() ||
-							data.createdAt,
-						updatedAt:
-							data.updatedAt?.toDate?.()?.toISOString() ||
-							data.updatedAt,
-					});
-				}
+				// TODOS os registros são carregados - dados compartilhados
+				records.push({
+					...data,
+					firebaseId: doc.id,
+					createdAt:
+						data.createdAt?.toDate?.()?.toISOString() ||
+						data.createdAt,
+					updatedAt:
+						data.updatedAt?.toDate?.()?.toISOString() ||
+						data.updatedAt,
+				});
 			});
 
 			// Salvar no localStorage como backup
 			localStorage.setItem("personalRecords", JSON.stringify(records));
 
+			console.log(
+				`☁️ ${records.length} registros COMPARTILHADOS carregados do Firebase`
+			);
 			return records;
 		} catch (error) {
-			console.error("Erro ao carregar do Firebase:", error);
+			console.error("❌ Erro ao carregar do Firebase:", error);
 			return this.loadFromLocalStorage();
 		}
 	}
 
-	// Sincronizar dados em tempo real
+	// Sincronizar dados em tempo real - COMPARTILHADOS
 	setupRealtimeSync() {
 		if (!this.currentUser) return;
 
@@ -338,18 +337,17 @@ class FirebaseService {
 			const records = [];
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				if (data.userId === this.currentUser.uid) {
-					records.push({
-						...data,
-						firebaseId: doc.id,
-						createdAt:
-							data.createdAt?.toDate?.()?.toISOString() ||
-							data.createdAt,
-						updatedAt:
-							data.updatedAt?.toDate?.()?.toISOString() ||
-							data.updatedAt,
-					});
-				}
+				// TODOS os registros em tempo real - dados compartilhados
+				records.push({
+					...data,
+					firebaseId: doc.id,
+					createdAt:
+						data.createdAt?.toDate?.()?.toISOString() ||
+						data.createdAt,
+					updatedAt:
+						data.updatedAt?.toDate?.()?.toISOString() ||
+						data.updatedAt,
+				});
 			});
 
 			// Atualizar dados locais
@@ -361,7 +359,9 @@ class FirebaseService {
 				updateUI();
 			}
 
-			console.log("Dados sincronizados em tempo real");
+			console.log(
+				`🔄 ${records.length} registros COMPARTILHADOS sincronizados em tempo real`
+			);
 		});
 	}
 
@@ -377,9 +377,10 @@ class FirebaseService {
 			return;
 		}
 
-		console.log(`🔄 Sincronizando ${pendingSync.length} registros...`);
+		console.log(
+			`🔄 Sincronizando ${pendingSync.length} registros compartilhados...`
+		);
 
-		// Sincronizar em paralelo para melhor performance
 		const syncPromises = pendingSync.map((record) =>
 			this.saveRecord(record)
 		);
@@ -387,13 +388,12 @@ class FirebaseService {
 		try {
 			await Promise.all(syncPromises);
 			console.log(
-				`✅ ${pendingSync.length} registros sincronizados com sucesso`
+				`✅ ${pendingSync.length} registros compartilhados sincronizados com sucesso`
 			);
 
-			// Notificar usuário
 			if (typeof UIUtils !== "undefined") {
 				UIUtils.showToast(
-					`${pendingSync.length} registros sincronizados na nuvem`,
+					`${pendingSync.length} registros sincronizados e compartilhados`,
 					"success"
 				);
 			}

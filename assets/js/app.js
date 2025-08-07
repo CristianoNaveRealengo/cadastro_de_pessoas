@@ -437,10 +437,22 @@ const appData = {
 // INICIALIZAÇÃO
 // ==============================================
 document.addEventListener("DOMContentLoaded", function () {
-	loadData();
-	updateUI();
-	updateYearFilterOptions();
-	updateForwardingFilterOptions();
+	// Aguardar Firebase estar disponível
+	setTimeout(() => {
+		if (window.firebaseService) {
+			firebaseService = window.firebaseService;
+			console.log(
+				"🔥 Firebase Service disponível - carregando dados da nuvem"
+			);
+			loadDataFromFirebase();
+		} else {
+			console.log("📱 Firebase não disponível - carregando dados locais");
+			loadData();
+		}
+		updateUI();
+		updateYearFilterOptions();
+		updateForwardingFilterOptions();
+	}, 2000);
 	// Configura os dropdowns de bairro
 	const citySelect = document.getElementById("city");
 	const searchCitySelect = document.getElementById("searchCity");
@@ -517,11 +529,39 @@ document.addEventListener("DOMContentLoaded", function () {
 // ==============================================
 // FUNÇÕES DE DADOS
 // ==============================================
+// Carregar dados do Firebase
+async function loadDataFromFirebase() {
+	if (firebaseService) {
+		try {
+			console.log("☁️ Carregando dados do Firebase...");
+			const records = await firebaseService.loadRecords();
+			appData.records = records;
+			updateTotalRecords();
+
+			console.log(
+				`✅ ${records.length} registros carregados do Firebase`
+			);
+
+			// Configurar sincronização em tempo real
+			firebaseService.setupRealtimeSync();
+		} catch (error) {
+			console.error("❌ Erro ao carregar do Firebase:", error);
+			console.log("📱 Carregando dados locais como fallback");
+			loadData(); // Fallback para localStorage
+		}
+	} else {
+		loadData();
+	}
+}
+
 function loadData() {
 	const savedData = localStorage.getItem("personalRecords");
 	if (savedData) {
 		appData.records = JSON.parse(savedData);
 		updateTotalRecords();
+		console.log(
+			`📱 ${appData.records.length} registros carregados localmente`
+		);
 	}
 }
 function saveData() {
@@ -733,6 +773,10 @@ function handleFormSubmit(e) {
 	// Adiciona o novo registro
 	appData.records.unshift(formData);
 	saveDataWithSync();
+
+	// Salvar no Firebase (background)
+	saveRecordToFirebase(formData);
+
 	updateUI();
 	clearForm();
 	// Feedback visual
@@ -1648,6 +1692,10 @@ function saveChanges() {
 	);
 	// Salva as alterações
 	saveDataWithSync();
+
+	// Atualizar no Firebase (background)
+	updateRecordInFirebase(appData.records[recordIndex]);
+
 	updateUI();
 	// Sai do modo de edição
 	appData.isEditMode = false;
@@ -1660,10 +1708,25 @@ function deleteRecord() {
 			"Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita."
 		)
 	) {
+		// Encontrar o registro antes de deletar (para pegar firebaseId)
+		const recordToDelete = appData.records.find(
+			(r) => r.id === appData.currentRecordId
+		);
+
+		// Remover do array local
 		appData.records = appData.records.filter(
 			(r) => r.id !== appData.currentRecordId
 		);
 		saveDataWithSync();
+
+		// Deletar do Firebase (background)
+		if (recordToDelete) {
+			deleteRecordFromFirebase(
+				appData.currentRecordId,
+				recordToDelete.firebaseId
+			);
+		}
+
 		updateUI();
 		closeModal();
 	}
@@ -1925,12 +1988,14 @@ function disconnectFromPeers() {
 }
 // Função para salvar dados com sincronização
 function saveDataWithSync() {
+	// SEMPRE salva localmente primeiro (UX instantânea)
 	localStorage.setItem("personalRecords", JSON.stringify(appData.records));
 	updateTotalRecords();
 	updateStatistics();
 	updateYearFilterOptions();
 	updateForwardingFilterOptions();
 	updateStatsByYear();
+
 	// Envia atualização para peers conectados
 	if (appData.connections.length > 0) {
 		sendDataToAllPeers({
@@ -1938,6 +2003,49 @@ function saveDataWithSync() {
 			data: appData.records,
 			timestamp: new Date().toISOString(),
 		});
+	}
+}
+
+// Função para salvar registro individual no Firebase
+async function saveRecordToFirebase(record) {
+	if (typeof firebaseService !== "undefined" && firebaseService) {
+		try {
+			console.log("💾 Salvando registro no Firebase:", record.fullName);
+			await firebaseService.saveRecord(record);
+		} catch (error) {
+			console.error("❌ Erro ao salvar no Firebase:", error);
+		}
+	} else {
+		console.log(
+			"📱 Firebase não disponível - dados salvos apenas localmente"
+		);
+	}
+}
+
+// Função para atualizar registro no Firebase
+async function updateRecordInFirebase(record) {
+	if (typeof firebaseService !== "undefined" && firebaseService) {
+		try {
+			console.log(
+				"🔄 Atualizando registro no Firebase:",
+				record.fullName
+			);
+			await firebaseService.updateRecord(record);
+		} catch (error) {
+			console.error("❌ Erro ao atualizar no Firebase:", error);
+		}
+	}
+}
+
+// Função para deletar registro do Firebase
+async function deleteRecordFromFirebase(recordId, firebaseId) {
+	if (typeof firebaseService !== "undefined" && firebaseService) {
+		try {
+			console.log("🗑️ Deletando registro do Firebase:", recordId);
+			await firebaseService.deleteRecord(recordId, firebaseId);
+		} catch (error) {
+			console.error("❌ Erro ao deletar do Firebase:", error);
+		}
 	}
 }
 // ==============================================
