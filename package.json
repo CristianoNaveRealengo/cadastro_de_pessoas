@@ -1,13 +1,31 @@
 {
-	"name": "cadastro-pessoas",
+	"name": "cadastro-pessoas-firebase",
 	"version": "1.0.0",
-	"description": "Sistema de Cadastro Pessoal",
+	"description": "Sistema de Cadastro Pessoal com Firebase e TypeScript",
+	"main": "dist/script.js",
 	"scripts": {
-		"build": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir .",
-		"watch": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir . --watch",
-		"dev": "tsc script.ts --target ES2017 --lib DOM,ES2017 --outDir . --watch"
+		"build": "tsc",
+		"dev": "tsc --watch",
+		"start": "live-server --port=3000",
+		"dev-server": "concurrently \"npm run dev\" \"npm run start\"",
+		"firebase:init": "firebase init",
+		"firebase:deploy": "npm run build && firebase deploy"
 	},
+	"keywords": [
+		"typescript",
+		"firebase",
+		"cadastro",
+		"pessoas"
+	],
+	"author": "Seu Nome",
+	"license": "MIT",
 	"devDependencies": {
-		"typescript": "^5.0.0"
+		"typescript": "^5.3.3",
+		"live-server": "^1.2.2",
+		"concurrently": "^8.2.2",
+		"@types/node": "^20.10.5"
+	},
+	"dependencies": {
+		"firebase": "^10.7.1"
 	}
 }

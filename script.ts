@@ -484,8 +484,10 @@ document.addEventListener("DOMContentLoaded", function (): void {
 
 	// Configura os dropdowns de bairro
 	const citySelect = document.getElementById("city") as HTMLSelectElement;
-	const searchCitySelect = document.getElementById("searchCity") as HTMLSelectElement;
-	
+	const searchCitySelect = document.getElementById(
+		"searchCity"
+	) as HTMLSelectElement;
+
 	if (citySelect) {
 		citySelect.addEventListener("change", updateNeighborhoods);
 	}
@@ -500,9 +502,13 @@ document.addEventListener("DOMContentLoaded", function (): void {
 	}
 
 	// Configura o formulário
-	const registrationForm = document.getElementById("registrationForm") as HTMLFormElement;
-	const clearFormBtn = document.getElementById("clearFormBtn") as HTMLButtonElement;
-	
+	const registrationForm = document.getElementById(
+		"registrationForm"
+	) as HTMLFormElement;
+	const clearFormBtn = document.getElementById(
+		"clearFormBtn"
+	) as HTMLButtonElement;
+
 	if (registrationForm) {
 		registrationForm.addEventListener("submit", handleFormSubmit);
 	}
@@ -512,8 +518,10 @@ document.addEventListener("DOMContentLoaded", function (): void {
 
 	// Configura a busca
 	const searchBtn = document.getElementById("searchBtn") as HTMLButtonElement;
-	const clearSearchBtn = document.getElementById("clearSearchBtn") as HTMLButtonElement;
-	
+	const clearSearchBtn = document.getElementById(
+		"clearSearchBtn"
+	) as HTMLButtonElement;
+
 	if (searchBtn) {
 		searchBtn.addEventListener("click", applyFilters);
 	}
@@ -522,9 +530,13 @@ document.addEventListener("DOMContentLoaded", function (): void {
 	}
 
 	// Configura as abas
-	const searchTabBtn = document.getElementById("searchTabBtn") as HTMLButtonElement;
-	const statsTabBtn = document.getElementById("statsTabBtn") as HTMLButtonElement;
-	
+	const searchTabBtn = document.getElementById(
+		"searchTabBtn"
+	) as HTMLButtonElement;
+	const statsTabBtn = document.getElementById(
+		"statsTabBtn"
+	) as HTMLButtonElement;
+
 	if (searchTabBtn) {
 		searchTabBtn.addEventListener("click", showSearchTab);
 	}
@@ -534,8 +546,10 @@ document.addEventListener("DOMContentLoaded", function (): void {
 
 	// Configura exportação e importação
 	const exportBtn = document.getElementById("exportBtn") as HTMLButtonElement;
-	const importInput = document.getElementById("importInput") as HTMLInputElement;
-	
+	const importInput = document.getElementById(
+		"importInput"
+	) as HTMLInputElement;
+
 	if (exportBtn) {
 		exportBtn.addEventListener("click", exportData);
 	}
@@ -544,9 +558,13 @@ document.addEventListener("DOMContentLoaded", function (): void {
 	}
 
 	// Configura paginação
-	const prevPageBtn = document.getElementById("prevPage") as HTMLButtonElement;
-	const nextPageBtn = document.getElementById("nextPage") as HTMLButtonElement;
-	
+	const prevPageBtn = document.getElementById(
+		"prevPage"
+	) as HTMLButtonElement;
+	const nextPageBtn = document.getElementById(
+		"nextPage"
+	) as HTMLButtonElement;
+
 	if (prevPageBtn) {
 		prevPageBtn.addEventListener("click", goToPrevPage);
 	}
@@ -556,9 +574,13 @@ document.addEventListener("DOMContentLoaded", function (): void {
 
 	// Configura sincronização
 	const syncBtn = document.getElementById("syncBtn") as HTMLButtonElement;
-	const connectBtn = document.getElementById("connectBtn") as HTMLButtonElement;
-	const disconnectAllBtn = document.getElementById("disconnectAllBtn") as HTMLButtonElement;
-	
+	const connectBtn = document.getElementById(
+		"connectBtn"
+	) as HTMLButtonElement;
+	const disconnectAllBtn = document.getElementById(
+		"disconnectAllBtn"
+	) as HTMLButtonElement;
+
 	if (syncBtn) {
 		syncBtn.addEventListener("click", toggleSyncPanel);
 	}
@@ -594,8 +616,9 @@ function saveData(): void {
 function updateTotalRecords(): void {
 	const total = appData.records.length;
 	const totalRecordsElement = document.getElementById("totalRecords");
-	const statsTotalRecordsElement = document.getElementById("statsTotalRecords");
-	
+	const statsTotalRecordsElement =
+		document.getElementById("statsTotalRecords");
+
 	if (totalRecordsElement) {
 		totalRecordsElement.textContent = total.toString();
 	}
@@ -692,13 +715,17 @@ function importData(event: Event): void {
 					setTimeout(() => {
 						importBtn.innerHTML =
 							'<i class="fas fa-file-import mr-2"></i> Importar';
-						importBtn.classList.remove("bg-blue-700", "animate-pulse");
+						importBtn.classList.remove(
+							"bg-blue-700",
+							"animate-pulse"
+						);
 						importBtn.classList.add("bg-blue-600");
 					}, 2000);
 				}
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+			const errorMessage =
+				error instanceof Error ? error.message : "Erro desconhecido";
 			alert("Erro ao importar dados: " + errorMessage);
 			console.error(error);
 		}
@@ -716,17 +743,29 @@ function importData(event: Event): void {
 function handleFormSubmit(e: Event): void {
 	e.preventDefault();
 
-	const fullNameInput = document.getElementById("fullName") as HTMLInputElement;
+	const fullNameInput = document.getElementById(
+		"fullName"
+	) as HTMLInputElement;
 	const originSelect = document.getElementById("origin") as HTMLSelectElement;
 	const dobInput = document.getElementById("dob") as HTMLInputElement;
 	const ageInput = document.getElementById("age") as HTMLInputElement;
 	const citySelect = document.getElementById("city") as HTMLSelectElement;
-	const neighborhoodSelect = document.getElementById("neighborhood") as HTMLSelectElement;
-	const educationSelect = document.getElementById("education") as HTMLSelectElement;
+	const neighborhoodSelect = document.getElementById(
+		"neighborhood"
+	) as HTMLSelectElement;
+	const educationSelect = document.getElementById(
+		"education"
+	) as HTMLSelectElement;
 	const statusSelect = document.getElementById("status") as HTMLSelectElement;
-	const referenceNameInput = document.getElementById("referenceName") as HTMLInputElement;
-	const forwardingInput = document.getElementById("forwarding") as HTMLInputElement;
-	const observationTextarea = document.getElementById("observation") as HTMLTextAreaElement;
+	const referenceNameInput = document.getElementById(
+		"referenceName"
+	) as HTMLInputElement;
+	const forwardingInput = document.getElementById(
+		"forwarding"
+	) as HTMLInputElement;
+	const observationTextarea = document.getElementById(
+		"observation"
+	) as HTMLTextAreaElement;
 
 	const formData: PersonRecord = {
 		id: Date.now().toString(),
@@ -794,10 +833,14 @@ function handleFormSubmit(e: Event): void {
 }
 
 function clearForm(): void {
-	const registrationForm = document.getElementById("registrationForm") as HTMLFormElement;
+	const registrationForm = document.getElementById(
+		"registrationForm"
+	) as HTMLFormElement;
 	const ageInput = document.getElementById("age") as HTMLInputElement;
-	const neighborhoodSelect = document.getElementById("neighborhood") as HTMLSelectElement;
-	
+	const neighborhoodSelect = document.getElementById(
+		"neighborhood"
+	) as HTMLSelectElement;
+
 	if (registrationForm) {
 		registrationForm.reset();
 	}
@@ -813,9 +856,9 @@ function clearForm(): void {
 function calculateAge(): void {
 	const dobInput = document.getElementById("dob") as HTMLInputElement;
 	const ageInput = document.getElementById("age") as HTMLInputElement;
-	
+
 	if (!dobInput || !ageInput) return;
-	
+
 	const dob = dobInput.value;
 	if (!dob) return;
 
@@ -836,10 +879,12 @@ function calculateAge(): void {
 
 function updateNeighborhoods(): void {
 	const citySelect = document.getElementById("city") as HTMLSelectElement;
-	const neighborhoodSelect = document.getElementById("neighborhood") as HTMLSelectElement;
-	
+	const neighborhoodSelect = document.getElementById(
+		"neighborhood"
+	) as HTMLSelectElement;
+
 	if (!citySelect || !neighborhoodSelect) return;
-	
+
 	const selectedCity = citySelect.value;
 
 	neighborhoodSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -855,11 +900,15 @@ function updateNeighborhoods(): void {
 }
 
 function updateSearchNeighborhoods(): void {
-	const citySelect = document.getElementById("searchCity") as HTMLSelectElement;
-	const neighborhoodSelect = document.getElementById("searchNeighborhood") as HTMLSelectElement;
-	
+	const citySelect = document.getElementById(
+		"searchCity"
+	) as HTMLSelectElement;
+	const neighborhoodSelect = document.getElementById(
+		"searchNeighborhood"
+	) as HTMLSelectElement;
+
 	if (!citySelect || !neighborhoodSelect) return;
-	
+
 	const selectedCity = citySelect.value;
 
 	neighborhoodSelect.innerHTML = '<option value="">Todos</option>';
@@ -875,9 +924,11 @@ function updateSearchNeighborhoods(): void {
 }
 
 function updateYearFilterOptions(): void {
-	const yearSelect = document.getElementById("searchYear") as HTMLSelectElement;
+	const yearSelect = document.getElementById(
+		"searchYear"
+	) as HTMLSelectElement;
 	if (!yearSelect) return;
-	
+
 	const years = new Set(
 		appData.records.map((record: PersonRecord) =>
 			new Date(record.createdAt).getFullYear()
@@ -896,11 +947,15 @@ function updateYearFilterOptions(): void {
 }
 
 function updateForwardingFilterOptions(): void {
-	const forwardingSelect = document.getElementById("searchForwarding") as HTMLSelectElement;
+	const forwardingSelect = document.getElementById(
+		"searchForwarding"
+	) as HTMLSelectElement;
 	if (!forwardingSelect) return;
-	
+
 	const forwardings = new Set(
-		appData.records.map((record: PersonRecord) => record.forwarding).filter((f: string) => f)
+		appData.records
+			.map((record: PersonRecord) => record.forwarding)
+			.filter((f: string) => f)
 	);
 
 	forwardingSelect.innerHTML = '<option value="">Todos</option>';
@@ -924,11 +979,21 @@ function applyFilters(): void {
 }
 
 function clearSearchFilters(): void {
-	const searchNameInput = document.getElementById("searchName") as HTMLInputElement;
-	const searchCitySelect = document.getElementById("searchCity") as HTMLSelectElement;
-	const searchNeighborhoodSelect = document.getElementById("searchNeighborhood") as HTMLSelectElement;
-	const searchOriginSelect = document.getElementById("searchOrigin") as HTMLSelectElement;
-	const searchStatusSelect = document.getElementById("searchStatus") as HTMLSelectElement;
+	const searchNameInput = document.getElementById(
+		"searchName"
+	) as HTMLInputElement;
+	const searchCitySelect = document.getElementById(
+		"searchCity"
+	) as HTMLSelectElement;
+	const searchNeighborhoodSelect = document.getElementById(
+		"searchNeighborhood"
+	) as HTMLSelectElement;
+	const searchOriginSelect = document.getElementById(
+		"searchOrigin"
+	) as HTMLSelectElement;
+	const searchStatusSelect = document.getElementById(
+		"searchStatus"
+	) as HTMLSelectElement;
 
 	if (searchNameInput) searchNameInput.value = "";
 	if (searchCitySelect) searchCitySelect.value = "";
@@ -942,14 +1007,30 @@ function clearSearchFilters(): void {
 }
 
 function getFilteredRecords(): PersonRecord[] {
-	const searchNameInput = document.getElementById("searchName") as HTMLInputElement;
-	const searchCitySelect = document.getElementById("searchCity") as HTMLSelectElement;
-	const searchNeighborhoodSelect = document.getElementById("searchNeighborhood") as HTMLSelectElement;
-	const searchOriginSelect = document.getElementById("searchOrigin") as HTMLSelectElement;
-	const searchStatusSelect = document.getElementById("searchStatus") as HTMLSelectElement;
-	const searchEducationSelect = document.getElementById("searchEducation") as HTMLSelectElement;
-	const searchYearSelect = document.getElementById("searchYear") as HTMLSelectElement;
-	const searchForwardingSelect = document.getElementById("searchForwarding") as HTMLSelectElement;
+	const searchNameInput = document.getElementById(
+		"searchName"
+	) as HTMLInputElement;
+	const searchCitySelect = document.getElementById(
+		"searchCity"
+	) as HTMLSelectElement;
+	const searchNeighborhoodSelect = document.getElementById(
+		"searchNeighborhood"
+	) as HTMLSelectElement;
+	const searchOriginSelect = document.getElementById(
+		"searchOrigin"
+	) as HTMLSelectElement;
+	const searchStatusSelect = document.getElementById(
+		"searchStatus"
+	) as HTMLSelectElement;
+	const searchEducationSelect = document.getElementById(
+		"searchEducation"
+	) as HTMLSelectElement;
+	const searchYearSelect = document.getElementById(
+		"searchYear"
+	) as HTMLSelectElement;
+	const searchForwardingSelect = document.getElementById(
+		"searchForwarding"
+	) as HTMLSelectElement;
 
 	const nameFilter = searchNameInput?.value.toLowerCase() || "";
 	const cityFilter = searchCitySelect?.value || "";
@@ -1007,7 +1088,7 @@ function goToNextPage(): void {
 function updatePagination(filteredRecords: PersonRecord[]): void {
 	const paginationElement = document.getElementById("pagination");
 	if (!paginationElement) return;
-	
+
 	const totalRecords = filteredRecords.length;
 	const totalPages = Math.ceil(totalRecords / appData.recordsPerPage);
 
@@ -1041,7 +1122,7 @@ function updatePagination(filteredRecords: PersonRecord[]): void {
 	// Atualizar números de página
 	const paginationList = paginationElement.querySelector("ul");
 	if (!paginationList) return;
-	
+
 	const existingPageItems = paginationList.querySelectorAll(
 		".page-item:not(#prevPage):not(#nextPage)"
 	);
@@ -1086,7 +1167,7 @@ function updateUI(): void {
 function updateRecordsTable(records: PersonRecord[]): void {
 	const tableBody = document.getElementById("recordsTableBody");
 	if (!tableBody) return;
-	
+
 	const totalRecords = records.length;
 
 	if (totalRecords === 0) {
@@ -1215,7 +1296,7 @@ function updateStatistics(): void {
 function updateAverageAge(): void {
 	const statsAvgAgeElement = document.getElementById("statsAvgAge");
 	if (!statsAvgAgeElement) return;
-	
+
 	if (appData.records.length === 0) {
 		statsAvgAgeElement.textContent = "0";
 		return;
@@ -1232,7 +1313,7 @@ function updateAverageAge(): void {
 function updateStatsByCity(): void {
 	const statsElement = document.getElementById("statsByCity");
 	if (!statsElement) return;
-	
+
 	const cities: Record<string, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1269,7 +1350,7 @@ function updateStatsByCity(): void {
 function updateStatsByOrigin(): void {
 	const statsElement = document.getElementById("statsByOrigin");
 	if (!statsElement) return;
-	
+
 	const origins: Record<string, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1306,7 +1387,7 @@ function updateStatsByOrigin(): void {
 function updateStatsByEducation(): void {
 	const statsElement = document.getElementById("statsByEducation");
 	if (!statsElement) return;
-	
+
 	const educations: Record<string, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1343,7 +1424,7 @@ function updateStatsByEducation(): void {
 function updateStatsByStatus(): void {
 	const statsElement = document.getElementById("statsByStatus");
 	if (!statsElement) return;
-	
+
 	const statuses: Record<string, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1382,7 +1463,7 @@ function updateStatsByStatus(): void {
 function updateStatsByYear(): void {
 	const statsElement = document.getElementById("statsByYear");
 	if (!statsElement) return;
-	
+
 	const years: Record<number, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1420,7 +1501,7 @@ function updateStatsByYear(): void {
 function updateStatsByForwarding(): void {
 	const statsElement = document.getElementById("statsByForwarding");
 	if (!statsElement) return;
-	
+
 	const forwardings: Record<string, number> = {};
 
 	appData.records.forEach((record: PersonRecord) => {
@@ -1475,7 +1556,7 @@ function showSearchTab(): void {
 	const statsContent = document.getElementById("statsContent");
 	const searchTabBtn = document.getElementById("searchTabBtn");
 	const statsTabBtn = document.getElementById("statsTabBtn");
-	
+
 	if (searchContent) searchContent.classList.remove("hidden");
 	if (statsContent) statsContent.classList.add("hidden");
 	if (searchTabBtn) searchTabBtn.classList.add("tab-active");
@@ -1487,7 +1568,7 @@ function showStatsTab(): void {
 	const statsContent = document.getElementById("statsContent");
 	const searchTabBtn = document.getElementById("searchTabBtn");
 	const statsTabBtn = document.getElementById("statsTabBtn");
-	
+
 	if (searchContent) searchContent.classList.add("hidden");
 	if (statsContent) statsContent.classList.remove("hidden");
 	if (searchTabBtn) searchTabBtn.classList.remove("tab-active");
@@ -1520,28 +1601,46 @@ function viewRecord(id: string): void {
 		modalForwarding: document.getElementById("modalForwarding"),
 		modalObservation: document.getElementById("modalObservation"),
 		modalCreatedAt: document.getElementById("modalCreatedAt"),
-		printDate: document.getElementById("printDate")
+		printDate: document.getElementById("printDate"),
 	};
 
-	if (modalElements.modalFullName) modalElements.modalFullName.textContent = record.fullName;
-	if (modalElements.modalOrigin) modalElements.modalOrigin.textContent = record.origin;
-	if (modalElements.modalDob) modalElements.modalDob.textContent = formatDate(record.dob);
-	if (modalElements.modalAge) modalElements.modalAge.textContent = record.age.toString();
-	if (modalElements.modalCity) modalElements.modalCity.textContent = record.city;
-	if (modalElements.modalNeighborhood) modalElements.modalNeighborhood.textContent = record.neighborhood;
-	if (modalElements.modalEducation) modalElements.modalEducation.textContent = record.education || "-";
-	if (modalElements.modalStatus) modalElements.modalStatus.textContent = record.status;
-	if (modalElements.modalReferenceName) modalElements.modalReferenceName.textContent = record.referenceName || "-";
-	if (modalElements.modalForwarding) modalElements.modalForwarding.textContent = record.forwarding || "-";
-	if (modalElements.modalObservation) modalElements.modalObservation.textContent = record.observation || "-";
-	if (modalElements.modalCreatedAt) modalElements.modalCreatedAt.textContent = formatDateTime(record.createdAt);
-	if (modalElements.printDate) modalElements.printDate.textContent = formatDateTime(new Date().toISOString());
+	if (modalElements.modalFullName)
+		modalElements.modalFullName.textContent = record.fullName;
+	if (modalElements.modalOrigin)
+		modalElements.modalOrigin.textContent = record.origin;
+	if (modalElements.modalDob)
+		modalElements.modalDob.textContent = formatDate(record.dob);
+	if (modalElements.modalAge)
+		modalElements.modalAge.textContent = record.age.toString();
+	if (modalElements.modalCity)
+		modalElements.modalCity.textContent = record.city;
+	if (modalElements.modalNeighborhood)
+		modalElements.modalNeighborhood.textContent = record.neighborhood;
+	if (modalElements.modalEducation)
+		modalElements.modalEducation.textContent = record.education || "-";
+	if (modalElements.modalStatus)
+		modalElements.modalStatus.textContent = record.status;
+	if (modalElements.modalReferenceName)
+		modalElements.modalReferenceName.textContent =
+			record.referenceName || "-";
+	if (modalElements.modalForwarding)
+		modalElements.modalForwarding.textContent = record.forwarding || "-";
+	if (modalElements.modalObservation)
+		modalElements.modalObservation.textContent = record.observation || "-";
+	if (modalElements.modalCreatedAt)
+		modalElements.modalCreatedAt.textContent = formatDateTime(
+			record.createdAt
+		);
+	if (modalElements.printDate)
+		modalElements.printDate.textContent = formatDateTime(
+			new Date().toISOString()
+		);
 
 	// Mostra o modal
 	const recordModal = document.getElementById("recordModal");
 	const editBtn = document.getElementById("editBtn");
 	const saveBtn = document.getElementById("saveBtn");
-	
+
 	if (recordModal) recordModal.classList.remove("hidden");
 	if (editBtn) editBtn.classList.remove("hidden");
 	if (saveBtn) saveBtn.classList.add("hidden");
@@ -1592,9 +1691,14 @@ function enableEditMode(): void {
 	if (modalCity) {
 		modalCity.innerHTML = `
                 <select id="editCity" class="w-full px-2 py-1 border rounded">
-                    ${Object.keys(appData.neighborhoods).map(city => 
-						`<option value="${city}" ${record.city === city ? "selected" : ""}>${city}</option>`
-					).join("")}
+                    ${Object.keys(appData.neighborhoods)
+						.map(
+							(city) =>
+								`<option value="${city}" ${
+									record.city === city ? "selected" : ""
+								}>${city}</option>`
+						)
+						.join("")}
                 </select>
             `;
 	}
@@ -1618,15 +1722,34 @@ function enableEditMode(): void {
 	const modalEducation = document.getElementById("modalEducation");
 	if (modalEducation) {
 		const educationOptions = [
-			"", "1ª série EF", "2ª série EF", "3ª série EF", "4ª série EF", "5ª série EF",
-			"6ª série EF", "7ª série EF", "8ª série EF", "9ª série EF", "Fundamental Completo",
-			"1º ano EM", "2º ano EM", "3º ano EM", "Médio Completo"
+			"",
+			"1ª série EF",
+			"2ª série EF",
+			"3ª série EF",
+			"4ª série EF",
+			"5ª série EF",
+			"6ª série EF",
+			"7ª série EF",
+			"8ª série EF",
+			"9ª série EF",
+			"Fundamental Completo",
+			"1º ano EM",
+			"2º ano EM",
+			"3º ano EM",
+			"Médio Completo",
 		];
-		
+
 		modalEducation.innerHTML = `<select id="editEducation" class="w-full px-2 py-1 border rounded">
-					${educationOptions.map(option => 
-						`<option value="${option}" ${record.education === option ? "selected" : ""}>${option || "Selecione..."}</option>`
-					).join("")}
+					${educationOptions
+						.map(
+							(option) =>
+								`<option value="${option}" ${
+									record.education === option
+										? "selected"
+										: ""
+								}>${option || "Selecione..."}</option>`
+						)
+						.join("")}
 				</select>`;
 	}
 
@@ -1671,7 +1794,7 @@ function enableEditMode(): void {
 	// Atualiza os botões
 	const editBtn = document.getElementById("editBtn");
 	const saveBtn = document.getElementById("saveBtn");
-	
+
 	if (editBtn) editBtn.classList.add("hidden");
 	if (saveBtn) saveBtn.classList.remove("hidden");
 }
@@ -1703,15 +1826,31 @@ function saveChanges(): void {
 	}
 
 	// Obtém os valores dos campos editáveis
-	const editFullName = document.getElementById("editFullName") as HTMLInputElement;
-	const editOrigin = document.getElementById("editOrigin") as HTMLSelectElement;
+	const editFullName = document.getElementById(
+		"editFullName"
+	) as HTMLInputElement;
+	const editOrigin = document.getElementById(
+		"editOrigin"
+	) as HTMLSelectElement;
 	const editCity = document.getElementById("editCity") as HTMLSelectElement;
-	const editNeighborhood = document.getElementById("editNeighborhood") as HTMLSelectElement;
-	const editEducation = document.getElementById("editEducation") as HTMLSelectElement;
-	const editStatus = document.getElementById("editStatus") as HTMLSelectElement;
-	const editReferenceName = document.getElementById("editReferenceName") as HTMLInputElement;
-	const editForwarding = document.getElementById("editForwarding") as HTMLInputElement;
-	const editObservation = document.getElementById("editObservation") as HTMLTextAreaElement;
+	const editNeighborhood = document.getElementById(
+		"editNeighborhood"
+	) as HTMLSelectElement;
+	const editEducation = document.getElementById(
+		"editEducation"
+	) as HTMLSelectElement;
+	const editStatus = document.getElementById(
+		"editStatus"
+	) as HTMLSelectElement;
+	const editReferenceName = document.getElementById(
+		"editReferenceName"
+	) as HTMLInputElement;
+	const editForwarding = document.getElementById(
+		"editForwarding"
+	) as HTMLInputElement;
+	const editObservation = document.getElementById(
+		"editObservation"
+	) as HTMLTextAreaElement;
 
 	// Atualiza o registro
 	appData.records[recordIndex] = {
@@ -1761,7 +1900,7 @@ function printRecord(): void {
 	if (printDateElement) {
 		printDateElement.textContent = new Date().toLocaleString();
 	}
-	
+
 	// A modal precisa estar aberta (sem class="hidden")
 	const modal = document.getElementById("recordModal");
 	if (modal?.classList.contains("hidden")) {
@@ -1814,7 +1953,9 @@ function initSyncSystem(): void {
 		// Eventos do peer
 		appData.peer.on("open", function (id: string): void {
 			console.log("Peer conectado com ID:", id);
-			const myPeerIdInput = document.getElementById("myPeerId") as HTMLInputElement;
+			const myPeerIdInput = document.getElementById(
+				"myPeerId"
+			) as HTMLInputElement;
 			if (myPeerIdInput) {
 				myPeerIdInput.value = id;
 			}
@@ -1836,7 +1977,6 @@ function initSyncSystem(): void {
 		if (copyPeerIdBtn) {
 			copyPeerIdBtn.addEventListener("click", copyPeerId);
 		}
-
 	} catch (error) {
 		console.error("Erro ao inicializar sistema de sincronização:", error);
 	}
@@ -1845,7 +1985,7 @@ function initSyncSystem(): void {
 function toggleSyncPanel(): void {
 	const syncPanel = document.getElementById("syncPanel");
 	if (!syncPanel) return;
-	
+
 	if (syncPanel.style.display === "none" || syncPanel.style.display === "") {
 		syncPanel.style.display = "block";
 		if (!appData.peer) {
@@ -1857,9 +1997,11 @@ function toggleSyncPanel(): void {
 }
 
 function connectToPeer(): void {
-	const targetPeerIdInput = document.getElementById("targetPeerId") as HTMLInputElement;
+	const targetPeerIdInput = document.getElementById(
+		"targetPeerId"
+	) as HTMLInputElement;
 	if (!targetPeerIdInput || !appData.peer) return;
-	
+
 	const targetPeerId = targetPeerIdInput.value.trim();
 	if (!targetPeerId) {
 		alert("Digite o ID do usuário para conectar");
@@ -1897,13 +2039,17 @@ function setupConnection(conn: any): void {
 
 	conn.on("close", function (): void {
 		console.log("Conexão fechada com:", conn.peer);
-		appData.connections = appData.connections.filter((c: any) => c !== conn);
+		appData.connections = appData.connections.filter(
+			(c: any) => c !== conn
+		);
 		updateConnectionsList();
 	});
 
 	conn.on("error", function (err: any): void {
 		console.error("Erro na conexão:", err);
-		appData.connections = appData.connections.filter((c: any) => c !== conn);
+		appData.connections = appData.connections.filter(
+			(c: any) => c !== conn
+		);
 		updateConnectionsList();
 	});
 }
@@ -1933,17 +2079,21 @@ function updateSyncStatus(status: string): void {
 function updateLastSyncTime(): void {
 	const lastSyncTimeElement = document.getElementById("lastSyncTime");
 	if (lastSyncTimeElement && appData.lastSyncTime) {
-		lastSyncTimeElement.textContent = `Última sincronização: ${formatDateTime(appData.lastSyncTime)}`;
+		lastSyncTimeElement.textContent = `Última sincronização: ${formatDateTime(
+			appData.lastSyncTime
+		)}`;
 	}
 }
 
 function copyPeerId(): void {
-	const myPeerIdInput = document.getElementById("myPeerId") as HTMLInputElement;
+	const myPeerIdInput = document.getElementById(
+		"myPeerId"
+	) as HTMLInputElement;
 	if (!myPeerIdInput) return;
-	
+
 	myPeerIdInput.select();
 	document.execCommand("copy");
-	
+
 	const copyBtn = document.getElementById("copyPeerIdBtn");
 	if (copyBtn) {
 		const originalText = copyBtn.innerHTML;
@@ -1967,7 +2117,8 @@ function updateConnectionsList(): void {
 		if (disconnectBtn) disconnectBtn.style.display = "none";
 		if (syncStatus) {
 			syncStatus.textContent = "Pronto para conectar";
-			syncStatus.className = "text-sm px-2 py-1 rounded-full bg-green-100 text-green-600";
+			syncStatus.className =
+				"text-sm px-2 py-1 rounded-full bg-green-100 text-green-600";
 		}
 	} else {
 		connectionsList.innerHTML = appData.connections
@@ -1982,7 +2133,8 @@ function updateConnectionsList(): void {
 		if (disconnectBtn) disconnectBtn.style.display = "block";
 		if (syncStatus) {
 			syncStatus.textContent = `${appData.connections.length} conexão(ões) ativa(s)`;
-			syncStatus.className = "text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-600";
+			syncStatus.className =
+				"text-sm px-2 py-1 rounded-full bg-blue-100 text-blue-600";
 		}
 	}
 }

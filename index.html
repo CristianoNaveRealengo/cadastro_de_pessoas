@@ -11,6 +11,8 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="style.css">
         <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+        
+
 
     </head>
 
@@ -35,6 +37,11 @@
                             <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg flex items-center">
                                 <i class="fas fa-database mr-2"></i>
                                 <span id="totalRecords" class="font-semibold mr-2">0</span> registros
+                            </div>
+                            <div class="bg-gray-100 text-gray-700 px-3 py-2 rounded-lg flex items-center">
+                                <span id="connectionStatus" class="text-sm">
+                                    <i class="fas fa-cloud-slash text-gray-500"></i> Conectando...
+                                </span>
                             </div>
                             <button id="syncBtn"
                                 class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center">
@@ -992,6 +999,9 @@
             </div>
         </body>
         <script src="script.js"></script>
-
+        <script src="utils.js"></script>
+        <script type="module" src="firebase-config.js"></script>
+        <script src="enhancements.js"></script>
+        <script src="dev-config.js"></script>
 
 </html>
