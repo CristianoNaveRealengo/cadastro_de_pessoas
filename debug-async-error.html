@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Erro de Listener Assíncrono</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-center">
+            <i class="fas fa-bug mr-2 text-red-500"></i>
+            Debug - Erro de Listener Assíncrono
+        </h1>
+
+        <!-- Informações do Erro -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 text-red-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Erro Identificado
+            </h2>
+            <div class="bg-red-900 text-red-100 p-4 rounded font-mono text-sm mb-4">
+                Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+            </div>
+            <p class="text-red-700">
+                Este erro geralmente ocorre devido a extensões do navegador ou problemas de comunicação assíncrona.
+            </p>
+        </div>
+
+        <!-- Diagnóstico -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-stethoscope mr-2 text-blue-500"></i>
+                Diagnóstico Automático
+            </h2>
+            <div id="diagnosticResults" class="space-y-4">
+                <div class="flex items-center">
+                    <i class="fas fa-spinner animate-spin mr-2 text-blue-500"></i>
+                    Executando diagnóstico...
+                </div>
+            </div>
+        </div>
+
+        <!-- Soluções -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-tools mr-2 text-green-500"></i>
+                Soluções Recomendadas
+            </h2>
+            <div class="space-y-4">
+                <div class="border-l-4 border-blue-500 pl-4">
+                    <h3 class="font-semibold text-blue-700">1. Desabilitar Extensões Temporariamente</h3>
+                    <p class="text-gray-600">Teste em modo incógnito ou desabilite extensões uma por uma.</p>
+                    <button id="testIncognito" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                        <i class="fas fa-user-secret mr-2"></i>
+                        Instruções para Modo Incógnito
+                    </button>
+                </div>
+
+                <div class="border-l-4 border-green-500 pl-4">
+                    <h3 class="font-semibold text-green-700">2. Corrigir Listeners Assíncronos</h3>
+                    <p class="text-gray-600">Implementar tratamento adequado de promises.</p>
+                    <button id="showAsyncFix" class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+                        <i class="fas fa-code mr-2"></i>
+                        Ver Correção de Código
+                    </button>
+                </div>
+
+                <div class="border-l-4 border-purple-500 pl-4">
+                    <h3 class="font-semibold text-purple-700">3. Implementar Error Boundaries</h3>
+                    <p class="text-gray-600">Capturar e tratar erros assíncronos adequadamente.</p>
+                    <button id="showErrorBoundary" class="mt-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                        <i class="fas fa-shield-alt mr-2"></i>
+                        Ver Error Boundary
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teste de Comunicação -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-vial mr-2 text-yellow-500"></i>
+                Teste de Comunicação Assíncrona
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button id="testPromise" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-clock mr-2"></i>
+                    Testar Promise
+                </button>
+                <button id="testAsync" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-sync mr-2"></i>
+                    Testar Async/Await
+                </button>
+                <button id="testListener" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                    <i class="fas fa-ear-listen mr-2"></i>
+                    Testar Event Listener
+                </button>
+            </div>
+            <div id="testResults" class="mt-4 p-4 bg-gray-100 rounded min-h-20">
+                Clique nos botões acima para testar diferentes tipos de comunicação assíncrona.
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-terminal mr-2 text-gray-600"></i>
+                Console de Debug
+            </h2>
+            <div id="debugConsole" class="bg-gray-900 text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                [DEBUG] Sistema de debug iniciado...<br>
+            </div>
+            <button id="clearConsole" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+                <i class="fas fa-trash mr-2"></i>
+                Limpar Console
+            </button>
+        </div>
+    </div>
+
+    <!-- Modais -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-2xl max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-semibold"></h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const diagnosticResults = document.getElementById('diagnosticResults');
+        const testResults = document.getElementById('testResults');
+        const debugConsole = document.getElementById('debugConsole');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+
+        // Função para adicionar log
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-blue-400',
+                success: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400'
+            };
+            
+            debugConsole.innerHTML += `<span class="${colors[type]}">[${timestamp}] ${message}</span><br>`;
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+
+        // Função para mostrar modal
+        function showModal(title, content) {
+            modalTitle.textContent = title;
+            modalContent.innerHTML = content;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        // Diagnóstico automático
+        async function runDiagnostic() {
+            const results = [];
+            
+            // Verificar extensões
+            if (typeof chrome !== 'undefined' && chrome.runtime) {
+                results.push({
+                    icon: 'fas fa-puzzle-piece',
+                    text: 'Extensões do Chrome detectadas',
+                    status: 'warning',
+                    solution: 'Teste em modo incógnito'
+                });
+            }
+
+            // Verificar Service Workers
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    results.push({
+                        icon: 'fas fa-cog',
+                        text: `${registrations.length} Service Worker(s) ativo(s)`,
+                        status: 'info',
+                        solution: 'Pode causar conflitos de comunicação'
+                    });
+                }
+            }
+
+            // Verificar listeners de erro
+            const hasErrorListeners = window.onerror !== null || window.onunhandledrejection !== null;
+            results.push({
+                icon: 'fas fa-exclamation-triangle',
+                text: hasErrorListeners ? 'Error handlers configurados' : 'Sem error handlers',
+                status: hasErrorListeners ? 'success' : 'warning',
+                solution: hasErrorListeners ? 'Configuração adequada' : 'Implementar error handling'
+            });
+
+            // Verificar promises pendentes
+            results.push({
+                icon: 'fas fa-clock',
+                text: 'Verificando promises pendentes...',
+                status: 'info',
+                solution: 'Implementar timeout adequado'
+            });
+
+            // Atualizar interface
+            diagnosticResults.innerHTML = results.map(result => `
+                <div class="flex items-center p-3 rounded ${
+                    result.status === 'success' ? 'bg-green-50 text-green-700' :
+                    result.status === 'warning' ? 'bg-yellow-50 text-yellow-700' :
+                    result.status === 'error' ? 'bg-red-50 text-red-700' :
+                    'bg-blue-50 text-blue-700'
+                }">
+                    <i class="${result.icon} mr-3"></i>
+                    <div class="flex-1">
+                        <div class="font-medium">${result.text}</div>
+                        <div class="text-sm opacity-75">${result.solution}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            addLog('Diagnóstico concluído', 'success');
+        }
+
+        // Testes de comunicação assíncrona
+        document.getElementById('testPromise').addEventListener('click', () => {
+            addLog('Testando Promise...', 'info');
+            
+            const promise = new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve('Promise resolvida com sucesso');
+                }, 1000);
+            });
+
+            promise
+                .then(result => {
+                    testResults.innerHTML = `<div class="text-green-600"><i class="fas fa-check mr-2"></i>${result}</div>`;
+                    addLog('Promise teste: SUCESSO', 'success');
+                })
+                .catch(error => {
+                    testResults.innerHTML = `<div class="text-red-600"><i class="fas fa-times mr-2"></i>Erro: ${error}</div>`;
+                    addLog('Promise teste: ERRO - ' + error, 'error');
+                });
+        });
+
+        document.getElementById('testAsync').addEventListener('click', async () => {
+            addLog('Testando Async/Await...', 'info');
+            
+            try {
+                testResults.innerHTML = '<div class="text-blue-600"><i class="fas fa-spinner animate-spin mr-2"></i>Testando async/await...</div>';
+                
+                const result = await new Promise(resolve => {
+                    setTimeout(() => resolve('Async/Await funcionando'), 1000);
+                });
+                
+                testResults.innerHTML = `<div class="text-green-600"><i class="fas fa-check mr-2"></i>${result}</div>`;
+                addLog('Async/Await teste: SUCESSO', 'success');
+            } catch (error) {
+                testResults.innerHTML = `<div class="text-red-600"><i class="fas fa-times mr-2"></i>Erro: ${error}</div>`;
+                addLog('Async/Await teste: ERRO - ' + error, 'error');
+            }
+        });
+
+        document.getElementById('testListener').addEventListener('click', () => {
+            addLog('Testando Event Listener...', 'info');
+            
+            // Simular um listener que pode causar o erro
+            const testEvent = new CustomEvent('testEvent');
+            
+            const listener = (event) => {
+                addLog('Event listener executado', 'info');
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        resolve('Listener assíncrono concluído');
+                    }, 500);
+                });
+            };
+
+            document.addEventListener('testEvent', listener, { once: true });
+            
+            setTimeout(() => {
+                document.dispatchEvent(testEvent);
+                testResults.innerHTML = '<div class="text-green-600"><i class="fas fa-check mr-2"></i>Event listener testado</div>';
+                addLog('Event Listener teste: SUCESSO', 'success');
+            }, 100);
+        });
+
+        // Botões de solução
+        document.getElementById('testIncognito').addEventListener('click', () => {
+            showModal('Modo Incógnito', `
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Como testar em modo incógnito:</h4>
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li><strong>Chrome:</strong> Ctrl+Shift+N (Windows) ou Cmd+Shift+N (Mac)</li>
+                        <li><strong>Firefox:</strong> Ctrl+Shift+P (Windows) ou Cmd+Shift+P (Mac)</li>
+                        <li><strong>Edge:</strong> Ctrl+Shift+N (Windows) ou Cmd+Shift+N (Mac)</li>
+                        <li><strong>Safari:</strong> Cmd+Shift+N (Mac)</li>
+                    </ol>
+                    <p class="text-gray-600 mt-4">
+                        No modo incógnito, a maioria das extensões está desabilitada, 
+                        o que pode resolver o erro se ele for causado por uma extensão.
+                    </p>
+                </div>
+            `);
+        });
+
+        document.getElementById('showAsyncFix').addEventListener('click', () => {
+            showModal('Correção de Código Assíncrono', `
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Problema comum:</h4>
+                    <pre class="bg-red-50 p-3 rounded text-sm"><code>// ❌ PROBLEMÁTICO
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // Operação assíncrona sem tratamento adequado
+    fetch('/api/data').then(response => {
+        sendResponse(response);
+    });
+    return true; // Indica resposta assíncrona
+});</code></pre>
+
+                    <h4 class="font-semibold">Solução:</h4>
+                    <pre class="bg-green-50 p-3 rounded text-sm"><code>// ✅ CORRETO
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    (async () => {
+        try {
+            const response = await fetch('/api/data');
+            const data = await response.json();
+            sendResponse({ success: true, data });
+        } catch (error) {
+            sendResponse({ success: false, error: error.message });
+        }
+    })();
+    return true; // Indica resposta assíncrona
+});</code></pre>
+
+                    <h4 class="font-semibold">Para Event Listeners:</h4>
+                    <pre class="bg-blue-50 p-3 rounded text-sm"><code>// ✅ TRATAMENTO ADEQUADO
+element.addEventListener('click', async (event) => {
+    try {
+        const result = await someAsyncOperation();
+        console.log('Sucesso:', result);
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+});</code></pre>
+                </div>
+            `);
+        });
+
+        document.getElementById('showErrorBoundary').addEventListener('click', () => {
+            showModal('Error Boundary Global', `
+                <div class="space-y-4">
+                    <h4 class="font-semibold">Implementar no início do seu app:</h4>
+                    <pre class="bg-gray-50 p-3 rounded text-sm"><code>// Error handler global para promises rejeitadas
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Promise rejeitada:', event.reason);
+    
+    // Prevenir que o erro apareça no console
+    event.preventDefault();
+    
+    // Log personalizado ou envio para serviço de monitoramento
+    logError('Unhandled Promise Rejection', event.reason);
+});
+
+// Error handler global para erros JavaScript
+window.addEventListener('error', (event) => {
+    console.error('Erro JavaScript:', event.error);
+    logError('JavaScript Error', event.error);
+});
+
+// Função para log de erros
+function logError(type, error) {
+    const errorInfo = {
+        type: type,
+        message: error.message || error,
+        stack: error.stack,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        url: window.location.href
+    };
+    
+    // Enviar para serviço de monitoramento ou salvar localmente
+    console.log('Error logged:', errorInfo);
+}</code></pre>
+
+                    <h4 class="font-semibold">Para funções assíncronas específicas:</h4>
+                    <pre class="bg-blue-50 p-3 rounded text-sm"><code>// Wrapper para funções assíncronas
+function safeAsync(asyncFn) {
+    return async (...args) => {
+        try {
+            return await asyncFn(...args);
+        } catch (error) {
+            console.error('Erro em função assíncrona:', error);
+            // Tratar erro adequadamente
+            throw error; // Re-throw se necessário
+        }
+    };
+}
+
+// Uso:
+const safeFunction = safeAsync(async () => {
+    // Sua função assíncrona aqui
+});</code></pre>
+                </div>
+            `);
+        });
+
+        // Event listeners para modal
+        document.getElementById('closeModal').addEventListener('click', () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        });
+
+        // Limpar console
+        document.getElementById('clearConsole').addEventListener('click', () => {
+            debugConsole.innerHTML = '[DEBUG] Console limpo...<br>';
+        });
+
+        // Implementar error handlers globais
+        window.addEventListener('unhandledrejection', (event) => {
+            addLog(`Promise rejeitada: ${event.reason}`, 'error');
+            event.preventDefault(); // Prevenir erro no console
+        });
+
+        window.addEventListener('error', (event) => {
+            addLog(`Erro JavaScript: ${event.error?.message || event.message}`, 'error');
+        });
+
+        // Inicializar
+        addLog('Sistema de debug carregado', 'success');
+        runDiagnostic();
+    </script>
+</body>
+</html>
