@@ -425,7 +425,7 @@ const appData = {
 	currentRecordId: null,
 	isEditMode: false,
 	currentPage: 1,
-	recordsPerPage: 6,
+	recordsPerPage: 5,
 	// Propriedades para sincronização peer-to-peer
 	peer: null,
 	peerId: null,
@@ -512,19 +512,6 @@ document.addEventListener("DOMContentLoaded", function () {
 	if (nextPageBtn) {
 		nextPageBtn.addEventListener("click", goToNextPage);
 	}
-	// Configura sincronização
-	const syncBtn = document.getElementById("syncBtn");
-	const connectBtn = document.getElementById("connectBtn");
-	const disconnectAllBtn = document.getElementById("disconnectAllBtn");
-	if (syncBtn) {
-		syncBtn.addEventListener("click", toggleSyncPanel);
-	}
-	if (connectBtn) {
-		connectBtn.addEventListener("click", connectToPeer);
-	}
-	if (disconnectAllBtn) {
-		disconnectAllBtn.addEventListener("click", disconnectFromPeers);
-	}
 });
 // ==============================================
 // FUNÇÕES DE DADOS
@@ -537,6 +524,8 @@ async function loadDataFromFirebase() {
 			const records = await firebaseService.loadRecords();
 			appData.records = records;
 			updateTotalRecords();
+			updateYearFilterOptions();
+			updateForwardingFilterOptions();
 
 			console.log(
 				`✅ ${records.length} registros carregados do Firebase`
@@ -559,6 +548,8 @@ function loadData() {
 	if (savedData) {
 		appData.records = JSON.parse(savedData);
 		updateTotalRecords();
+		updateYearFilterOptions();
+		updateForwardingFilterOptions();
 		console.log(
 			`📱 ${appData.records.length} registros carregados localmente`
 		);
@@ -1001,7 +992,7 @@ function updatePagination(filteredRecords) {
 	if (!paginationElement) return;
 	const totalRecords = filteredRecords.length;
 	const totalPages = Math.ceil(totalRecords / appData.recordsPerPage);
-	if (totalRecords <= appData.recordsPerPage) {
+	if (totalRecords < appData.recordsPerPage) {
 		paginationElement.classList.add("hidden");
 		return;
 	}
@@ -1060,6 +1051,10 @@ function updateUI() {
 	const filteredRecords = getFilteredRecords();
 	updateRecordsTable(filteredRecords);
 	updatePagination(filteredRecords);
+
+	// Atualizar filtros com dados atuais
+	updateYearFilterOptions();
+	updateForwardingFilterOptions();
 }
 function updateRecordsTable(records) {
 	const tableBody = document.getElementById("recordsTableBody");

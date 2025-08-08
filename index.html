@@ -11,7 +11,7 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="assets/css/style.css">
         <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-        
+
 
 
     </head>
@@ -43,10 +43,7 @@
                                     <i class="fas fa-cloud-slash text-gray-500"></i> Conectando...
                                 </span>
                             </div>
-                            <button id="syncBtn"
-                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center">
-                                <i class="fas fa-sync-alt mr-2"></i> Sincronizar
-                            </button>
+
                             <button id="exportBtn"
                                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
                                 <i class="fas fa-file-export mr-2"></i> Exportar
@@ -60,65 +57,8 @@
                     </div>
                 </header>
 
-                <!-- Painel de Sincronização -->
-                <div id="syncPanel" class="bg-white rounded-lg custom-shadow p-6 mb-6" style="display: none;">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-network-wired mr-2 text-purple-500"></i> Sincronização P2P
-                    </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Informações do Peer -->
-                        <div>
-                            <h4 class="font-medium text-gray-700 mb-2">Seu ID de Sincronização:</h4>
-                            <div class="flex items-center space-x-2">
-                                <input type="text" id="myPeerId" readonly
-                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm">
-                                <button id="copyPeerIdBtn"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-md text-sm">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Compartilhe este ID com outros usuários para
-                                sincronizar
-                            </p>
-                        </div>
 
-                        <!-- Conectar a outro Peer -->
-                        <div>
-                            <h4 class="font-medium text-gray-700 mb-2">Conectar a outro usuário:</h4>
-                            <div class="flex items-center space-x-2">
-                                <input type="text" id="targetPeerId" placeholder="Digite o ID do usuário"
-                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                <button id="connectBtn"
-                                    class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-md text-sm">
-                                    Conectar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Status e Conexões -->
-                    <div class="mt-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-medium text-gray-700">Conexões Ativas:</h4>
-                            <span id="syncStatus" class="text-sm px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                                Desconectado
-                            </span>
-                        </div>
-                        <div id="connectionsList" class="space-y-2">
-                            <p class="text-sm text-gray-500">Nenhuma conexão ativa</p>
-                        </div>
-
-                        <div class="mt-4 flex items-center justify-between">
-                            <button id="disconnectAllBtn"
-                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm"
-                                style="display: none;">
-                                <i class="fas fa-unlink mr-1"></i> Desconectar Todos
-                            </button>
-                            <span id="lastSyncTime" class="text-xs text-gray-500"></span>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Main Content - Two Columns -->
                 <div class="flex flex-wrap responsive-columns -mx-2">
@@ -1000,8 +940,8 @@
         </body>
         <script src="assets/js/app.js"></script>
         <script src="assets/js/utils.js"></script>
-        <script type="module" src="config/firebase-shared.config.js"></script>
+        <script type="module" src="config/firebase-offline.config.js"></script>
         <script src="assets/js/enhancements.js"></script>
-        <script src="config/dev.config.js"></script>
+        <!-- <script src="config/dev.config.js"></script> -->
 
 </html>
