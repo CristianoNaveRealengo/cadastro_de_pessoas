@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login - Sistema de Cadastro</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </head>
+
+    <body class="bg-gray-100 min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+            <!-- Logo/Título -->
+            <div class="text-center mb-8">
+                <i class="fas fa-users text-4xl text-blue-600 mb-4"></i>
+                <h1 class="text-2xl font-bold text-gray-800">Sistema de Cadastro</h1>
+                <p class="text-gray-600 mt-2">Faça login para continuar</p>
+            </div>
+
+            <!-- Status de Conexão -->
+            <div id="connectionStatus" class="text-center mb-4 text-sm text-gray-500">
+                <i class="fas fa-spinner animate-spin mr-1"></i>
+                Conectando...
+            </div>
+
+
+
+            <!-- Formulário de Login -->
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-envelope mr-1"></i>
+                        Email
+                    </label>
+                    <input type="email" id="email" name="email" required
+                        autocomplete="off" 
+                        autocapitalize="off" 
+                        spellcheck="false"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="seu@email.com">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-lock mr-1"></i>
+                        Senha
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required
+                            autocomplete="new-password"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                            placeholder="Sua senha">
+                        <button type="button" id="togglePassword"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <button type="submit" id="loginBtn"
+                        class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Entrar
+                    </button>
+                    
+                    <button type="button" id="clearFieldsBtn"
+                        class="w-full bg-gray-300 text-gray-700 py-1 px-3 rounded-md hover:bg-gray-400 focus:outline-none text-sm transition duration-200">
+                        <i class="fas fa-eraser mr-1"></i>
+                        Limpar Campos
+                    </button>
+                </div>
+            </form>
+
+            <!-- Divisor -->
+            <div class="my-6 flex items-center">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-4 text-sm text-gray-500">ou</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Botão Criar Conta -->
+            <button id="showSignupBtn"
+                class="w-full bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                <i class="fas fa-user-plus mr-2"></i>
+                Criar Nova Conta
+            </button>
+
+            <!-- Formulário de Cadastro (inicialmente oculto) -->
+            <form id="signupForm" class="space-y-4 mt-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 text-center">Criar Nova Conta</h3>
+
+                <div>
+                    <label for="signupEmail" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-envelope mr-1"></i>
+                        Email
+                    </label>
+                    <input type="email" id="signupEmail" name="signupEmail" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="seu@email.com">
+                </div>
+
+                <div>
+                    <label for="signupPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-lock mr-1"></i>
+                        Senha (mínimo 6 caracteres)
+                    </label>
+                    <input type="password" id="signupPassword" name="signupPassword" required minlength="6"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Sua senha">
+                </div>
+
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class="fas fa-lock mr-1"></i>
+                        Confirmar Senha
+                    </label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        placeholder="Confirme sua senha">
+                </div>
+
+                <button type="submit" id="signupBtn"
+                    class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-200">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Criar Conta
+                </button>
+
+                <button type="button" id="backToLoginBtn"
+                    class="w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar ao Login
+                </button>
+            </form>
+
+
+
+            <!-- Mensagens de Toast -->
+            <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+                <div class="bg-white border-l-4 border-blue-500 rounded-lg shadow-lg p-4 max-w-sm">
+                    <div class="flex items-center">
+                        <i id="toastIcon" class="fas fa-info-circle text-blue-500 mr-3"></i>
+                        <span id="toastMessage" class="text-gray-800"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script type="module">
+            // Importar Firebase diretamente
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { 
+                getAuth, 
+                signInWithEmailAndPassword,
+                createUserWithEmailAndPassword
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+            // Configuração do Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
+                authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
+                projectId: "appcadastrodepessoas-2c20b",
+                storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
+                messagingSenderId: "789674139888",
+                appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
+            };
+
+            // Inicializar Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            // Elementos DOM
+            const statusDiv = document.getElementById('connectionStatus');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const signupBtn = document.getElementById('signupBtn');
+            const showSignupBtn = document.getElementById('showSignupBtn');
+            const backToLoginBtn = document.getElementById('backToLoginBtn');
+            const toggleBtn = document.getElementById('togglePassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            const passwordInput = document.getElementById('password');
+
+            const clearFieldsBtn = document.getElementById('clearFieldsBtn');
+
+            // Atualizar status de conexão
+            statusDiv.innerHTML = '<i class="fas fa-check text-green-500 mr-1"></i>Conectado';
+            statusDiv.className = 'text-center mb-4 text-sm text-green-600';
+
+            // Forçar limpeza dos campos (evitar auto-preenchimento do navegador)
+            function clearAllFields() {
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }
+
+            // Limpar campos imediatamente
+            clearAllFields();
+
+            // Limpar campos após um pequeno delay (caso o navegador demore para preencher)
+            setTimeout(clearAllFields, 100);
+            setTimeout(clearAllFields, 500);
+
+            // Função para mostrar toast
+            function showToast(message, type = 'info') {
+                const toast = document.getElementById('toast');
+                const toastIcon = document.getElementById('toastIcon');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                let iconClass = 'fas fa-info-circle text-blue-500';
+                let borderColor = 'border-blue-500';
+                
+                switch (type) {
+                    case 'success':
+                        iconClass = 'fas fa-check-circle text-green-500';
+                        borderColor = 'border-green-500';
+                        break;
+                    case 'error':
+                        iconClass = 'fas fa-exclamation-circle text-red-500';
+                        borderColor = 'border-red-500';
+                        break;
+                    case 'warning':
+                        iconClass = 'fas fa-exclamation-triangle text-yellow-500';
+                        borderColor = 'border-yellow-500';
+                        break;
+                }
+                
+                toastIcon.className = iconClass;
+                toast.querySelector('div').className = `bg-white ${borderColor} rounded-lg shadow-lg p-4 max-w-sm`;
+                toastMessage.textContent = message;
+                
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 3000);
+            }
+
+            // Toggle visibilidade da senha
+            toggleBtn.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    eyeIcon.classList.remove('fa-eye');
+                    eyeIcon.classList.add('fa-eye-slash');
+                } else {
+                    passwordInput.type = 'password';
+                    eyeIcon.classList.remove('fa-eye-slash');
+                    eyeIcon.classList.add('fa-eye');
+                }
+            });
+
+            // Mostrar formulário de cadastro
+            showSignupBtn.addEventListener('click', () => {
+                loginForm.classList.add('hidden');
+                showSignupBtn.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+                
+                // Limpar campos
+                document.getElementById('signupEmail').value = '';
+                document.getElementById('signupPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                // Focar no primeiro campo
+                document.getElementById('signupEmail').focus();
+            });
+
+            // Voltar ao login
+            backToLoginBtn.addEventListener('click', () => {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                showSignupBtn.classList.remove('hidden');
+                
+                // Focar no primeiro campo
+                document.getElementById('email').focus();
+            });
+
+            // Função para redirecionar após login bem-sucedido
+            function redirectToApp(user) {
+                console.log('✅ Usuário logado:', user.email);
+                console.log('📋 UID:', user.uid);
+                
+                // Mostrar informações do usuário no console
+                console.log('👤 Informações do usuário:', {
+                    email: user.email,
+                    uid: user.uid,
+                    emailVerified: user.emailVerified
+                });
+                
+                // Mostrar mensagem de sucesso e redirecionar automaticamente
+                showToast('Login realizado com sucesso! Redirecionando...', 'success');
+                
+                // Ocultar formulários de login/cadastro
+                loginForm.classList.add('hidden');
+                signupForm.classList.add('hidden');
+                showSignupBtn.classList.add('hidden');
+                
+                // Mostrar mensagem de redirecionamento
+                const redirectDiv = document.createElement('div');
+                redirectDiv.className = 'text-center p-4 bg-green-50 border border-green-200 rounded-lg';
+                redirectDiv.innerHTML = `
+                    <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                    <p class="text-green-800 mb-3">Login realizado com sucesso!</p>
+                    <p class="text-green-600 text-sm">
+                        <i class="fas fa-spinner animate-spin mr-2"></i>
+                        Redirecionando para o sistema...
+                    </p>
+                `;
+                
+                // Adicionar a mensagem na tela
+                document.querySelector('.bg-white').appendChild(redirectDiv);
+                
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    console.log('🔄 Redirecionando para a aplicação...');
+                    window.location.href = '../index.html';
+                }, 2000);
+            }
+
+
+
+            // Botão para limpar campos manualmente
+            clearFieldsBtn.addEventListener('click', () => {
+                clearAllFields();
+                showToast('Campos limpos', 'success');
+                document.getElementById('email').focus();
+            });
+
+            // Formulário de login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                
+                if (!email || !password) {
+                    showToast('Preencha todos os campos', 'error');
+                    return;
+                }
+                
+                const originalText = loginBtn.innerHTML;
+                
+                try {
+                    // Mostrar loading
+                    loginBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Entrando...';
+                    loginBtn.disabled = true;
+                    
+                    // Fazer login
+                    const result = await signInWithEmailAndPassword(auth, email, password);
+                    
+                    // Redirecionar imediatamente após login bem-sucedido
+                    redirectToApp(result.user);
+                    
+                } catch (error) {
+                    console.error('❌ Erro no login:', error);
+                    
+                    let errorMessage = 'Erro no login';
+                    if (error.code === 'auth/user-not-found') {
+                        errorMessage = 'Usuário não encontrado';
+                    } else if (error.code === 'auth/wrong-password') {
+                        errorMessage = 'Senha incorreta';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Email inválido';
+                    } else if (error.code === 'auth/too-many-requests') {
+                        errorMessage = 'Muitas tentativas. Tente novamente mais tarde';
+                    } else if (error.code === 'auth/invalid-credential') {
+                        errorMessage = 'Email ou senha incorretos';
+                    }
+                    
+                    showToast(errorMessage, 'error');
+                    
+                } finally {
+                    // Restaurar botão
+                    loginBtn.innerHTML = originalText;
+                    loginBtn.disabled = false;
+                }
+            });
+
+            // Formulário de cadastro
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('signupEmail').value.trim();
+                const password = document.getElementById('signupPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Validações
+                if (!email || !password || !confirmPassword) {
+                    showToast('Preencha todos os campos', 'error');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showToast('As senhas não coincidem', 'error');
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showToast('A senha deve ter pelo menos 6 caracteres', 'error');
+                    return;
+                }
+                
+                const originalText = signupBtn.innerHTML;
+                
+                try {
+                    // Mostrar loading
+                    signupBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Criando conta...';
+                    signupBtn.disabled = true;
+                    
+                    // Criar conta
+                    const result = await createUserWithEmailAndPassword(auth, email, password);
+                    
+                    showToast('Conta criada com sucesso!', 'success');
+                    
+                    // Redirecionar após criar conta
+                    setTimeout(() => {
+                        redirectToApp(result.user);
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error('❌ Erro ao criar conta:', error);
+                    
+                    let errorMessage = 'Erro ao criar conta';
+                    if (error.code === 'auth/email-already-in-use') {
+                        errorMessage = 'Este email já está em uso';
+                    } else if (error.code === 'auth/weak-password') {
+                        errorMessage = 'Senha muito fraca (mínimo 6 caracteres)';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Email inválido';
+                    }
+                    
+                    showToast(errorMessage, 'error');
+                    
+                } finally {
+                    // Restaurar botão
+                    signupBtn.innerHTML = originalText;
+                    signupBtn.disabled = false;
+                }
+            });
+
+            // Disponibilizar para debug
+            window.auth = auth;
+            console.log('🔍 Sistema de login carregado!');
+        </script>
+    </body>
+
+</html>

@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==============================================
+    // REGRAS PARA USUÁRIO ÚNICO
+    // ==============================================
+    
+    // UID do usuário autorizado: Cristiano Nave Realengo
+    function isSingleAuthorizedUser() {
+      return request.auth != null &&
+             request.auth.uid == "wV5SD29tCMRZq8by3Pwe4m75l3w1";
+    }
+    
+    // Alternativa: Permitir qualquer usuário autenticado (menos seguro)
+    function isAnyAuthenticatedUser() {
+      return request.auth != null;
+    }
+    
+    // ==============================================
+    // REGRAS PARA A COLEÇÃO 'records'
+    // ==============================================
+    
+    match /records/{document} {
+      // OPÇÃO 1: Apenas o usuário específico (mais seguro)
+      allow read, write: if isSingleAuthorizedUser();
+      
+      // OPÇÃO 2: Qualquer usuário autenticado (menos seguro, mas mais simples)
+      // Descomente a linha abaixo e comente a linha acima para usar esta opção
+      // allow read, write: if isAnyAuthenticatedUser();
+    }
+    
+    // ==============================================
+    // REGRAS PARA OUTRAS COLEÇÕES
+    // ==============================================
+    
+    // Configurações do sistema
+    match /settings/{document} {
+      allow read, write: if isSingleAuthorizedUser();
+    }
+    
+    // Logs do sistema
+    match /logs/{document} {
+      allow read: if isSingleAuthorizedUser();
+      allow write: if false; // Sistema gera logs automaticamente
+    }
+    
+    // Regra padrão: negar acesso a qualquer outra coleção
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ==============================================
+// INSTRUÇÕES DE USO:
+// ==============================================
+// 
+// 1. Execute createInitialUser() no console para criar o usuário
+// 2. Copie o UID que aparece no console
+// 3. Substitua "UID_DO_USUARIO_UNICO" pelo UID real
+// 4. Aplique estas regras no Console do Firebase
+// 
+// Exemplo de UID: "abc123def456ghi789jkl012"
+// 
+// Para aplicar as regras:
+// 1. Vá para https://console.firebase.google.com
+// 2. Selecione seu projeto
+// 3. Vá em Firestore Database > Rules
+// 4. Cole o conteúdo deste arquivo
+// 5. Clique em "Publish"

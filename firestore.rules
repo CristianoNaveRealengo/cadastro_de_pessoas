@@ -1,0 +1,108 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==============================================
+    // FUNÇÕES DE SEGURANÇA
+    // ==============================================
+    
+    // UID do usuário autorizado: Cristiano Nave Realengo
+    function isAllowedUser() {
+      return request.auth != null &&
+             request.auth.uid in [
+               "wV5SD29tCMRZq8by3Pwe4m75l3w1"  // Cristiano Nave Realengo
+             ];
+    }
+    
+    // Verificar se o usuário está autenticado
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Verificar se o usuário é o criador do documento
+    function isCreator() {
+      return request.auth != null && 
+             resource.data.createdBy == request.auth.uid;
+    }
+    
+    // Verificar se o usuário foi o último a atualizar
+    function isLastUpdater() {
+      return request.auth != null && 
+             resource.data.updatedBy == request.auth.uid;
+    }
+    
+    // Verificar se o usuário pode editar (criador ou último atualizador)
+    function canEdit() {
+      return isCreator() || isLastUpdater();
+    }
+    
+    // ==============================================
+    // REGRAS PARA A COLEÇÃO 'records'
+    // ==============================================
+    
+    match /records/{document} {
+      // OPÇÃO 1: Whitelist simples (mais restritiva)
+      // Descomente esta linha para usar apenas whitelist
+      // allow read, write: if isAllowedUser();
+      
+      // OPÇÃO 2: Baseada em propriedade do documento (mais flexível)
+      // Criar: usuário autenticado pode criar com seu próprio UID
+      allow create: if isAuthenticated() &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Ler: usuário pode ler documentos que criou ou atualizou
+      allow read: if isAuthenticated() && 
+                     (resource.data.createdBy == request.auth.uid ||
+                      resource.data.updatedBy == request.auth.uid);
+      
+      // Atualizar: criador ou último atualizador pode editar
+      allow update: if isAuthenticated() &&
+                       request.resource.data.updatedBy == request.auth.uid &&
+                       (resource.data.createdBy == request.auth.uid ||
+                        resource.data.updatedBy == request.auth.uid);
+      
+      // Deletar: apenas o criador pode deletar
+      allow delete: if isAuthenticated() &&
+                       resource.data.createdBy == request.auth.uid;
+      
+      // OPÇÃO 3: Híbrida - Whitelist + Propriedade
+      // Descomente as linhas abaixo para usar whitelist + verificação de propriedade
+      /*
+      allow create: if isAllowedUser() &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      allow read: if isAllowedUser() && 
+                     (resource.data.createdBy == request.auth.uid ||
+                      resource.data.updatedBy == request.auth.uid);
+      
+      allow update: if isAllowedUser() &&
+                       request.resource.data.updatedBy == request.auth.uid &&
+                       canEdit();
+      
+      allow delete: if isAllowedUser() &&
+                       resource.data.createdBy == request.auth.uid;
+      */
+    }
+    
+    // ==============================================
+    // REGRAS PARA OUTRAS COLEÇÕES
+    // ==============================================
+    
+    // Configurações do sistema (apenas whitelist)
+    match /settings/{document} {
+      allow read, write: if isAllowedUser();
+    }
+    
+    // Logs do sistema (apenas leitura para whitelist)
+    match /logs/{document} {
+      allow read: if isAllowedUser();
+      allow write: if false; // Sistema gera logs automaticamente
+    }
+    
+    // Regra padrão: negar acesso a qualquer outra coleção
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

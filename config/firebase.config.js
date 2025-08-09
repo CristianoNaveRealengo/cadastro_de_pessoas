@@ -5,9 +5,13 @@
 // Importe as funções necessárias do Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
+	browserLocalPersistence,
+	createUserWithEmailAndPassword,
 	getAuth,
 	onAuthStateChanged,
-	signInAnonymously,
+	setPersistence,
+	signInWithEmailAndPassword,
+	signOut,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
 	addDoc,
@@ -68,25 +72,33 @@ class FirebaseService {
 		}, 10000); // 10 segundos timeout
 	}
 
-	// Configurar autenticação anônima
+	// Configurar autenticação com email/senha
 	async setupAuth() {
 		try {
-			await signInAnonymously(this.auth);
+			// Configurar persistência de autenticação
+			await setPersistence(this.auth, browserLocalPersistence);
+
+			// Monitorar mudanças de autenticação
 			onAuthStateChanged(this.auth, (user) => {
 				this.currentUser = user;
 				if (user) {
-					console.log("🔥 Firebase conectado - Usuário:", user.uid);
+					console.log(
+						"🔥 Firebase conectado - Usuário:",
+						user.email || user.uid
+					);
 					this.isConnected = true;
 					this.updateConnectionStatus("online");
 					this.syncData();
 				} else {
-					console.log("❌ Firebase desconectado");
+					console.log(
+						"❌ Firebase desconectado - usuário precisa fazer login"
+					);
 					this.isConnected = false;
 					this.updateConnectionStatus("offline");
 				}
 			});
 		} catch (error) {
-			console.error("❌ Erro na autenticação Firebase:", error);
+			console.error("❌ Erro na configuração de autenticação:", error);
 			this.isConnected = false;
 			this.updateConnectionStatus("offline");
 		}
@@ -214,9 +226,11 @@ class FirebaseService {
 			// Marcar como "sincronizando"
 			this.updateConnectionStatus("online");
 
+			const userId = this.currentUser.uid;
 			const docRef = await addDoc(collection(this.db, "records"), {
 				...record,
-				// Removido userId para permitir compartilhamento
+				createdBy: userId,
+				updatedBy: userId,
 				createdAt: serverTimestamp(),
 				updatedAt: serverTimestamp(),
 			});
@@ -225,6 +239,8 @@ class FirebaseService {
 
 			// Atualizar o ID local com o ID do Firebase
 			record.firebaseId = docRef.id;
+			record.createdBy = userId;
+			record.updatedBy = userId;
 			this.saveToLocalStorage(record);
 
 			// Atualizar status
@@ -255,13 +271,18 @@ class FirebaseService {
 		}
 
 		try {
+			const userId = this.currentUser.uid;
 			const docRef = doc(this.db, "records", record.firebaseId);
 			await updateDoc(docRef, {
 				...record,
+				updatedBy: userId,
 				updatedAt: serverTimestamp(),
 			});
 
 			console.log("Registro atualizado no Firebase:", record.firebaseId);
+
+			// Atualizar também localmente
+			record.updatedBy = userId;
 			this.saveToLocalStorage(record);
 		} catch (error) {
 			console.error("Erro ao atualizar no Firebase:", error);
@@ -301,7 +322,13 @@ class FirebaseService {
 
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				if (data.userId === this.currentUser.uid) {
+				// Filtrar por createdBy ou updatedBy (usuário pode ver registros que criou ou editou)
+				if (
+					data.createdBy === this.currentUser.uid ||
+					data.updatedBy === this.currentUser.uid ||
+					data.userId === this.currentUser.uid
+				) {
+					// Compatibilidade com registros antigos
 					records.push({
 						...data,
 						firebaseId: doc.id,
@@ -338,7 +365,13 @@ class FirebaseService {
 			const records = [];
 			querySnapshot.forEach((doc) => {
 				const data = doc.data();
-				if (data.userId === this.currentUser.uid) {
+				// Filtrar por createdBy ou updatedBy (usuário pode ver registros que criou ou editou)
+				if (
+					data.createdBy === this.currentUser.uid ||
+					data.updatedBy === this.currentUser.uid ||
+					data.userId === this.currentUser.uid
+				) {
+					// Compatibilidade com registros antigos
 					records.push({
 						...data,
 						firebaseId: doc.id,
@@ -353,7 +386,9 @@ class FirebaseService {
 			});
 
 			// Atualizar dados locais
-			appData.records = records;
+			if (typeof appData !== "undefined") {
+				appData.records = records;
+			}
 			localStorage.setItem("personalRecords", JSON.stringify(records));
 
 			// Atualizar interface
@@ -434,6 +469,108 @@ class FirebaseService {
 			"personalRecords",
 			JSON.stringify(filteredRecords)
 		);
+	}
+
+	// Fazer login com email e senha
+	async signIn(email, password) {
+		try {
+			const result = await signInWithEmailAndPassword(
+				this.auth,
+				email,
+				password
+			);
+			console.log("✅ Login realizado com sucesso:", result.user.email);
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast("Login realizado com sucesso!", "success");
+			}
+
+			return result.user;
+		} catch (error) {
+			console.error("❌ Erro no login:", error);
+
+			let errorMessage = "Erro no login";
+			if (error.code === "auth/user-not-found") {
+				errorMessage = "Usuário não encontrado";
+			} else if (error.code === "auth/wrong-password") {
+				errorMessage = "Senha incorreta";
+			} else if (error.code === "auth/invalid-email") {
+				errorMessage = "Email inválido";
+			} else if (error.code === "auth/too-many-requests") {
+				errorMessage = "Muitas tentativas. Tente novamente mais tarde";
+			}
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast(errorMessage, "error");
+			}
+
+			throw error;
+		}
+	}
+
+	// Criar conta com email e senha
+	async signUp(email, password) {
+		try {
+			const result = await createUserWithEmailAndPassword(
+				this.auth,
+				email,
+				password
+			);
+			console.log("✅ Conta criada com sucesso:", result.user.email);
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast("Conta criada com sucesso!", "success");
+			}
+
+			return result.user;
+		} catch (error) {
+			console.error("❌ Erro ao criar conta:", error);
+
+			let errorMessage = "Erro ao criar conta";
+			if (error.code === "auth/email-already-in-use") {
+				errorMessage = "Este email já está em uso";
+			} else if (error.code === "auth/weak-password") {
+				errorMessage = "Senha muito fraca (mínimo 6 caracteres)";
+			} else if (error.code === "auth/invalid-email") {
+				errorMessage = "Email inválido";
+			}
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast(errorMessage, "error");
+			}
+
+			throw error;
+		}
+	}
+
+	// Fazer logout
+	async signOutUser() {
+		try {
+			await signOut(this.auth);
+			console.log("✅ Logout realizado com sucesso");
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast("Logout realizado com sucesso!", "success");
+			}
+		} catch (error) {
+			console.error("❌ Erro no logout:", error);
+
+			if (typeof UIUtils !== "undefined") {
+				UIUtils.showToast("Erro no logout", "error");
+			}
+
+			throw error;
+		}
+	}
+
+	// Verificar se usuário está logado
+	isUserLoggedIn() {
+		return this.currentUser !== null;
+	}
+
+	// Obter email do usuário atual
+	getCurrentUserEmail() {
+		return this.currentUser?.email || null;
 	}
 }
 

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center mb-6">Teste de Login</h1>
+        
+        <div id="status" class="mb-4 p-3 rounded bg-blue-100 text-blue-800">
+            Carregando Firebase...
+        </div>
+        
+        <form id="testForm" class="space-y-4">
+            <input 
+                type="email" 
+                id="email" 
+                placeholder="Email"
+                value="cristianonaverealengo@gmail.com"
+                class="w-full px-3 py-2 border rounded"
+            >
+            <input 
+                type="password" 
+                id="password" 
+                placeholder="Senha"
+                value="lukasliam"
+                class="w-full px-3 py-2 border rounded"
+            >
+            <button 
+                type="submit" 
+                class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+            >
+                Testar Login
+            </button>
+        </form>
+        
+        <div id="result" class="mt-4 p-3 rounded hidden"></div>
+    </div>
+
+    <script type="module">
+        // Importar Firebase diretamente
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
+            authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
+            projectId: "appcadastrodepessoas-2c20b",
+            storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
+            messagingSenderId: "789674139888",
+            appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Configurar persistência
+        await setPersistence(auth, browserLocalPersistence);
+
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        const form = document.getElementById('testForm');
+
+        statusDiv.textContent = '✅ Firebase carregado com sucesso!';
+        statusDiv.className = 'mb-4 p-3 rounded bg-green-100 text-green-800';
+
+        // Monitorar autenticação
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                resultDiv.innerHTML = `
+                    <div class="bg-green-100 text-green-800">
+                        <strong>✅ Login bem-sucedido!</strong><br>
+                        Email: ${user.email}<br>
+                        UID: ${user.uid}
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+            }
+        });
+
+        // Teste de login
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                statusDiv.textContent = '🔄 Fazendo login...';
+                statusDiv.className = 'mb-4 p-3 rounded bg-yellow-100 text-yellow-800';
+                
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                
+                console.log('Login bem-sucedido:', result.user);
+                
+            } catch (error) {
+                console.error('Erro no login:', error);
+                
+                resultDiv.innerHTML = `
+                    <div class="bg-red-100 text-red-800">
+                        <strong>❌ Erro no login:</strong><br>
+                        ${error.code}: ${error.message}
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+                
+                statusDiv.textContent = '❌ Erro no login';
+                statusDiv.className = 'mb-4 p-3 rounded bg-red-100 text-red-800';
+            }
+        });
+
+        // Disponibilizar globalmente para debug
+        window.auth = auth;
+        window.testLogin = async (email, password) => {
+            return await signInWithEmailAndPassword(auth, email, password);
+        };
+
+        console.log('🔍 Teste de login carregado!');
+        console.log('Use testLogin("email", "senha") no console para testar');
+    </script>
+</body>
+</html>

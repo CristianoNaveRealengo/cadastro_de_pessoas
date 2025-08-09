@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <!-- Logo/Título -->
+        <div class="text-center mb-8">
+            <i class="fas fa-users text-4xl text-blue-600 mb-4"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Sistema de Cadastro</h1>
+            <p class="text-gray-600 mt-2">Faça login para continuar</p>
+        </div>
+
+        <!-- Status de Conexão -->
+        <div id="connectionStatus" class="text-center mb-4 text-sm text-gray-500">
+            <i class="fas fa-spinner animate-spin mr-1"></i>
+            Conectando...
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                    <i class="fas fa-envelope mr-1"></i>
+                    Email
+                </label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email"
+                    required
+                    value="cristianonaverealengo@gmail.com"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="seu@email.com"
+                >
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                    <i class="fas fa-lock mr-1"></i>
+                    Senha
+                </label>
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        required
+                        value="lukasliam"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                        placeholder="Sua senha"
+                    >
+                    <button 
+                        type="button" 
+                        id="togglePassword"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    >
+                        <i class="fas fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button 
+                type="submit" 
+                id="loginBtn"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200"
+            >
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Entrar
+            </button>
+        </form>
+
+        <!-- Mensagens de Toast -->
+        <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+            <div class="bg-white border-l-4 border-blue-500 rounded-lg shadow-lg p-4 max-w-sm">
+                <div class="flex items-center">
+                    <i id="toastIcon" class="fas fa-info-circle text-blue-500 mr-3"></i>
+                    <span id="toastMessage" class="text-gray-800"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar Firebase diretamente
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            setPersistence,
+            browserLocalPersistence
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
+            authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
+            projectId: "appcadastrodepessoas-2c20b",
+            storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
+            messagingSenderId: "789674139888",
+            appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Configurar persistência
+        await setPersistence(auth, browserLocalPersistence);
+
+        // Elementos DOM
+        const statusDiv = document.getElementById('connectionStatus');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const toggleBtn = document.getElementById('togglePassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const passwordInput = document.getElementById('password');
+
+        // Atualizar status
+        statusDiv.innerHTML = '<i class="fas fa-check text-green-500 mr-1"></i>Conectado';
+        statusDiv.className = 'text-center mb-4 text-sm text-green-600';
+
+        // Função para mostrar toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            let iconClass = 'fas fa-info-circle text-blue-500';
+            let borderColor = 'border-blue-500';
+            
+            switch (type) {
+                case 'success':
+                    iconClass = 'fas fa-check-circle text-green-500';
+                    borderColor = 'border-green-500';
+                    break;
+                case 'error':
+                    iconClass = 'fas fa-exclamation-circle text-red-500';
+                    borderColor = 'border-red-500';
+                    break;
+            }
+            
+            toastIcon.className = iconClass;
+            toast.querySelector('div').className = `bg-white ${borderColor} rounded-lg shadow-lg p-4 max-w-sm`;
+            toastMessage.textContent = message;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Toggle senha
+        toggleBtn.addEventListener('click', () => {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        });
+
+        // Monitorar autenticação
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('✅ Usuário logado:', user.email);
+                showToast('Login realizado com sucesso!', 'success');
+                
+                // Redirecionar após 1 segundo
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1000);
+            }
+        });
+
+        // Verificar se já está logado
+        if (auth.currentUser) {
+            console.log('✅ Usuário já está logado, redirecionando...');
+            window.location.href = '../index.html';
+        }
+
+        // Formulário de login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            const originalText = loginBtn.innerHTML;
+            
+            try {
+                // Mostrar loading
+                loginBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Entrando...';
+                loginBtn.disabled = true;
+                
+                // Fazer login
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                console.log('✅ Login bem-sucedido:', result.user.email);
+                
+                // O redirecionamento será feito pelo onAuthStateChanged
+                
+            } catch (error) {
+                console.error('❌ Erro no login:', error);
+                
+                let errorMessage = 'Erro no login';
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = 'Usuário não encontrado';
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = 'Senha incorreta';
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = 'Email inválido';
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = 'Muitas tentativas. Tente novamente mais tarde';
+                }
+                
+                showToast(errorMessage, 'error');
+                
+            } finally {
+                // Restaurar botão
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Disponibilizar para debug
+        window.auth = auth;
+        window.testLogin = async (email, password) => {
+            return await signInWithEmailAndPassword(auth, email, password);
+        };
+
+        console.log('🔍 Login corrigido carregado!');
+    </script>
+</body>
+</html>
