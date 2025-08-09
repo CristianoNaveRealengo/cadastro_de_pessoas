@@ -25,15 +25,14 @@ import {
 	updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Configuração do Firebase
-const firebaseConfig = {
-	apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
-	authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
-	projectId: "appcadastrodepessoas-2c20b",
-	storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
-	messagingSenderId: "789674139888",
-	appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
-};
+// Importar configuração segura
+import { firebaseConfig } from "./firebase-secure.config.js";
+
+// Verificar se a configuração foi carregada
+if (!firebaseConfig.apiKey) {
+	console.error("❌ Configuração Firebase não encontrada no modo offline!");
+	throw new Error("Configuração Firebase não encontrada");
+}
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);

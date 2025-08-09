@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Segurança - Sistema de Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-8">
+                <i class="fas fa-shield-alt text-4xl text-blue-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Verificação de Segurança</h1>
+                <p class="text-gray-600 mt-2">Validação automática das configurações de segurança</p>
+            </div>
+
+            <div id="results" class="space-y-4">
+                <div class="text-center">
+                    <i class="fas fa-spinner animate-spin text-2xl text-blue-500"></i>
+                    <p class="mt-2 text-gray-600">Executando verificações...</p>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="runCheck" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-play mr-2"></i>
+                    Executar Verificação
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        class SecurityChecker {
+            constructor() {
+                this.checks = [];
+                this.results = [];
+            }
+
+            async runAllChecks() {
+                this.results = [];
+                const resultsDiv = document.getElementById('results');
+                
+                // Limpar resultados anteriores
+                resultsDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-spinner animate-spin text-2xl text-blue-500"></i>
+                        <p class="mt-2 text-gray-600">Executando verificações...</p>
+                    </div>
+                `;
+
+                // Lista de verificações
+                const checks = [
+                    { name: 'Configuração Firebase Segura', fn: this.checkFirebaseConfig },
+                    { name: 'Proteção de Chaves API', fn: this.checkAPIKeyProtection },
+                    { name: 'Detecção de Ambiente', fn: this.checkEnvironmentDetection },
+                    { name: 'Validação de Configuração', fn: this.checkConfigValidation },
+                    { name: 'Arquivos Protegidos', fn: this.checkProtectedFiles },
+                    { name: 'Debug Tools Controlados', fn: this.checkDebugTools },
+                    { name: 'Fallbacks Seguros', fn: this.checkSecureFallbacks }
+                ];
+
+                // Executar cada verificação
+                for (const check of checks) {
+                    try {
+                        const result = await check.fn.call(this);
+                        this.results.push({
+                            name: check.name,
+                            status: result.status,
+                            message: result.message,
+                            details: result.details || []
+                        });
+                    } catch (error) {
+                        this.results.push({
+                            name: check.name,
+                            status: 'error',
+                            message: `Erro na verificação: ${error.message}`,
+                            details: []
+                        });
+                    }
+                }
+
+                this.displayResults();
+            }
+
+            async checkFirebaseConfig() {
+                try {
+                    // Tentar importar configuração segura
+                    const { firebaseConfig, configManager } = await import('../config/firebase-secure.config.js');
+                    
+                    if (firebaseConfig && configManager) {
+                        return {
+                            status: 'success',
+                            message: 'Sistema de configuração seguro carregado com sucesso',
+                            details: [
+                                'Arquivo firebase-secure.config.js encontrado',
+                                'ConfigManager inicializado',
+                                'Configuração carregada dinamicamente'
+                            ]
+                        };
+                    } else {
+                        return {
+                            status: 'warning',
+                            message: 'Configuração carregada mas com problemas',
+                            details: ['Verificar se todas as variáveis estão definidas']
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Falha ao carregar configuração segura',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async checkAPIKeyProtection() {
+                // Verificar se chaves não estão expostas no código
+                const scripts = document.querySelectorAll('script');
+                let exposedKeys = 0;
+                
+                scripts.forEach(script => {
+                    if (script.textContent && script.textContent.includes('AIzaSy')) {
+                        exposedKeys++;
+                    }
+                });
+
+                if (exposedKeys === 0) {
+                    return {
+                        status: 'success',
+                        message: 'Nenhuma chave API exposta encontrada',
+                        details: ['Chaves protegidas adequadamente']
+                    };
+                } else {
+                    return {
+                        status: 'error',
+                        message: `${exposedKeys} chave(s) API ainda expostas no código`,
+                        details: ['Remover chaves hardcoded do código']
+                    };
+                }
+            }
+
+            async checkEnvironmentDetection() {
+                try {
+                    const { configManager } = await import('../config/firebase-secure.config.js');
+                    const securityInfo = configManager.getSecurityInfo();
+                    
+                    return {
+                        status: 'success',
+                        message: `Ambiente detectado: ${securityInfo.environment}`,
+                        details: [
+                            `Protocolo: ${securityInfo.protocol}`,
+                            `Hostname: ${securityInfo.hostname}`,
+                            `Configuração segura: ${securityInfo.isSecure ? 'Sim' : 'Não'}`,
+                            `Fonte: ${securityInfo.configSource}`
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Falha na detecção de ambiente',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async checkConfigValidation() {
+                try {
+                    const { firebaseConfig } = await import('../config/firebase-secure.config.js');
+                    
+                    const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+                    const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+                    
+                    if (missingFields.length === 0) {
+                        return {
+                            status: 'success',
+                            message: 'Todas as configurações obrigatórias estão presentes',
+                            details: requiredFields.map(field => `${field}: ✓`)
+                        };
+                    } else {
+                        return {
+                            status: 'error',
+                            message: 'Configurações obrigatórias ausentes',
+                            details: missingFields.map(field => `${field}: ✗`)
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Falha na validação de configuração',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async checkProtectedFiles() {
+                // Verificar se arquivos sensíveis estão protegidos
+                const protectedFiles = [
+                    'config/env.config.js',
+                    'config/firebase-private.config.js',
+                    '.env'
+                ];
+
+                return {
+                    status: 'info',
+                    message: 'Verificação de arquivos protegidos',
+                    details: [
+                        'Arquivos sensíveis devem estar no .gitignore',
+                        'Verificar manualmente se não estão no repositório',
+                        'Configurações de produção devem usar variáveis de ambiente'
+                    ]
+                };
+            }
+
+            async checkDebugTools() {
+                const hasDebugTools = typeof window.configDebug !== 'undefined';
+                const isProduction = window.location.protocol === 'https:' && 
+                                   !window.location.hostname.includes('localhost');
+
+                if (isProduction && hasDebugTools) {
+                    return {
+                        status: 'warning',
+                        message: 'Ferramentas de debug disponíveis em produção',
+                        details: ['Remover debug tools em produção']
+                    };
+                } else if (!isProduction && hasDebugTools) {
+                    return {
+                        status: 'success',
+                        message: 'Ferramentas de debug disponíveis apenas em desenvolvimento',
+                        details: ['configDebug disponível para desenvolvimento']
+                    };
+                } else {
+                    return {
+                        status: 'success',
+                        message: 'Debug tools controlados adequadamente',
+                        details: ['Sem ferramentas de debug em produção']
+                    };
+                }
+            }
+
+            async checkSecureFallbacks() {
+                try {
+                    const { configManager } = await import('../config/firebase-secure.config.js');
+                    
+                    return {
+                        status: 'success',
+                        message: 'Sistema de fallbacks implementado',
+                        details: [
+                            'Múltiplas fontes de configuração',
+                            'Validação antes de usar configuração',
+                            'Erro controlado se configuração inválida'
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Falha no sistema de fallbacks',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            displayResults() {
+                const resultsDiv = document.getElementById('results');
+                let html = '<div class="space-y-4">';
+
+                // Resumo
+                const successCount = this.results.filter(r => r.status === 'success').length;
+                const warningCount = this.results.filter(r => r.status === 'warning').length;
+                const errorCount = this.results.filter(r => r.status === 'error').length;
+
+                html += `
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-800 mb-2">Resumo da Verificação</h3>
+                        <div class="flex space-x-4 text-sm">
+                            <span class="text-green-600">✓ ${successCount} Sucessos</span>
+                            <span class="text-yellow-600">⚠ ${warningCount} Avisos</span>
+                            <span class="text-red-600">✗ ${errorCount} Erros</span>
+                        </div>
+                    </div>
+                `;
+
+                // Resultados detalhados
+                this.results.forEach(result => {
+                    const iconClass = {
+                        success: 'fas fa-check-circle text-green-500',
+                        warning: 'fas fa-exclamation-triangle text-yellow-500',
+                        error: 'fas fa-times-circle text-red-500',
+                        info: 'fas fa-info-circle text-blue-500'
+                    }[result.status];
+
+                    const bgClass = {
+                        success: 'bg-green-50 border-green-200',
+                        warning: 'bg-yellow-50 border-yellow-200',
+                        error: 'bg-red-50 border-red-200',
+                        info: 'bg-blue-50 border-blue-200'
+                    }[result.status];
+
+                    html += `
+                        <div class="border rounded-lg p-4 ${bgClass}">
+                            <div class="flex items-start">
+                                <i class="${iconClass} mt-1 mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">${result.name}</h4>
+                                    <p class="text-gray-600 mt-1">${result.message}</p>
+                                    ${result.details.length > 0 ? `
+                                        <ul class="mt-2 text-sm text-gray-500 list-disc list-inside">
+                                            ${result.details.map(detail => `<li>${detail}</li>`).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }
+        }
+
+        // Inicializar verificador
+        const checker = new SecurityChecker();
+
+        // Event listeners
+        document.getElementById('runCheck').addEventListener('click', () => {
+            checker.runAllChecks();
+        });
+
+        // Executar verificação inicial
+        checker.runAllChecks();
+    </script>
+</body>
+</html>

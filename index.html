@@ -1007,15 +1007,31 @@
                 signOut
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-            // Configuração do Firebase
-            const firebaseConfig = {
-                apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
-                authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
-                projectId: "appcadastrodepessoas-2c20b",
-                storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
-                messagingSenderId: "789674139888",
-                appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
-            };
+            // Importar configuração segura
+            import { firebaseConfig, configManager } from "./config/firebase-secure.config.js";
+
+            // Verificar se a configuração foi carregada corretamente
+            if (!firebaseConfig.apiKey) {
+                console.error('❌ Configuração Firebase não encontrada!');
+                console.log('💡 Verifique as variáveis de ambiente ou configure localmente');
+                
+                // Mostrar mensagem de erro na interface
+                document.body.innerHTML = `
+                    <div class="min-h-screen flex items-center justify-center bg-red-50">
+                        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+                            <h2 class="text-xl font-bold text-red-800 mb-2">Erro de Configuração</h2>
+                            <p class="text-red-600 mb-4">
+                                As configurações do Firebase não foram encontradas.
+                            </p>
+                            <p class="text-sm text-gray-600">
+                                Verifique as variáveis de ambiente ou entre em contato com o administrador.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                throw new Error('Configuração Firebase não encontrada');
+            }
 
             // Inicializar Firebase
             const app = initializeApp(firebaseConfig);
