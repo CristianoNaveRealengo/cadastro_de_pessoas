@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Auditoria - Sistema de Segurança</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-shield-alt text-blue-500 mr-3"></i>
+                        Dashboard de Auditoria
+                    </h1>
+                    <p class="text-gray-600">Monitoramento e análise de ações dos usuários</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Atualizar
+                    </button>
+                    <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-download mr-2"></i>
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-list text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total de Logs</p>
+                        <p id="totalLogs" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Usuários Únicos</p>
+                        <p id="uniqueUsers" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Atividades Suspeitas</p>
+                        <p id="suspiciousActivities" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-times-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Erros Críticos</p>
+                        <p id="criticalErrors" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Actions by Type Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-chart-pie text-blue-500 mr-2"></i>
+                    Ações por Tipo
+                </h3>
+                <canvas id="actionsByTypeChart" width="400" height="200"></canvas>
+            </div>
+            
+            <!-- Activity Timeline Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-chart-line text-green-500 mr-2"></i>
+                    Atividade por Hora
+                </h3>
+                <canvas id="activityTimelineChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-filter text-purple-500 mr-2"></i>
+                Filtros de Busca
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuário</label>
+                    <select id="filterUser" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todos os usuários</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ação</label>
+                    <select id="filterAction" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todas as ações</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Severidade</label>
+                    <select id="filterSeverity" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todas as severidades</option>
+                        <option value="LOW">Baixa</option>
+                        <option value="MEDIUM">Média</option>
+                        <option value="HIGH">Alta</option>
+                        <option value="CRITICAL">Crítica</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                    <select id="filterPeriod" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Todo o período</option>
+                        <option value="today">Hoje</option>
+                        <option value="week">Última semana</option>
+                        <option value="month">Último mês</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button id="applyFiltersBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Aplicar Filtros
+                </button>
+                <button id="clearFiltersBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-times mr-2"></i>
+                    Limpar
+                </button>
+            </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold flex items-center">
+                    <i class="fas fa-table text-indigo-500 mr-2"></i>
+                    Logs de Auditoria
+                </h3>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">Mostrando</span>
+                    <select id="pageSize" class="px-2 py-1 border border-gray-300 rounded text-sm">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span class="text-sm text-gray-600">registros</span>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Timestamp
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Usuário
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ação
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Severidade
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Resultado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Detalhes
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Logs will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="flex items-center justify-between mt-4">
+                <div class="text-sm text-gray-700">
+                    Mostrando <span id="showingFrom">1</span> a <span id="showingTo">25</span> de <span id="totalRecords">0</span> registros
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevPageBtn" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                        Anterior
+                    </button>
+                    <button id="nextPageBtn" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                        Próximo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Detail Modal -->
+    <div id="logDetailModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Detalhes do Log</h3>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="logDetailContent" class="space-y-4">
+                <!-- Log details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../security/audit-system.js"></script>
+    
+    <script>
+        let currentPage = 1;
+        let pageSize = 25;
+        let filteredLogs = [];
+        let charts = {};
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupEventListeners();
+            loadData();
+        });
+        
+        function initializeDashboard() {
+            console.log('📊 Inicializando dashboard de auditoria...');
+            
+            // Check if audit system is available
+            if (!window.auditSystem) {
+                console.error('❌ Sistema de auditoria não encontrado');
+                showError('Sistema de auditoria não disponível');
+                return;
+            }
+            
+            console.log('✅ Dashboard de auditoria inicializado');
+        }
+        
+        function setupEventListeners() {
+            // Buttons
+            document.getElementById('refreshBtn').addEventListener('click', loadData);
+            document.getElementById('exportBtn').addEventListener('click', exportLogs);
+            document.getElementById('applyFiltersBtn').addEventListener('click', applyFilters);
+            document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+            
+            // Pagination
+            document.getElementById('prevPageBtn').addEventListener('click', () => changePage(-1));
+            document.getElementById('nextPageBtn').addEventListener('click', () => changePage(1));
+            document.getElementById('pageSize').addEventListener('change', changePageSize);
+            
+            // Modal
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            
+            // Click outside modal to close
+            document.getElementById('logDetailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
+        
+        function loadData() {
+            if (!window.auditSystem) return;
+            
+            console.log('📊 Carregando dados de auditoria...');
+            
+            // Get all logs
+            const allLogs = window.auditSystem.auditLogs;
+            filteredLogs = [...allLogs];
+            
+            // Update statistics
+            updateStatistics();
+            
+            // Update filters
+            updateFilterOptions();
+            
+            // Update charts
+            updateCharts();
+            
+            // Update table
+            updateTable();
+            
+            console.log(`✅ ${allLogs.length} logs carregados`);
+        }
+        
+        function updateStatistics() {
+            const stats = window.auditSystem.getSystemStats();
+            const report = window.auditSystem.generateReport();
+            
+            document.getElementById('totalLogs').textContent = stats.totalLogs;
+            document.getElementById('uniqueUsers').textContent = stats.uniqueUsers;
+            
+            // Count suspicious activities
+            const suspiciousCount = filteredLogs.filter(log => 
+                log.action === 'SUSPICIOUS_ACTIVITY'
+            ).length;
+            document.getElementById('suspiciousActivities').textContent = suspiciousCount;
+            
+            // Count critical errors
+            const criticalCount = filteredLogs.filter(log => 
+                log.severity === 'CRITICAL' || log.result === 'ERROR'
+            ).length;
+            document.getElementById('criticalErrors').textContent = criticalCount;
+        }
+        
+        function updateFilterOptions() {
+            // Update user filter
+            const users = [...new Set(filteredLogs.map(log => log.userEmail))];
+            const userSelect = document.getElementById('filterUser');
+            userSelect.innerHTML = '<option value="">Todos os usuários</option>';
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user;
+                option.textContent = user;
+                userSelect.appendChild(option);
+            });
+            
+            // Update action filter
+            const actions = [...new Set(filteredLogs.map(log => log.action))];
+            const actionSelect = document.getElementById('filterAction');
+            actionSelect.innerHTML = '<option value="">Todas as ações</option>';
+            actions.forEach(action => {
+                const option = document.createElement('option');
+                option.value = action;
+                option.textContent = action.replace(/_/g, ' ');
+                actionSelect.appendChild(option);
+            });
+        }
+        
+        function updateCharts() {
+            updateActionsByTypeChart();
+            updateActivityTimelineChart();
+        }
+        
+        function updateActionsByTypeChart() {
+            const ctx = document.getElementById('actionsByTypeChart').getContext('2d');
+            
+            // Count actions by type
+            const actionCounts = {};
+            filteredLogs.forEach(log => {
+                actionCounts[log.action] = (actionCounts[log.action] || 0) + 1;
+            });
+            
+            // Get top 10 actions
+            const sortedActions = Object.entries(actionCounts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10);
+            
+            const labels = sortedActions.map(([action]) => action.replace(/_/g, ' '));
+            const data = sortedActions.map(([,count]) => count);
+            
+            if (charts.actionsByType) {
+                charts.actionsByType.destroy();
+            }
+            
+            charts.actionsByType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                            '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateActivityTimelineChart() {
+            const ctx = document.getElementById('activityTimelineChart').getContext('2d');
+            
+            // Count activities by hour
+            const hourCounts = new Array(24).fill(0);
+            filteredLogs.forEach(log => {
+                const hour = new Date(log.timestamp).getHours();
+                hourCounts[hour]++;
+            });
+            
+            const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+            
+            if (charts.activityTimeline) {
+                charts.activityTimeline.destroy();
+            }
+            
+            charts.activityTimeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Atividades',
+                        data: hourCounts,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateTable() {
+            const tbody = document.getElementById('logsTableBody');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pageData = filteredLogs.slice(startIndex, endIndex);
+            
+            tbody.innerHTML = '';
+            
+            pageData.forEach(log => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 cursor-pointer';
+                row.onclick = () => showLogDetail(log);
+                
+                const severityColor = getSeverityColor(log.severity);
+                const resultColor = getResultColor(log.result);
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${formatTimestamp(log.timestamp)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${log.userEmail || 'N/A'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${log.action.replace(/_/g, ' ')}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${severityColor}">
+                            ${log.severity}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${resultColor}">
+                            ${log.result}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">
+                        ${JSON.stringify(log.details).substring(0, 100)}...
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            updatePagination();
+        }
+        
+        function updatePagination() {
+            const totalRecords = filteredLogs.length;
+            const totalPages = Math.ceil(totalRecords / pageSize);
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, totalRecords);
+            
+            document.getElementById('showingFrom').textContent = startIndex;
+            document.getElementById('showingTo').textContent = endIndex;
+            document.getElementById('totalRecords').textContent = totalRecords;
+            
+            document.getElementById('prevPageBtn').disabled = currentPage === 1;
+            document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+        }
+        
+        function applyFilters() {
+            const userFilter = document.getElementById('filterUser').value;
+            const actionFilter = document.getElementById('filterAction').value;
+            const severityFilter = document.getElementById('filterSeverity').value;
+            const periodFilter = document.getElementById('filterPeriod').value;
+            
+            let filtered = [...window.auditSystem.auditLogs];
+            
+            if (userFilter) {
+                filtered = filtered.filter(log => log.userEmail === userFilter);
+            }
+            
+            if (actionFilter) {
+                filtered = filtered.filter(log => log.action === actionFilter);
+            }
+            
+            if (severityFilter) {
+                filtered = filtered.filter(log => log.severity === severityFilter);
+            }
+            
+            if (periodFilter) {
+                const now = new Date();
+                let cutoffDate;
+                
+                switch (periodFilter) {
+                    case 'today':
+                        cutoffDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'week':
+                        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        break;
+                    case 'month':
+                        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        break;
+                }
+                
+                if (cutoffDate) {
+                    filtered = filtered.filter(log => new Date(log.timestamp) >= cutoffDate);
+                }
+            }
+            
+            filteredLogs = filtered;
+            currentPage = 1;
+            
+            updateStatistics();
+            updateCharts();
+            updateTable();
+        }
+        
+        function clearFilters() {
+            document.getElementById('filterUser').value = '';
+            document.getElementById('filterAction').value = '';
+            document.getElementById('filterSeverity').value = '';
+            document.getElementById('filterPeriod').value = '';
+            
+            filteredLogs = [...window.auditSystem.auditLogs];
+            currentPage = 1;
+            
+            updateStatistics();
+            updateCharts();
+            updateTable();
+        }
+        
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredLogs.length / pageSize);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                updateTable();
+            }
+        }
+        
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1;
+            updateTable();
+        }
+        
+        function showLogDetail(log) {
+            const modal = document.getElementById('logDetailModal');
+            const content = document.getElementById('logDetailContent');
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">Informações Básicas</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>ID:</strong> ${log.id}</div>
+                            <div><strong>Timestamp:</strong> ${formatTimestamp(log.timestamp)}</div>
+                            <div><strong>Usuário:</strong> ${log.userEmail || 'N/A'}</div>
+                            <div><strong>Função:</strong> ${log.userRole || 'N/A'}</div>
+                            <div><strong>Ação:</strong> ${log.action}</div>
+                            <div><strong>Severidade:</strong> <span class="px-2 py-1 rounded text-xs ${getSeverityColor(log.severity)}">${log.severity}</span></div>
+                            <div><strong>Resultado:</strong> <span class="px-2 py-1 rounded text-xs ${getResultColor(log.result)}">${log.result}</span></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-2">Metadados</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>IP:</strong> ${log.metadata?.ipAddress || 'N/A'}</div>
+                            <div><strong>User Agent:</strong> ${log.metadata?.userAgent?.substring(0, 50) || 'N/A'}...</div>
+                            <div><strong>URL:</strong> ${log.metadata?.url || 'N/A'}</div>
+                            <div><strong>Resolução:</strong> ${log.metadata?.screenResolution || 'N/A'}</div>
+                            <div><strong>Timezone:</strong> ${log.metadata?.timezone || 'N/A'}</div>
+                            <div><strong>Idioma:</strong> ${log.metadata?.language || 'N/A'}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Detalhes</h4>
+                    <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">${JSON.stringify(log.details, null, 2)}</pre>
+                </div>
+                ${log.changes ? `
+                <div class="mt-4">
+                    <h4 class="font-semibold text-gray-900 mb-2">Alterações</h4>
+                    <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">${JSON.stringify(log.changes, null, 2)}</pre>
+                </div>
+                ` : ''}
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            document.getElementById('logDetailModal').classList.add('hidden');
+        }
+        
+        function exportLogs() {
+            if (!window.auditSystem) return;
+            
+            const format = confirm('Exportar como CSV? (Cancelar para JSON)') ? 'csv' : 'json';
+            window.auditSystem.exportLogs({}, format);
+        }
+        
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleString('pt-BR');
+        }
+        
+        function getSeverityColor(severity) {
+            switch (severity) {
+                case 'LOW': return 'bg-green-100 text-green-800';
+                case 'MEDIUM': return 'bg-yellow-100 text-yellow-800';
+                case 'HIGH': return 'bg-orange-100 text-orange-800';
+                case 'CRITICAL': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function getResultColor(result) {
+            switch (result) {
+                case 'SUCCESS': return 'bg-green-100 text-green-800';
+                case 'ERROR': return 'bg-red-100 text-red-800';
+                case 'DENIED': return 'bg-orange-100 text-orange-800';
+                case 'SUSPICIOUS_DETECTED': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('header').nextSibling);
+        }
+    </script>
+</body>
+</html>
