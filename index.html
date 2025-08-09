@@ -45,6 +45,12 @@
                             </p>
                         </div>
                         <div class="flex items-center space-x-4">
+                            <!-- Informações do usuário logado (sempre visível) -->
+                            <div id="userInfo" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg flex items-center hidden">
+                                <i class="fas fa-user mr-2"></i>
+                                <span id="userName" class="font-semibold">Carregando...</span>
+                            </div>
+                            
                             <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg flex items-center">
                                 <i class="fas fa-database mr-2"></i>
                                 <span id="totalRecords" class="font-semibold mr-2">0</span> registros
@@ -55,15 +61,38 @@
                                 </span>
                             </div>
 
-                            <button id="exportBtn"
-                                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
-                                <i class="fas fa-file-export mr-2"></i> Exportar
-                            </button>
-                            <label for="importInput"
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center cursor-pointer">
-                                <i class="fas fa-file-import mr-2"></i> Importar
-                                <input type="file" id="importInput" accept=".json" class="file-input">
-                            </label>
+                            <!-- Menu Dropdown -->
+                            <div class="relative" id="menuDropdown">
+                                <button id="menuToggle" 
+                                    class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md flex items-center transition-colors duration-200">
+                                    <i class="fas fa-cog mr-2"></i> Menu
+                                    <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200" id="menuChevron"></i>
+                                </button>
+                                
+                                <!-- Dropdown Content -->
+                                <div id="menuContent" 
+                                    class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 hidden">
+                                    <div class="py-1">
+                                        <button id="exportBtn" 
+                                            class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center transition-colors duration-150">
+                                            <i class="fas fa-file-export mr-3 text-green-600"></i> Exportar Dados
+                                        </button>
+                                        
+                                        <label for="importInput" 
+                                            class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 flex items-center cursor-pointer transition-colors duration-150">
+                                            <i class="fas fa-file-import mr-3 text-blue-600"></i> Importar Dados
+                                            <input type="file" id="importInput" accept=".json" class="hidden">
+                                        </label>
+                                        
+                                        <div class="border-t border-gray-100 my-1"></div>
+                                        
+                                        <button id="logoutBtn" 
+                                            class="w-full text-left px-4 py-2 text-red-700 hover:bg-red-50 flex items-center transition-colors duration-150 hidden">
+                                            <i class="fas fa-sign-out-alt mr-3 text-red-600"></i> Sair do Sistema
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </header>
@@ -956,6 +985,120 @@
         <!-- <script src="config/dev.config.js"></script> -->
         <!-- PWA Scripts -->
         <script src="/pwa-installer.js"></script>
+        
+        <!-- Script de Autenticação -->
+        <script type="module">
+            // Importar Firebase Auth
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { 
+                getAuth, 
+                onAuthStateChanged,
+                signOut
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+            // Configuração do Firebase
+            const firebaseConfig = {
+                apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
+                authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
+                projectId: "appcadastrodepessoas-2c20b",
+                storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
+                messagingSenderId: "789674139888",
+                appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
+            };
+
+            // Inicializar Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+
+            // Elementos DOM
+            const userInfo = document.getElementById('userInfo');
+            const userName = document.getElementById('userName');
+            const logoutBtn = document.getElementById('logoutBtn');
+
+            // Verificar estado de autenticação
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // Usuário está logado
+                    console.log('✅ Usuário autenticado:', user.email);
+                    
+                    // Mostrar informações do usuário
+                    userName.textContent = user.email;
+                    userInfo.classList.remove('hidden');
+                    logoutBtn.classList.remove('hidden');
+                    
+                    // Disponibilizar globalmente para outros scripts
+                    window.currentUser = user;
+                    
+                } else {
+                    // Usuário não está logado - redirecionar para login
+                    console.log('❌ Usuário não autenticado - redirecionando...');
+                    window.location.href = 'components/login.html';
+                }
+            });
+
+            // Função de logout
+            async function handleLogout() {
+                try {
+                    await signOut(auth);
+                    console.log('✅ Logout realizado com sucesso');
+                    
+                    // Redirecionar para login
+                    window.location.href = 'components/login.html';
+                    
+                } catch (error) {
+                    console.error('❌ Erro no logout:', error);
+                    alert('Erro ao fazer logout. Tente novamente.');
+                }
+            }
+
+            // Event listener para o botão de logout
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Tem certeza que deseja sair do sistema?')) {
+                    handleLogout();
+                }
+            });
+
+            // Disponibilizar função globalmente
+            window.handleLogout = handleLogout;
+            
+            // Controle do Menu Dropdown
+            const menuToggle = document.getElementById('menuToggle');
+            const menuContent = document.getElementById('menuContent');
+            const menuChevron = document.getElementById('menuChevron');
+            
+            // Toggle do menu
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = !menuContent.classList.contains('hidden');
+                
+                if (isOpen) {
+                    // Fechar menu
+                    menuContent.classList.add('hidden');
+                    menuChevron.style.transform = 'rotate(0deg)';
+                } else {
+                    // Abrir menu
+                    menuContent.classList.remove('hidden');
+                    menuChevron.style.transform = 'rotate(180deg)';
+                }
+            });
+            
+            // Fechar menu ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!menuToggle.contains(e.target) && !menuContent.contains(e.target)) {
+                    menuContent.classList.add('hidden');
+                    menuChevron.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Fechar menu ao clicar em uma opção
+            menuContent.addEventListener('click', () => {
+                menuContent.classList.add('hidden');
+                menuChevron.style.transform = 'rotate(0deg)';
+            });
+            
+            console.log('🔐 Sistema de autenticação carregado');
+            console.log('⚙️ Menu dropdown configurado');
+        </script>
 
 
 </html>

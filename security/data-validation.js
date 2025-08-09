@@ -10,8 +10,6 @@ class DataValidator {
 			email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
 			phone: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
 			dob: /^\d{4}-\d{2}-\d{2}$/,
-			cpf: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
-			cep: /^\d{5}-\d{3}$/,
 		};
 
 		// Listas de valores permitidos
