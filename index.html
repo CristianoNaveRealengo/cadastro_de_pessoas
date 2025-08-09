@@ -25,6 +25,10 @@
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/icon-32x32.png">
 
         <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+        
+        <!-- Scripts de Segurança e Criptografia -->
+        <script src="security/data-encryption.js"></script>
+        <script src="security/encryption-integration.js"></script>
     </head>
 
     <body>
@@ -48,7 +52,10 @@
                             <!-- Informações do usuário logado (sempre visível) -->
                             <div id="userInfo" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg flex items-center hidden">
                                 <i class="fas fa-user mr-2"></i>
-                                <span id="userName" class="font-semibold">Carregando...</span>
+                                <div class="flex flex-col">
+                                    <span id="userName" class="font-semibold text-sm">Carregando...</span>
+                                    <span id="userRole" class="text-xs opacity-75">Verificando função...</span>
+                                </div>
                             </div>
                             
                             <div class="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-lg flex items-center">
@@ -97,6 +104,11 @@
                                         <button id="extendSessionBtn" 
                                             class="w-full text-left px-4 py-2 text-green-700 hover:bg-green-50 flex items-center transition-colors duration-150 hidden">
                                             <i class="fas fa-clock mr-3 text-green-600"></i> Renovar Sessão
+                                        </button>
+                                        
+                                        <button id="accessInfoBtn" 
+                                            class="w-full text-left px-4 py-2 text-purple-700 hover:bg-purple-50 flex items-center transition-colors duration-150 hidden">
+                                            <i class="fas fa-shield-alt mr-3 text-purple-600"></i> Informações de Acesso
                                         </button>
                                         
                                         <button id="logoutBtn" 
@@ -992,7 +1004,6 @@
             </div>
         </body>
         <script src="assets/js/app.js"></script>
-        <script type="module" src="config/firebase-offline.config.js"></script>
         <!-- <script src="config/dev.config.js"></script> -->
         <!-- PWA Scripts -->
         <script src="/pwa-installer.js"></script>
@@ -1009,6 +1020,9 @@
 
             // Importar configuração segura
             import { firebaseConfig, configManager } from "./config/firebase-secure.config.js";
+            
+            // Importar sistema RBAC
+            import { accessControl, PERMISSIONS, ROLES } from "./config/rbac-config.js";
 
             // Verificar se a configuração foi carregada corretamente
             if (!firebaseConfig.apiKey) {
@@ -1040,6 +1054,7 @@
             // Elementos DOM
             const userInfo = document.getElementById('userInfo');
             const userName = document.getElementById('userName');
+            const userRole = document.getElementById('userRole');
             const logoutBtn = document.getElementById('logoutBtn');
             const extendSessionBtn = document.getElementById('extendSessionBtn');
             const sessionIndicator = document.getElementById('sessionIndicator');
@@ -1051,28 +1066,169 @@
                     // Usuário está logado
                     console.log('✅ Usuário autenticado:', user.email);
                     
+                    // Configurar controle de acesso
+                    accessControl.setCurrentUser(user);
+                    const userInfo_data = accessControl.getCurrentUserInfo();
+                    
+                    if (!userInfo_data || userInfo_data.roles.length === 0) {
+                        // Usuário sem funções definidas
+                        console.error('❌ Usuário sem permissões definidas:', user.email);
+                        showAccessDeniedPage();
+                        return;
+                    }
+                    
                     // Mostrar informações do usuário
                     userName.textContent = user.email;
+                    
+                    // Mostrar funções do usuário
+                    const roleNames = userInfo_data.roles.map(role => role.displayName).join(', ');
+                    const roleIcons = userInfo_data.roles.map(role => `<i class="fas ${role.icon} mr-1"></i>`).join('');
+                    userRole.innerHTML = `${roleIcons}${roleNames}`;
+                    
+                    // Aplicar cor baseada na função principal
+                    const primaryRole = userInfo_data.roles[0];
+                    const colorClass = {
+                        red: 'bg-red-100 text-red-800',
+                        blue: 'bg-blue-100 text-blue-800',
+                        green: 'bg-green-100 text-green-800',
+                        purple: 'bg-purple-100 text-purple-800',
+                        yellow: 'bg-yellow-100 text-yellow-800'
+                    }[primaryRole.color] || 'bg-blue-100 text-blue-800';
+                    
+                    userInfo.className = `${colorClass} px-4 py-2 rounded-lg flex items-center`;
+                    
+                    // Mostrar elementos da interface
                     userInfo.classList.remove('hidden');
                     logoutBtn.classList.remove('hidden');
-                    extendSessionBtn.classList.remove('hidden');
+                    
+                    // Mostrar botão de renovar sessão apenas se tiver permissão
+                    if (accessControl.hasPermission(PERMISSIONS.EXTEND_SESSION)) {
+                        extendSessionBtn.classList.remove('hidden');
+                    }
+                    
+                    // Mostrar informações de acesso apenas para administradores
+                    if (accessControl.hasPermission(PERMISSIONS.VIEW_AUDIT_LOG)) {
+                        document.getElementById('accessInfoBtn').classList.remove('hidden');
+                    }
+                    
                     sessionIndicator.classList.remove('hidden');
+                    
+                    // Configurar interface baseada em permissões
+                    setupPermissionBasedUI();
                     
                     // Disponibilizar globalmente para outros scripts
                     window.currentUser = user;
+                    window.userPermissions = userInfo_data;
                     
                 } else {
                     // Usuário não está logado - redirecionar para login
                     console.log('❌ Usuário não autenticado - redirecionando...');
+                    accessControl.clearCurrentUser();
                     window.location.href = 'components/login.html';
                 }
             });
+
+            // Função para mostrar página de acesso negado
+            function showAccessDeniedPage() {
+                document.body.innerHTML = `
+                    <div class="min-h-screen flex items-center justify-center bg-red-50">
+                        <div class="bg-white p-8 rounded-lg shadow-lg max-w-md text-center">
+                            <i class="fas fa-ban text-red-500 text-6xl mb-6"></i>
+                            <h2 class="text-2xl font-bold text-red-800 mb-4">Acesso Negado</h2>
+                            <p class="text-red-600 mb-4">
+                                Você não possui permissões para acessar este sistema.
+                            </p>
+                            <p class="text-sm text-gray-600 mb-6">
+                                Entre em contato com o administrador para solicitar acesso.
+                            </p>
+                            <button onclick="handleLogout()" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                Sair do Sistema
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Função para configurar interface baseada em permissões
+            function setupPermissionBasedUI() {
+                // Botões de ação no formulário
+                const saveBtn = document.querySelector('button[type="submit"]');
+                const clearBtn = document.getElementById('clearFormBtn');
+                
+                // Botões de exportação/importação
+                const exportBtn = document.getElementById('exportBtn');
+                const importInput = document.getElementById('importInput');
+                
+                // Verificar permissões e habilitar/desabilitar elementos
+                
+                // Criar registros
+                if (!accessControl.hasPermission(PERMISSIONS.CREATE_RECORD)) {
+                    if (saveBtn) {
+                        saveBtn.disabled = true;
+                        saveBtn.innerHTML = '<i class="fas fa-ban mr-2"></i>Sem Permissão';
+                        saveBtn.className = saveBtn.className.replace('bg-blue-600', 'bg-gray-400');
+                    }
+                }
+                
+                // Exportar dados
+                if (!accessControl.hasPermission(PERMISSIONS.EXPORT_DATA)) {
+                    if (exportBtn) {
+                        exportBtn.style.display = 'none';
+                    }
+                }
+                
+                // Importar dados
+                if (!accessControl.hasPermission(PERMISSIONS.IMPORT_DATA)) {
+                    const importLabel = document.querySelector('label[for="importInput"]');
+                    if (importLabel) {
+                        importLabel.style.display = 'none';
+                    }
+                }
+                
+                // Adicionar indicadores visuais de permissões
+                addPermissionIndicators();
+            }
+
+            // Função para adicionar indicadores visuais de permissões
+            function addPermissionIndicators() {
+                const userInfo_data = accessControl.getCurrentUserInfo();
+                if (!userInfo_data) return;
+                
+                // Criar tooltip com permissões
+                const tooltip = document.createElement('div');
+                tooltip.className = 'hidden absolute bg-gray-800 text-white text-xs rounded py-2 px-3 z-50 max-w-xs';
+                tooltip.innerHTML = `
+                    <div class="font-semibold mb-2">Suas Permissões:</div>
+                    <ul class="text-xs space-y-1">
+                        ${userInfo_data.permissions.map(permission => `
+                            <li><i class="fas fa-check text-green-400 mr-1"></i>${permission.replace('_', ' ')}</li>
+                        `).join('')}
+                    </ul>
+                `;
+                
+                document.body.appendChild(tooltip);
+                
+                // Adicionar evento de hover no userInfo
+                userInfo.addEventListener('mouseenter', (e) => {
+                    tooltip.style.left = e.pageX + 'px';
+                    tooltip.style.top = (e.pageY + 20) + 'px';
+                    tooltip.classList.remove('hidden');
+                });
+                
+                userInfo.addEventListener('mouseleave', () => {
+                    tooltip.classList.add('hidden');
+                });
+            }
 
             // Função de logout
             async function handleLogout() {
                 try {
                     await signOut(auth);
                     console.log('✅ Logout realizado com sucesso');
+                    
+                    // Limpar controle de acesso
+                    accessControl.clearCurrentUser();
                     
                     // Redirecionar para login
                     window.location.href = 'components/login.html';
@@ -1083,6 +1239,9 @@
                 }
             }
 
+            // Disponibilizar função globalmente
+            window.handleLogout = handleLogout;
+
             // Event listener para o botão de logout
             logoutBtn.addEventListener('click', () => {
                 if (confirm('Tem certeza que deseja sair do sistema?')) {
@@ -1092,10 +1251,237 @@
 
             // Event listener para renovar sessão
             extendSessionBtn.addEventListener('click', () => {
-                if (window.sessionManager) {
-                    window.sessionManager.extendSession();
+                if (accessControl.hasPermission(PERMISSIONS.EXTEND_SESSION)) {
+                    if (window.sessionManager) {
+                        window.sessionManager.extendSession();
+                    }
+                } else {
+                    accessControl.showAccessDeniedMessage('Você não tem permissão para renovar a sessão');
                 }
             });
+
+            // ==============================================
+            // PROTEÇÃO DE OPERAÇÕES COM RBAC
+            // ==============================================
+
+            // Interceptar operações de CRUD quando o app.js carregar
+            document.addEventListener('DOMContentLoaded', function() {
+                // Aguardar carregamento completo
+                setTimeout(() => {
+                    setupCRUDProtection();
+                }, 2000);
+            });
+
+            function setupCRUDProtection() {
+                // Proteger formulário de cadastro
+                const registrationForm = document.getElementById('registrationForm');
+                if (registrationForm) {
+                    registrationForm.addEventListener('submit', function(e) {
+                        if (!accessControl.hasPermission(PERMISSIONS.CREATE_RECORD)) {
+                            e.preventDefault();
+                            accessControl.showAccessDeniedMessage('Você não tem permissão para criar registros');
+                            return false;
+                        }
+                    });
+                }
+
+                // Proteger botão de exportação
+                const exportBtn = document.getElementById('exportBtn');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', function(e) {
+                        if (!accessControl.hasPermission(PERMISSIONS.EXPORT_DATA)) {
+                            e.preventDefault();
+                            accessControl.showAccessDeniedMessage('Você não tem permissão para exportar dados');
+                            return false;
+                        }
+                    });
+                }
+
+                // Proteger importação
+                const importInput = document.getElementById('importInput');
+                if (importInput) {
+                    importInput.addEventListener('change', function(e) {
+                        if (!accessControl.hasPermission(PERMISSIONS.IMPORT_DATA)) {
+                            e.preventDefault();
+                            this.value = '';
+                            accessControl.showAccessDeniedMessage('Você não tem permissão para importar dados');
+                            return false;
+                        }
+                    });
+                }
+
+                // Interceptar funções globais se existirem
+                if (typeof window.editRecord === 'function') {
+                    const originalEditRecord = window.editRecord;
+                    window.editRecord = function(recordId) {
+                        if (accessControl.hasPermission(PERMISSIONS.UPDATE_RECORD)) {
+                            return originalEditRecord(recordId);
+                        } else {
+                            accessControl.showAccessDeniedMessage('Você não tem permissão para editar registros');
+                        }
+                    };
+                }
+
+                if (typeof window.deleteRecord === 'function') {
+                    const originalDeleteRecord = window.deleteRecord;
+                    window.deleteRecord = function(recordId) {
+                        if (accessControl.hasPermission(PERMISSIONS.DELETE_RECORD)) {
+                            return originalDeleteRecord(recordId);
+                        } else {
+                            accessControl.showAccessDeniedMessage('Você não tem permissão para excluir registros');
+                        }
+                    };
+                }
+
+                console.log('🔒 Proteção RBAC aplicada às operações CRUD');
+            }
+
+            // Event listener para informações de acesso
+            document.addEventListener('DOMContentLoaded', function() {
+                const accessInfoBtn = document.getElementById('accessInfoBtn');
+                if (accessInfoBtn) {
+                    accessInfoBtn.addEventListener('click', () => {
+                        showAccessInfoModal();
+                    });
+                }
+            });
+
+            // Função para mostrar modal com informações de acesso
+            function showAccessInfoModal() {
+                if (!accessControl.hasPermission(PERMISSIONS.VIEW_AUDIT_LOG)) {
+                    accessControl.showAccessDeniedMessage('Você não tem permissão para visualizar informações de acesso');
+                    return;
+                }
+
+                const userInfo_data = accessControl.getCurrentUserInfo();
+                const auditLog = accessControl.getAuditLog(20);
+                const stats = accessControl.getAccessStats();
+
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-2xl font-bold text-gray-800">
+                                    <i class="fas fa-shield-alt text-purple-600 mr-2"></i>
+                                    Informações de Acesso
+                                </h2>
+                                <button id="closeAccessModal" class="text-gray-500 hover:text-gray-700">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+
+                            <!-- Informações do Usuário Atual -->
+                            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                                <h3 class="font-semibold text-blue-800 mb-3">Usuário Atual</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p><strong>Email:</strong> ${userInfo_data.email}</p>
+                                        <p><strong>UID:</strong> ${userInfo_data.uid}</p>
+                                        <p><strong>Admin:</strong> ${userInfo_data.isAdmin ? 'Sim' : 'Não'}</p>
+                                    </div>
+                                    <div>
+                                        <p><strong>Funções:</strong></p>
+                                        <div class="mt-1">
+                                            ${userInfo_data.roles.map(role => `
+                                                <span class="inline-block bg-${role.color}-100 text-${role.color}-800 px-2 py-1 rounded text-xs mr-1 mb-1">
+                                                    <i class="fas ${role.icon} mr-1"></i>${role.displayName}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estatísticas -->
+                            <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                                <h3 class="font-semibold text-green-800 mb-3">Estatísticas de Acesso</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                    <div>
+                                        <div class="text-2xl font-bold text-green-600">${stats.totalLogs}</div>
+                                        <div class="text-sm text-gray-600">Total de Logs</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-blue-600">${stats.uniqueUsers}</div>
+                                        <div class="text-sm text-gray-600">Usuários Únicos</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-purple-600">${stats.loginCount}</div>
+                                        <div class="text-sm text-gray-600">Logins</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-red-600">${stats.deniedCount}</div>
+                                        <div class="text-sm text-gray-600">Acessos Negados</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Permissões -->
+                            <div class="mb-6 p-4 bg-yellow-50 rounded-lg">
+                                <h3 class="font-semibold text-yellow-800 mb-3">Suas Permissões</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                    ${userInfo_data.permissions.map(permission => `
+                                        <div class="flex items-center text-sm">
+                                            <i class="fas fa-check text-green-500 mr-2"></i>
+                                            <span>${permission.replace(/_/g, ' ').toLowerCase()}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Log de Auditoria -->
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <h3 class="font-semibold text-gray-800 mb-3">Log de Auditoria (Últimas 20 ações)</h3>
+                                <div class="max-h-64 overflow-y-auto">
+                                    <table class="w-full text-sm">
+                                        <thead class="bg-gray-100 sticky top-0">
+                                            <tr>
+                                                <th class="text-left p-2">Horário</th>
+                                                <th class="text-left p-2">Usuário</th>
+                                                <th class="text-left p-2">Ação</th>
+                                                <th class="text-left p-2">Detalhes</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${auditLog.map(log => `
+                                                <tr class="border-b">
+                                                    <td class="p-2">${new Date(log.timestamp).toLocaleString()}</td>
+                                                    <td class="p-2">${log.user}</td>
+                                                    <td class="p-2">
+                                                        <span class="px-2 py-1 rounded text-xs ${
+                                                            log.action === 'ACCESS_DENIED' ? 'bg-red-100 text-red-800' :
+                                                            log.action === 'USER_LOGIN' ? 'bg-green-100 text-green-800' :
+                                                            'bg-blue-100 text-blue-800'
+                                                        }">
+                                                            ${log.action}
+                                                        </span>
+                                                    </td>
+                                                    <td class="p-2 text-xs text-gray-600">${log.details}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Event listener para fechar modal
+                modal.querySelector('#closeAccessModal').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+
+                // Fechar ao clicar fora
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        document.body.removeChild(modal);
+                    }
+                });
+            }
 
             // Disponibilizar função globalmente
             window.handleLogout = handleLogout;

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Limpo - Sistema de Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+        <!-- Logo/Título -->
+        <div class="text-center mb-8">
+            <i class="fas fa-users text-4xl text-blue-600 mb-4"></i>
+            <h1 class="text-2xl font-bold text-gray-800">Sistema de Cadastro</h1>
+            <p class="text-gray-600 mt-2">Login Limpo - Apenas SignIn</p>
+        </div>
+
+        <!-- Status de Conexão -->
+        <div id="connectionStatus" class="text-center mb-4 text-sm text-gray-500">
+            <i class="fas fa-spinner animate-spin mr-1"></i>
+            Conectando...
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">
+                    <i class="fas fa-envelope mr-1"></i>
+                    Email
+                </label>
+                <input type="email" id="email" name="email" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="seu@email.com">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                    <i class="fas fa-lock mr-1"></i>
+                    Senha
+                </label>
+                <input type="password" id="password" name="password" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Sua senha">
+            </div>
+
+            <button type="submit" id="loginBtn"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200">
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Entrar
+            </button>
+        </form>
+
+        <!-- Mensagens de Toast -->
+        <div id="toast" class="fixed top-4 right-4 z-50 hidden">
+            <div class="bg-white border-l-4 border-blue-500 rounded-lg shadow-lg p-4 max-w-sm">
+                <div class="flex items-center">
+                    <i id="toastIcon" class="fas fa-info-circle text-blue-500 mr-3"></i>
+                    <span id="toastMessage" class="text-gray-800"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Configuração Firebase direta (sem imports para evitar conflitos)
+        const firebaseConfig = {
+            apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
+            authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
+            projectId: "appcadastrodepessoas-2c20b",
+            storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
+            messagingSenderId: "789674139888",
+            appId: "1:789674139888:web:0e21d7ba75c10bd6086235"
+        };
+
+        // Importar apenas o necessário
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+        const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Elementos DOM
+        const statusDiv = document.getElementById('connectionStatus');
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+
+        // Atualizar status
+        statusDiv.innerHTML = '<i class="fas fa-check text-green-500 mr-1"></i>Conectado';
+        statusDiv.className = 'text-center mb-4 text-sm text-green-600';
+
+        // Função para mostrar toast
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            let iconClass = 'fas fa-info-circle text-blue-500';
+            let borderColor = 'border-blue-500';
+            
+            switch (type) {
+                case 'success':
+                    iconClass = 'fas fa-check-circle text-green-500';
+                    borderColor = 'border-green-500';
+                    break;
+                case 'error':
+                    iconClass = 'fas fa-exclamation-circle text-red-500';
+                    borderColor = 'border-red-500';
+                    break;
+            }
+            
+            toastIcon.className = iconClass;
+            toast.querySelector('div').className = `bg-white ${borderColor} rounded-lg shadow-lg p-4 max-w-sm`;
+            toastMessage.textContent = message;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3000);
+        }
+
+        // Formulário de login
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            
+            const originalText = loginBtn.innerHTML;
+            
+            try {
+                // Mostrar loading
+                loginBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>Entrando...';
+                loginBtn.disabled = true;
+                
+                console.log('🔑 Tentando login com:', email);
+                
+                // APENAS signInWithEmailAndPassword - SEM createUser
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                
+                console.log('✅ Login realizado:', result.user.email);
+                showToast('Login realizado com sucesso!', 'success');
+                
+                // Redirecionar após 1 segundo
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Erro no login:', error);
+                
+                let errorMessage = 'Erro no login';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = 'Usuário não encontrado';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Senha incorreta';
+                        break;
+                    case 'auth/invalid-email':
+                        errorMessage = 'Email inválido';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Muitas tentativas. Tente novamente mais tarde';
+                        break;
+                    case 'auth/invalid-credential':
+                        errorMessage = 'Email ou senha incorretos';
+                        break;
+                    default:
+                        errorMessage = `Erro: ${error.message}`;
+                }
+                
+                showToast(errorMessage, 'error');
+                
+            } finally {
+                // Restaurar botão
+                loginBtn.innerHTML = originalText;
+                loginBtn.disabled = false;
+            }
+        });
+
+        console.log('🔍 Login limpo carregado - APENAS signInWithEmailAndPassword');
+        console.log('🚫 SEM createUserWithEmailAndPassword');
+        console.log('🚫 SEM signInAnonymously');
+    </script>
+</body>
+</html>

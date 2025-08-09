@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Criptografia - Sistema de Segurança</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-shield-alt text-blue-500 mr-3"></i>
+                Teste de Criptografia
+            </h1>
+            <p class="text-gray-600">Ferramenta para testar o sistema de criptografia de dados sensíveis</p>
+        </header>
+
+        <!-- Status da Criptografia -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                Status do Sistema
+            </h2>
+            <div id="systemStatus" class="space-y-2">
+                <div class="flex items-center">
+                    <span class="w-4 h-4 bg-gray-300 rounded-full mr-3"></span>
+                    <span>Carregando sistema de criptografia...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teste de Criptografia -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-flask text-green-500 mr-2"></i>
+                Teste de Integridade
+            </h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Dados de Teste:
+                </label>
+                <textarea id="testData" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Digite os dados que deseja testar...">João da Silva Santos
+1990-05-15
+Informações confidenciais do candidato
+Maria Referência</textarea>
+            </div>
+            
+            <div class="flex space-x-3 mb-4">
+                <button id="runTest" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-play mr-2"></i>
+                    Executar Teste
+                </button>
+                <button id="clearResults" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md flex items-center">
+                    <i class="fas fa-trash mr-2"></i>
+                    Limpar Resultados
+                </button>
+            </div>
+            
+            <div id="testResults" class="hidden">
+                <h3 class="font-semibold mb-2">Resultados:</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dados Originais:</label>
+                        <pre id="originalData" class="bg-gray-100 p-3 rounded text-sm overflow-x-auto"></pre>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dados Criptografados:</label>
+                        <pre id="encryptedData" class="bg-red-50 p-3 rounded text-sm overflow-x-auto"></pre>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dados Descriptografados:</label>
+                        <pre id="decryptedData" class="bg-green-50 p-3 rounded text-sm overflow-x-auto"></pre>
+                    </div>
+                    <div id="testResult" class="p-3 rounded font-semibold"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-bar text-purple-500 mr-2"></i>
+                Estatísticas de Criptografia
+            </h2>
+            <div id="encryptionStats" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">-</div>
+                    <div class="text-sm text-gray-600">Algoritmo</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">-</div>
+                    <div class="text-sm text-gray-600">Tamanho da Chave</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">-</div>
+                    <div class="text-sm text-gray-600">Campos Protegidos</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-orange-600">-</div>
+                    <div class="text-sm text-gray-600">Status da Chave</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teste de Registro Completo -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-database text-indigo-500 mr-2"></i>
+                Teste de Registro Completo
+            </h2>
+            
+            <button id="testRecord" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center mb-4">
+                <i class="fas fa-cog mr-2"></i>
+                Testar Registro de Exemplo
+            </button>
+            
+            <div id="recordTestResults" class="hidden space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Registro Original:</label>
+                    <pre id="originalRecord" class="bg-gray-100 p-3 rounded text-sm overflow-x-auto"></pre>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Registro Criptografado:</label>
+                    <pre id="encryptedRecord" class="bg-red-50 p-3 rounded text-sm overflow-x-auto"></pre>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Registro Descriptografado:</label>
+                    <pre id="decryptedRecord" class="bg-green-50 p-3 rounded text-sm overflow-x-auto"></pre>
+                </div>
+                <div id="recordTestResult" class="p-3 rounded font-semibold"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../security/data-encryption.js"></script>
+    
+    <script>
+        let encryptionSystem = null;
+        
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeEncryption();
+            updateSystemStatus();
+            updateStats();
+            
+            // Event listeners
+            document.getElementById('runTest').addEventListener('click', runEncryptionTest);
+            document.getElementById('clearResults').addEventListener('click', clearResults);
+            document.getElementById('testRecord').addEventListener('click', testCompleteRecord);
+        });
+        
+        async function initializeEncryption() {
+            try {
+                if (window.dataEncryption) {
+                    encryptionSystem = window.dataEncryption;
+                    
+                    // Inicializar com email de teste
+                    await encryptionSystem.initializeKey('test@exemplo.com');
+                    
+                    console.log('✅ Sistema de criptografia inicializado para teste');
+                } else {
+                    console.error('❌ Sistema de criptografia não encontrado');
+                }
+            } catch (error) {
+                console.error('❌ Erro ao inicializar criptografia:', error);
+            }
+        }
+        
+        function updateSystemStatus() {
+            const statusDiv = document.getElementById('systemStatus');
+            
+            if (encryptionSystem && encryptionSystem.encryptionKey) {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-green-500 rounded-full mr-3"></span>
+                        <span class="text-green-800">Sistema de criptografia ativo</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-blue-500 rounded-full mr-3"></span>
+                        <span class="text-blue-800">Chave de criptografia inicializada</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-purple-500 rounded-full mr-3"></span>
+                        <span class="text-purple-800">Pronto para testes</span>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="w-4 h-4 bg-red-500 rounded-full mr-3"></span>
+                        <span class="text-red-800">Sistema de criptografia não disponível</span>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateStats() {
+            if (!encryptionSystem) return;
+            
+            const stats = encryptionSystem.getStats();
+            const statsDiv = document.getElementById('encryptionStats');
+            
+            statsDiv.innerHTML = `
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">${stats.algorithm}</div>
+                    <div class="text-sm text-gray-600">Algoritmo</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">${stats.keyLength} bits</div>
+                    <div class="text-sm text-gray-600">Tamanho da Chave</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">${stats.sensitiveFields.length}</div>
+                    <div class="text-sm text-gray-600">Campos Protegidos</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold ${stats.keyInitialized ? 'text-green-600' : 'text-red-600'}">
+                        ${stats.keyInitialized ? 'ATIVA' : 'INATIVA'}
+                    </div>
+                    <div class="text-sm text-gray-600">Status da Chave</div>
+                </div>
+            `;
+        }
+        
+        async function runEncryptionTest() {
+            if (!encryptionSystem) {
+                alert('Sistema de criptografia não disponível');
+                return;
+            }
+            
+            const testData = document.getElementById('testData').value;
+            if (!testData.trim()) {
+                alert('Digite alguns dados para testar');
+                return;
+            }
+            
+            try {
+                // Mostrar dados originais
+                document.getElementById('originalData').textContent = testData;
+                
+                // Criptografar
+                const encrypted = await encryptionSystem.encryptData(testData);
+                document.getElementById('encryptedData').textContent = JSON.stringify(encrypted, null, 2);
+                
+                // Descriptografar
+                const decrypted = await encryptionSystem.decryptData(encrypted);
+                document.getElementById('decryptedData').textContent = decrypted;
+                
+                // Verificar resultado
+                const success = decrypted === testData;
+                const resultDiv = document.getElementById('testResult');
+                
+                if (success) {
+                    resultDiv.className = 'p-3 rounded font-semibold bg-green-100 text-green-800';
+                    resultDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Teste bem-sucedido! Os dados foram criptografados e descriptografados corretamente.';
+                } else {
+                    resultDiv.className = 'p-3 rounded font-semibold bg-red-100 text-red-800';
+                    resultDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Teste falhou! Os dados descriptografados não coincidem com os originais.';
+                }
+                
+                // Mostrar resultados
+                document.getElementById('testResults').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Erro no teste:', error);
+                alert('Erro durante o teste: ' + error.message);
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('testResults').classList.add('hidden');
+            document.getElementById('recordTestResults').classList.add('hidden');
+        }
+        
+        async function testCompleteRecord() {
+            if (!encryptionSystem) {
+                alert('Sistema de criptografia não disponível');
+                return;
+            }
+            
+            const testRecord = {
+                id: 'test_' + Date.now(),
+                fullName: 'João da Silva Santos',
+                dob: '1990-05-15',
+                observation: 'Informações confidenciais do candidato - dados sensíveis para teste',
+                referenceName: 'Maria Referência Silva',
+                city: 'Rio de Janeiro',
+                neighborhood: 'Copacabana',
+                status: 'Em Análise',
+                origin: 'MSE',
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                // Mostrar registro original
+                document.getElementById('originalRecord').textContent = JSON.stringify(testRecord, null, 2);
+                
+                // Criptografar registro
+                const encrypted = await encryptionSystem.encryptRecord(testRecord);
+                document.getElementById('encryptedRecord').textContent = JSON.stringify(encrypted, null, 2);
+                
+                // Descriptografar registro
+                const decrypted = await encryptionSystem.decryptRecord(encrypted);
+                document.getElementById('decryptedRecord').textContent = JSON.stringify(decrypted, null, 2);
+                
+                // Verificar integridade dos campos sensíveis
+                const fieldsToCheck = ['fullName', 'dob', 'observation', 'referenceName'];
+                const success = fieldsToCheck.every(field => decrypted[field] === testRecord[field]);
+                
+                const resultDiv = document.getElementById('recordTestResult');
+                
+                if (success) {
+                    resultDiv.className = 'p-3 rounded font-semibold bg-green-100 text-green-800';
+                    resultDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Teste de registro bem-sucedido! Todos os campos sensíveis foram protegidos corretamente.';
+                } else {
+                    resultDiv.className = 'p-3 rounded font-semibold bg-red-100 text-red-800';
+                    resultDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Teste de registro falhou! Alguns campos não foram descriptografados corretamente.';
+                }
+                
+                // Mostrar resultados
+                document.getElementById('recordTestResults').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Erro no teste de registro:', error);
+                alert('Erro durante o teste de registro: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

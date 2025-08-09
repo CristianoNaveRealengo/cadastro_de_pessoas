@@ -99,6 +99,9 @@
 
             // Importar configuração segura
             import { firebaseConfig, configManager } from "../config/firebase-secure.config.js";
+            
+            // Importar sistema RBAC
+            import { accessControl, USER_ROLES } from "../config/rbac-config.js";
 
             // Verificar se a configuração foi carregada corretamente
             if (!firebaseConfig.apiKey) {
@@ -267,6 +270,14 @@
                     
                     // Fazer login
                     const result = await signInWithEmailAndPassword(auth, email, password);
+                    
+                    // Verificar se usuário tem permissões
+                    if (!USER_ROLES[email]) {
+                        // Usuário não autorizado
+                        await auth.signOut();
+                        showToast('Usuário não autorizado para acessar o sistema', 'error');
+                        return;
+                    }
                     
                     // Redirecionar imediatamente após login bem-sucedido
                     redirectToApp(result.user);

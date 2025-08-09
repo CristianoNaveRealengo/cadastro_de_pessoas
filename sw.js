@@ -14,7 +14,7 @@ const ESSENTIAL_FILES = [
 	"/manifest.json",
 	"/assets/css/style.css",
 	"/assets/js/app.js",
-	"/config/firebase-offline.config.js",
+	"/config/firebase-secure.config.js",
 	"/fix-async-listener-error.js",
 ];
 

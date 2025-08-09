@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Firebase - Sistema de Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-4xl">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-8">
+                <i class="fas fa-bug text-4xl text-red-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">Debug Firebase</h1>
+                <p class="text-gray-600 mt-2">Diagnóstico de problemas de autenticação</p>
+            </div>
+
+            <div id="results" class="space-y-4">
+                <div class="text-center">
+                    <i class="fas fa-spinner animate-spin text-2xl text-blue-500"></i>
+                    <p class="mt-2 text-gray-600">Executando diagnósticos...</p>
+                </div>
+            </div>
+
+            <div class="mt-8 space-y-4">
+                <button id="testLogin" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Testar Login
+                </button>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="email" id="testEmail" placeholder="Email de teste" 
+                           class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="cristianonaverealengo@gmail.com">
+                    <input type="password" id="testPassword" placeholder="Senha de teste" 
+                           class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Importar configuração segura
+        import { firebaseConfig, configManager } from "../config/firebase-secure.config.js";
+
+        class FirebaseDebugger {
+            constructor() {
+                this.results = [];
+                this.app = null;
+                this.auth = null;
+            }
+
+            async runDiagnostics() {
+                const resultsDiv = document.getElementById('results');
+                this.results = [];
+
+                // Limpar resultados
+                resultsDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-spinner animate-spin text-2xl text-blue-500"></i>
+                        <p class="mt-2 text-gray-600">Executando diagnósticos...</p>
+                    </div>
+                `;
+
+                // Lista de testes
+                const tests = [
+                    { name: 'Configuração Firebase', fn: this.testFirebaseConfig },
+                    { name: 'Inicialização Firebase', fn: this.testFirebaseInit },
+                    { name: 'Configuração de Auth', fn: this.testAuthConfig },
+                    { name: 'Conectividade', fn: this.testConnectivity },
+                    { name: 'Regras de Segurança', fn: this.testSecurityRules }
+                ];
+
+                // Executar testes
+                for (const test of tests) {
+                    try {
+                        const result = await test.fn.call(this);
+                        this.results.push({
+                            name: test.name,
+                            status: result.status,
+                            message: result.message,
+                            details: result.details || []
+                        });
+                    } catch (error) {
+                        this.results.push({
+                            name: test.name,
+                            status: 'error',
+                            message: `Erro no teste: ${error.message}`,
+                            details: [error.stack]
+                        });
+                    }
+                }
+
+                this.displayResults();
+            }
+
+            async testFirebaseConfig() {
+                try {
+                    console.log('🔧 Testando configuração Firebase...');
+                    
+                    if (!firebaseConfig) {
+                        return {
+                            status: 'error',
+                            message: 'Configuração Firebase não encontrada',
+                            details: ['Verificar arquivo firebase-secure.config.js']
+                        };
+                    }
+
+                    const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'];
+                    const missingFields = requiredFields.filter(field => !firebaseConfig[field]);
+
+                    if (missingFields.length > 0) {
+                        return {
+                            status: 'error',
+                            message: 'Campos obrigatórios ausentes',
+                            details: missingFields.map(field => `${field}: ausente`)
+                        };
+                    }
+
+                    return {
+                        status: 'success',
+                        message: 'Configuração Firebase válida',
+                        details: [
+                            `API Key: ${firebaseConfig.apiKey.substring(0, 10)}...`,
+                            `Auth Domain: ${firebaseConfig.authDomain}`,
+                            `Project ID: ${firebaseConfig.projectId}`,
+                            `App ID: ${firebaseConfig.appId.substring(0, 15)}...`
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Erro ao verificar configuração',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async testFirebaseInit() {
+                try {
+                    console.log('🚀 Testando inicialização Firebase...');
+                    
+                    this.app = initializeApp(firebaseConfig);
+                    this.auth = getAuth(this.app);
+
+                    return {
+                        status: 'success',
+                        message: 'Firebase inicializado com sucesso',
+                        details: [
+                            `App Name: ${this.app.name}`,
+                            `Auth disponível: ${!!this.auth}`
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Erro na inicialização Firebase',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async testAuthConfig() {
+                try {
+                    console.log('🔐 Testando configuração de autenticação...');
+                    
+                    if (!this.auth) {
+                        return {
+                            status: 'error',
+                            message: 'Auth não inicializado',
+                            details: ['Executar teste de inicialização primeiro']
+                        };
+                    }
+
+                    // Verificar configurações de auth
+                    const authSettings = {
+                        currentUser: this.auth.currentUser,
+                        app: this.auth.app.name,
+                        config: this.auth.config
+                    };
+
+                    return {
+                        status: 'success',
+                        message: 'Configuração de Auth válida',
+                        details: [
+                            `Usuário atual: ${authSettings.currentUser ? authSettings.currentUser.email : 'Nenhum'}`,
+                            `App associado: ${authSettings.app}`,
+                            `Configuração disponível: ${!!authSettings.config}`
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Erro na configuração de Auth',
+                        details: [error.message]
+                    };
+                }
+            }
+
+            async testConnectivity() {
+                try {
+                    console.log('🌐 Testando conectividade...');
+                    
+                    // Testar conectividade básica
+                    const response = await fetch('https://identitytoolkit.googleapis.com/v1/projects', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        return {
+                            status: 'success',
+                            message: 'Conectividade com Firebase OK',
+                            details: [
+                                `Status: ${response.status}`,
+                                `URL: ${response.url}`
+                            ]
+                        };
+                    } else {
+                        return {
+                            status: 'warning',
+                            message: 'Conectividade limitada',
+                            details: [
+                                `Status: ${response.status}`,
+                                `Status Text: ${response.statusText}`
+                            ]
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        status: 'warning',
+                        message: 'Problema de conectividade',
+                        details: [
+                            error.message,
+                            'Pode ser bloqueio de CORS ou firewall'
+                        ]
+                    };
+                }
+            }
+
+            async testSecurityRules() {
+                return {
+                    status: 'info',
+                    message: 'Verificação de regras de segurança',
+                    details: [
+                        'Verificar regras do Firestore no console Firebase',
+                        'Verificar domínios autorizados em Authentication',
+                        'Verificar se o projeto está ativo'
+                    ]
+                };
+            }
+
+            async testLogin(email, password) {
+                if (!this.auth) {
+                    throw new Error('Auth não inicializado');
+                }
+
+                try {
+                    console.log(`🔑 Testando login: ${email}`);
+                    
+                    const result = await signInWithEmailAndPassword(this.auth, email, password);
+                    
+                    return {
+                        status: 'success',
+                        message: 'Login realizado com sucesso',
+                        details: [
+                            `Email: ${result.user.email}`,
+                            `UID: ${result.user.uid}`,
+                            `Email verificado: ${result.user.emailVerified}`
+                        ]
+                    };
+                } catch (error) {
+                    return {
+                        status: 'error',
+                        message: 'Erro no login',
+                        details: [
+                            `Código: ${error.code}`,
+                            `Mensagem: ${error.message}`,
+                            `Stack: ${error.stack}`
+                        ]
+                    };
+                }
+            }
+
+            displayResults() {
+                const resultsDiv = document.getElementById('results');
+                let html = '<div class="space-y-4">';
+
+                // Resumo
+                const successCount = this.results.filter(r => r.status === 'success').length;
+                const warningCount = this.results.filter(r => r.status === 'warning').length;
+                const errorCount = this.results.filter(r => r.status === 'error').length;
+
+                html += `
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="font-semibold text-gray-800 mb-2">Resumo dos Testes</h3>
+                        <div class="flex space-x-4 text-sm">
+                            <span class="text-green-600">✓ ${successCount} Sucessos</span>
+                            <span class="text-yellow-600">⚠ ${warningCount} Avisos</span>
+                            <span class="text-red-600">✗ ${errorCount} Erros</span>
+                        </div>
+                    </div>
+                `;
+
+                // Resultados detalhados
+                this.results.forEach(result => {
+                    const iconClass = {
+                        success: 'fas fa-check-circle text-green-500',
+                        warning: 'fas fa-exclamation-triangle text-yellow-500',
+                        error: 'fas fa-times-circle text-red-500',
+                        info: 'fas fa-info-circle text-blue-500'
+                    }[result.status];
+
+                    const bgClass = {
+                        success: 'bg-green-50 border-green-200',
+                        warning: 'bg-yellow-50 border-yellow-200',
+                        error: 'bg-red-50 border-red-200',
+                        info: 'bg-blue-50 border-blue-200'
+                    }[result.status];
+
+                    html += `
+                        <div class="border rounded-lg p-4 ${bgClass}">
+                            <div class="flex items-start">
+                                <i class="${iconClass} mt-1 mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">${result.name}</h4>
+                                    <p class="text-gray-600 mt-1">${result.message}</p>
+                                    ${result.details.length > 0 ? `
+                                        <ul class="mt-2 text-sm text-gray-500 list-disc list-inside">
+                                            ${result.details.map(detail => `<li>${detail}</li>`).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }
+        }
+
+        // Inicializar debugger
+        const debugger = new FirebaseDebugger();
+
+        // Event listeners
+        document.getElementById('testLogin').addEventListener('click', async () => {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            if (!email || !password) {
+                alert('Preencha email e senha para testar');
+                return;
+            }
+
+            try {
+                const result = await debugger.testLogin(email, password);
+                
+                // Adicionar resultado do login aos resultados
+                debugger.results.push({
+                    name: 'Teste de Login',
+                    status: result.status,
+                    message: result.message,
+                    details: result.details
+                });
+                
+                debugger.displayResults();
+                
+                if (result.status === 'success') {
+                    // Fazer logout após teste
+                    await signOut(debugger.auth);
+                    console.log('✅ Logout realizado após teste');
+                }
+            } catch (error) {
+                alert(`Erro no teste de login: ${error.message}`);
+            }
+        });
+
+        // Executar diagnósticos iniciais
+        debugger.runDiagnostics();
+    </script>
+</body>
+</html>
