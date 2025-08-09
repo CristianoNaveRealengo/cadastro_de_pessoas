@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Rate Limiting - Sistema de Segurança</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                        <i class="fas fa-tachometer-alt text-blue-500 mr-3"></i>
+                        Dashboard Rate Limiting
+                    </h1>
+                    <p class="text-gray-600">Monitoramento e controle de limites de ações</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Atualizar
+                    </button>
+                    <button id="resetBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-undo mr-2"></i>
+                        Resetar Limites
+                    </button>
+                    <button id="toggleBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center">
+                        <i class="fas fa-power-off mr-2"></i>
+                        <span id="toggleText">Desativar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-users text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Usuários Ativos</p>
+                        <p id="totalUsers" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Violações</p>
+                        <p id="totalViolations" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-ban text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Usuários Bloqueados</p>
+                        <p id="blockedUsers" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Status Sistema</p>
+                        <p id="systemStatus" class="text-2xl font-bold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Actions Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-chart-bar text-blue-500 mr-2"></i>
+                    Ações por Tipo
+                </h3>
+                <canvas id="actionsChart" width="400" height="200"></canvas>
+            </div>
+            
+            <!-- Limits Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-chart-line text-green-500 mr-2"></i>
+                    Uso dos Limites
+                </h3>
+                <canvas id="limitsChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Current Limits Table -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-list text-purple-500 mr-2"></i>
+                Limites Atuais do Usuário
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ação
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Limite
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Usado
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Restante
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Reset
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="limitsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Limits will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Configuration Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-cogs text-indigo-500 mr-2"></i>
+                Configurações
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium text-gray-800 mb-3">Configurações Gerais</h4>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-gray-600">Sistema Ativo</label>
+                            <input type="checkbox" id="systemEnabledToggle" class="toggle-checkbox">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-gray-600">Modo Rigoroso</label>
+                            <input type="checkbox" id="strictModeToggle" class="toggle-checkbox">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Máximo de Violações</label>
+                            <input type="number" id="maxViolationsInput" min="1" max="10" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Duração do Bloqueio (minutos)</label>
+                            <input type="number" id="blockDurationInput" min="5" max="60" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-medium text-gray-800 mb-3">Teste de Limites</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-sm text-gray-600">Ação para Testar</label>
+                            <select id="testActionSelect" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                <option value="CREATE_RECORD">Criar Registro</option>
+                                <option value="UPDATE_RECORD">Atualizar Registro</option>
+                                <option value="DELETE_RECORD">Excluir Registro</option>
+                                <option value="SEARCH_RECORDS">Buscar Registros</option>
+                                <option value="EXPORT_DATA">Exportar Dados</option>
+                                <option value="UI_INTERACTION">Interação UI</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-sm text-gray-600">Quantidade de Testes</label>
+                            <input type="number" id="testCountInput" min="1" max="100" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
+                        </div>
+                        <button id="runTestBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm">
+                            <i class="fas fa-flask mr-2"></i>
+                            Executar Teste
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <button id="saveConfigBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md mr-3">
+                    <i class="fas fa-save mr-2"></i>
+                    Salvar Configurações
+                </button>
+                <button id="resetConfigBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-undo mr-2"></i>
+                    Restaurar Padrão
+                </button>
+            </div>
+        </div>
+
+        <!-- Console Output -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-4">
+            <h3 class="text-lg font-semibold mb-2 text-white">Console de Rate Limiting:</h3>
+            <div id="consoleOutput" class="font-mono text-sm max-h-64 overflow-y-auto">
+                <div>Sistema de Rate Limiting carregado...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../security/rate-limiting.js"></script>
+    
+    <script>
+        let charts = {};
+        let consoleOutput = [];
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                initializeDashboard();
+                setupEventListeners();
+                loadData();
+                startAutoRefresh();
+            }, 1000);
+        });
+        
+        function initializeDashboard() {
+            console.log('📊 Inicializando dashboard de rate limiting...');
+            
+            // Check if rate limiting system is available
+            if (!window.rateLimitingSystem) {
+                console.error('❌ Sistema de rate limiting não encontrado');
+                showError('Sistema de rate limiting não disponível');
+                return;
+            }
+            
+            log('✅ Dashboard de rate limiting inicializado');
+        }
+        
+        function setupEventListeners() {
+            // Buttons
+            document.getElementById('refreshBtn').addEventListener('click', loadData);
+            document.getElementById('resetBtn').addEventListener('click', resetUserLimits);
+            document.getElementById('toggleBtn').addEventListener('click', toggleSystem);
+            document.getElementById('runTestBtn').addEventListener('click', runTest);
+            document.getElementById('saveConfigBtn').addEventListener('click', saveConfiguration);
+            document.getElementById('resetConfigBtn').addEventListener('click', resetConfiguration);
+            
+            // Configuration toggles
+            document.getElementById('systemEnabledToggle').addEventListener('change', updateSystemStatus);
+            document.getElementById('strictModeToggle').addEventListener('change', updateStrictMode);
+        }
+        
+        function loadData() {
+            if (!window.rateLimitingSystem) return;
+            
+            log('📊 Carregando dados de rate limiting...');
+            
+            // Get statistics
+            const stats = window.rateLimitingSystem.getStats();
+            
+            // Update status cards
+            updateStatusCards(stats);
+            
+            // Update charts
+            updateCharts(stats);
+            
+            // Update limits table
+            updateLimitsTable();
+            
+            // Update configuration
+            updateConfiguration();
+            
+            log(`✅ Dados carregados: ${stats.totalUsers} usuários, ${stats.totalViolations} violações`);
+        }
+        
+        function updateStatusCards(stats) {
+            document.getElementById('totalUsers').textContent = stats.totalUsers;
+            document.getElementById('totalViolations').textContent = stats.totalViolations;
+            document.getElementById('blockedUsers').textContent = stats.blockedUsers;
+            
+            const systemStatus = stats.config.enabled ? 'Ativo' : 'Inativo';
+            document.getElementById('systemStatus').textContent = systemStatus;
+            document.getElementById('systemStatus').className = `text-2xl font-bold ${stats.config.enabled ? 'text-green-600' : 'text-red-600'}`;
+        }
+        
+        function updateCharts(stats) {
+            updateActionsChart(stats);
+            updateLimitsChart(stats);
+        }
+        
+        function updateActionsChart(stats) {
+            const ctx = document.getElementById('actionsChart').getContext('2d');
+            
+            const actions = Object.keys(stats.actionStats);
+            const counts = actions.map(action => stats.actionStats[action].totalActions);
+            
+            if (charts.actions) {
+                charts.actions.destroy();
+            }
+            
+            charts.actions = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: actions.map(action => action.replace(/_/g, ' ')),
+                    datasets: [{
+                        label: 'Total de Ações',
+                        data: counts,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateLimitsChart(stats) {
+            const ctx = document.getElementById('limitsChart').getContext('2d');
+            
+            const actions = Object.keys(stats.actionStats);
+            const usagePercentages = actions.map(action => {
+                const actionStats = stats.actionStats[action];
+                return (actionStats.totalActions / actionStats.limit * 100).toFixed(1);
+            });
+            
+            if (charts.limits) {
+                charts.limits.destroy();
+            }
+            
+            charts.limits = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: actions.map(action => action.replace(/_/g, ' ')),
+                    datasets: [{
+                        data: usagePercentages,
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+                            '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6B7280'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateLimitsTable() {
+            if (!window.rateLimitDebug) return;
+            
+            const limits = window.rateLimitDebug.myLimits();
+            const tbody = document.getElementById('limitsTableBody');
+            
+            tbody.innerHTML = '';
+            
+            Object.entries(limits).forEach(([action, limit]) => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                
+                const actionLimit = window.rateLimitingSystem.actionLimits[action];
+                const used = actionLimit.max - (limit.remaining || 0);
+                const usagePercentage = (used / actionLimit.max * 100).toFixed(1);
+                
+                let statusClass = 'bg-green-100 text-green-800';
+                let statusText = 'OK';
+                
+                if (!limit.allowed) {
+                    statusClass = 'bg-red-100 text-red-800';
+                    statusText = 'Bloqueado';
+                } else if (usagePercentage > 80) {
+                    statusClass = 'bg-yellow-100 text-yellow-800';
+                    statusText = 'Próximo do Limite';
+                }
+                
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        ${action.replace(/_/g, ' ')}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${actionLimit.max}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${used} (${usagePercentage}%)
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${limit.remaining || 0}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${limit.resetTime || 'N/A'}
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateConfiguration() {
+            if (!window.rateLimitingSystem) return;
+            
+            const config = window.rateLimitingSystem.config;
+            
+            document.getElementById('systemEnabledToggle').checked = config.enabled;
+            document.getElementById('strictModeToggle').checked = config.strictMode;
+            document.getElementById('maxViolationsInput').value = config.maxViolations;
+            document.getElementById('blockDurationInput').value = config.blockDuration / (60 * 1000);
+        }
+        
+        function resetUserLimits() {
+            if (!window.rateLimitDebug) return;
+            
+            if (confirm('Tem certeza que deseja resetar todos os seus limites?')) {
+                window.rateLimitDebug.resetMyLimits();
+                log('🔄 Limites do usuário resetados');
+                loadData();
+            }
+        }
+        
+        function toggleSystem() {
+            if (!window.rateLimitingSystem) return;
+            
+            const isEnabled = window.rateLimitingSystem.config.enabled;
+            window.rateLimitingSystem.setEnabled(!isEnabled);
+            
+            const toggleBtn = document.getElementById('toggleBtn');
+            const toggleText = document.getElementById('toggleText');
+            
+            if (!isEnabled) {
+                toggleBtn.className = 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center';
+                toggleText.textContent = 'Desativar';
+                log('✅ Sistema de rate limiting ativado');
+            } else {
+                toggleBtn.className = 'bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center';
+                toggleText.textContent = 'Ativar';
+                log('❌ Sistema de rate limiting desativado');
+            }
+            
+            loadData();
+        }
+        
+        function runTest() {
+            if (!window.rateLimitDebug) return;
+            
+            const action = document.getElementById('testActionSelect').value;
+            const count = parseInt(document.getElementById('testCountInput').value);
+            
+            log(`🧪 Executando teste: ${count}x ${action}`);
+            
+            try {
+                window.rateLimitDebug.simulateExcess(action, count);
+                log(`✅ Teste concluído: ${count} ações de ${action} simuladas`);
+                
+                setTimeout(() => {
+                    loadData();
+                }, 1000);
+            } catch (error) {
+                log(`❌ Erro no teste: ${error.message}`);
+            }
+        }
+        
+        function saveConfiguration() {
+            if (!window.rateLimitingSystem) return;
+            
+            const config = {
+                enabled: document.getElementById('systemEnabledToggle').checked,
+                strictMode: document.getElementById('strictModeToggle').checked,
+                maxViolations: parseInt(document.getElementById('maxViolationsInput').value),
+                blockDuration: parseInt(document.getElementById('blockDurationInput').value) * 60 * 1000
+            };
+            
+            // Update configuration
+            Object.assign(window.rateLimitingSystem.config, config);
+            
+            log('💾 Configurações salvas');
+            loadData();
+        }
+        
+        function resetConfiguration() {
+            if (!window.rateLimitingSystem) return;
+            
+            // Reset to default configuration
+            window.rateLimitingSystem.config = {
+                enabled: true,
+                strictMode: false,
+                cleanupInterval: 5 * 60 * 1000,
+                maxViolations: 3,
+                blockDuration: 15 * 60 * 1000,
+                warningThreshold: 0.8
+            };
+            
+            updateConfiguration();
+            log('🔄 Configurações restauradas para o padrão');
+            loadData();
+        }
+        
+        function updateSystemStatus() {
+            const enabled = document.getElementById('systemEnabledToggle').checked;
+            if (window.rateLimitingSystem) {
+                window.rateLimitingSystem.setEnabled(enabled);
+                log(`🚦 Sistema ${enabled ? 'ativado' : 'desativado'}`);
+            }
+        }
+        
+        function updateStrictMode() {
+            const strictMode = document.getElementById('strictModeToggle').checked;
+            if (window.rateLimitingSystem) {
+                window.rateLimitingSystem.config.strictMode = strictMode;
+                log(`⚙️ Modo rigoroso ${strictMode ? 'ativado' : 'desativado'}`);
+            }
+        }
+        
+        function startAutoRefresh() {
+            setInterval(() => {
+                loadData();
+            }, 30000); // Refresh every 30 seconds
+        }
+        
+        function log(message) {
+            console.log(message);
+            consoleOutput.push(`${new Date().toLocaleTimeString()} - ${message}`);
+            
+            // Keep only last 50 messages
+            if (consoleOutput.length > 50) {
+                consoleOutput = consoleOutput.slice(-50);
+            }
+            
+            updateConsole();
+        }
+        
+        function updateConsole() {
+            const consoleDiv = document.getElementById('consoleOutput');
+            consoleDiv.innerHTML = consoleOutput.map(line => `<div>${line}</div>`).join('');
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4';
+            errorDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.querySelector('.container').insertBefore(errorDiv, document.querySelector('header').nextSibling);
+        }
+    </script>
+</body>
+</html>

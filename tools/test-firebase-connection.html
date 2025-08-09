@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center justify-center">
+                <i class="fas fa-fire text-orange-500 mr-3"></i>
+                Teste de Conexão Firebase
+            </h1>
+            <p class="text-gray-600">Diagnóstico completo da conexão com Firebase</p>
+        </header>
+
+        <!-- Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-cog text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Configuração</p>
+                        <p id="configStatus" class="text-2xl font-bold text-gray-900">Testando...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-plug text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Conexão</p>
+                        <p id="connectionStatus" class="text-2xl font-bold text-gray-900">Testando...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-database text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Firestore</p>
+                        <p id="firestoreStatus" class="text-2xl font-bold text-gray-900">Testando...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Results -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-list-check text-blue-500 mr-2"></i>
+                Resultados dos Testes
+            </h2>
+            <div id="testResults" class="space-y-4">
+                <div class="text-center">
+                    <i class="fas fa-spinner animate-spin text-2xl text-blue-500"></i>
+                    <p class="mt-2 text-gray-600">Executando testes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-tools text-green-500 mr-2"></i>
+                Ações de Teste
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button id="retestBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+                    <i class="fas fa-redo mr-2"></i>
+                    Executar Testes Novamente
+                </button>
+                <button id="testWriteBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Testar Escrita no Firestore
+                </button>
+                <button id="testReadBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+                    <i class="fas fa-eye mr-2"></i>
+                    Testar Leitura do Firestore
+                </button>
+                <button id="openDebugBtn" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md flex items-center justify-center">
+                    <i class="fas fa-bug mr-2"></i>
+                    Abrir Debug Avançado
+                </button>
+            </div>
+        </div>
+
+        <!-- Console Output -->
+        <div class="bg-gray-900 text-green-400 rounded-lg p-4 mt-6">
+            <h3 class="text-lg font-semibold mb-2 text-white">Console de Debug:</h3>
+            <div id="consoleOutput" class="font-mono text-sm max-h-64 overflow-y-auto">
+                <div>Iniciando testes...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged,
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            getDocs,
+            doc,
+            deleteDoc,
+            query,
+            limit,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Importar configuração
+        import { firebaseConfig, configManager } from "../config/firebase-secure.config.js";
+
+        class FirebaseConnectionTester {
+            constructor() {
+                this.app = null;
+                this.auth = null;
+                this.db = null;
+                this.testResults = [];
+                this.consoleOutput = [];
+                
+                this.init();
+            }
+            
+            async init() {
+                this.log('🔥 Iniciando teste de conexão Firebase...');
+                await this.runAllTests();
+                this.setupEventListeners();
+            }
+            
+            log(message) {
+                console.log(message);
+                this.consoleOutput.push(`${new Date().toLocaleTimeString()} - ${message}`);
+                this.updateConsole();
+            }
+            
+            updateConsole() {
+                const consoleDiv = document.getElementById('consoleOutput');
+                consoleDiv.innerHTML = this.consoleOutput.map(line => `<div>${line}</div>`).join('');
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            }
+            
+            async runAllTests() {
+                const tests = [
+                    { name: 'Configuração Firebase', fn: this.testConfig },
+                    { name: 'Inicialização Firebase', fn: this.testInit },
+                    { name: 'Conectividade de Rede', fn: this.testNetworkConnectivity },
+                    { name: 'Autenticação Anônima', fn: this.testAnonymousAuth },
+                    { name: 'Conexão Firestore', fn: this.testFirestoreConnection },
+                    { name: 'Leitura de Dados', fn: this.testFirestoreRead },
+                ];
+                
+                this.testResults = [];
+                
+                for (const test of tests) {
+                    try {
+                        this.log(`🧪 Executando: ${test.name}`);
+                        const result = await test.fn.call(this);
+                        this.testResults.push({ ...result, name: test.name });
+                        this.log(`${result.success ? '✅' : '❌'} ${test.name}: ${result.message}`);
+                    } catch (error) {
+                        this.testResults.push({
+                            name: test.name,
+                            success: false,
+                            message: `Erro: ${error.message}`,
+                            details: error.stack
+                        });
+                        this.log(`❌ ${test.name}: Erro - ${error.message}`);
+                    }
+                }
+                
+                this.updateUI();
+            }
+            
+            async testConfig() {
+                if (!firebaseConfig) {
+                    return { success: false, message: 'Configuração não encontrada' };
+                }
+                
+                const required = ['apiKey', 'authDomain', 'projectId', 'appId'];
+                const missing = required.filter(key => !firebaseConfig[key]);
+                
+                if (missing.length > 0) {
+                    return { 
+                        success: false, 
+                        message: `Campos obrigatórios ausentes: ${missing.join(', ')}` 
+                    };
+                }
+                
+                return { 
+                    success: true, 
+                    message: 'Configuração válida',
+                    details: {
+                        projectId: firebaseConfig.projectId,
+                        authDomain: firebaseConfig.authDomain
+                    }
+                };
+            }
+            
+            async testInit() {
+                try {
+                    this.app = initializeApp(firebaseConfig);
+                    this.auth = getAuth(this.app);
+                    this.db = getFirestore(this.app);
+                    
+                    return { 
+                        success: true, 
+                        message: 'Firebase inicializado com sucesso',
+                        details: {
+                            appName: this.app.name,
+                            hasAuth: !!this.auth,
+                            hasFirestore: !!this.db
+                        }
+                    };
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Erro na inicialização: ${error.message}` 
+                    };
+                }
+            }
+            
+            async testNetworkConnectivity() {
+                try {
+                    const response = await fetch('https://firebase.googleapis.com/', {
+                        method: 'HEAD',
+                        mode: 'no-cors'
+                    });
+                    
+                    return { 
+                        success: true, 
+                        message: 'Conectividade com Firebase OK' 
+                    };
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Problema de conectividade: ${error.message}` 
+                    };
+                }
+            }
+            
+            async testAnonymousAuth() {
+                if (!this.auth) {
+                    return { success: false, message: 'Auth não inicializado' };
+                }
+                
+                try {
+                    const userCredential = await signInAnonymously(this.auth);
+                    return { 
+                        success: true, 
+                        message: 'Autenticação anônima bem-sucedida',
+                        details: {
+                            uid: userCredential.user.uid.substring(0, 8) + '...',
+                            isAnonymous: userCredential.user.isAnonymous
+                        }
+                    };
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Erro na autenticação: ${error.code} - ${error.message}` 
+                    };
+                }
+            }
+            
+            async testFirestoreConnection() {
+                if (!this.db) {
+                    return { success: false, message: 'Firestore não inicializado' };
+                }
+                
+                try {
+                    // Tentar acessar uma coleção (mesmo que vazia)
+                    const testCollection = collection(this.db, 'connection_test');
+                    const q = query(testCollection, limit(1));
+                    await getDocs(q);
+                    
+                    return { 
+                        success: true, 
+                        message: 'Conexão com Firestore estabelecida' 
+                    };
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Erro na conexão Firestore: ${error.code} - ${error.message}` 
+                    };
+                }
+            }
+            
+            async testFirestoreRead() {
+                if (!this.db) {
+                    return { success: false, message: 'Firestore não inicializado' };
+                }
+                
+                try {
+                    const recordsCollection = collection(this.db, 'records');
+                    const q = query(recordsCollection, limit(5));
+                    const querySnapshot = await getDocs(q);
+                    
+                    return { 
+                        success: true, 
+                        message: `Leitura bem-sucedida: ${querySnapshot.size} registros encontrados` 
+                    };
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Erro na leitura: ${error.code} - ${error.message}` 
+                    };
+                }
+            }
+            
+            async testFirestoreWrite() {
+                if (!this.db) {
+                    this.log('❌ Firestore não inicializado');
+                    return;
+                }
+                
+                try {
+                    this.log('📝 Testando escrita no Firestore...');
+                    
+                    const testDoc = {
+                        test: true,
+                        message: 'Teste de conexão',
+                        timestamp: serverTimestamp(),
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    const docRef = await addDoc(collection(this.db, 'connection_test'), testDoc);
+                    this.log(`✅ Documento criado com ID: ${docRef.id}`);
+                    
+                    // Limpar o documento de teste
+                    await deleteDoc(doc(this.db, 'connection_test', docRef.id));
+                    this.log('🧹 Documento de teste removido');
+                    
+                } catch (error) {
+                    this.log(`❌ Erro na escrita: ${error.code} - ${error.message}`);
+                }
+            }
+            
+            updateUI() {
+                // Atualizar status cards
+                const configSuccess = this.testResults.find(r => r.name === 'Configuração Firebase')?.success;
+                const connectionSuccess = this.testResults.find(r => r.name === 'Conectividade de Rede')?.success;
+                const firestoreSuccess = this.testResults.find(r => r.name === 'Conexão Firestore')?.success;
+                
+                document.getElementById('configStatus').textContent = configSuccess ? 'OK' : 'Erro';
+                document.getElementById('configStatus').className = `text-2xl font-bold ${configSuccess ? 'text-green-600' : 'text-red-600'}`;
+                
+                document.getElementById('connectionStatus').textContent = connectionSuccess ? 'Conectado' : 'Desconectado';
+                document.getElementById('connectionStatus').className = `text-2xl font-bold ${connectionSuccess ? 'text-green-600' : 'text-red-600'}`;
+                
+                document.getElementById('firestoreStatus').textContent = firestoreSuccess ? 'Ativo' : 'Inativo';
+                document.getElementById('firestoreStatus').className = `text-2xl font-bold ${firestoreSuccess ? 'text-green-600' : 'text-red-600'}`;
+                
+                // Atualizar resultados detalhados
+                const resultsDiv = document.getElementById('testResults');
+                resultsDiv.innerHTML = this.testResults.map(result => {
+                    const iconClass = result.success ? 'fas fa-check-circle text-green-500' : 'fas fa-times-circle text-red-500';
+                    const bgClass = result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200';
+                    
+                    return `
+                        <div class="border rounded-lg p-4 ${bgClass}">
+                            <div class="flex items-start">
+                                <i class="${iconClass} mt-1 mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-gray-800">${result.name}</h4>
+                                    <p class="text-gray-600 mt-1">${result.message}</p>
+                                    ${result.details ? `
+                                        <pre class="mt-2 text-sm text-gray-500 bg-gray-100 p-2 rounded overflow-x-auto">${JSON.stringify(result.details, null, 2)}</pre>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            setupEventListeners() {
+                document.getElementById('retestBtn').addEventListener('click', () => {
+                    this.log('🔄 Executando testes novamente...');
+                    this.runAllTests();
+                });
+                
+                document.getElementById('testWriteBtn').addEventListener('click', () => {
+                    this.testFirestoreWrite();
+                });
+                
+                document.getElementById('testReadBtn').addEventListener('click', () => {
+                    this.log('📖 Executando teste de leitura...');
+                    this.testFirestoreRead().then(result => {
+                        this.log(`${result.success ? '✅' : '❌'} Teste de leitura: ${result.message}`);
+                    });
+                });
+                
+                document.getElementById('openDebugBtn').addEventListener('click', () => {
+                    window.open('../tools/firebase-debug.html', '_blank');
+                });
+            }
+        }
+
+        // Inicializar tester
+        new FirebaseConnectionTester();
+    </script>
+</body>
+</html>

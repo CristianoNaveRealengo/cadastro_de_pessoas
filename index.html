@@ -33,6 +33,10 @@
         <!-- Scripts de Auditoria -->
         <script src="security/audit-system.js"></script>
         <script src="security/audit-integration.js"></script>
+        
+        <!-- Scripts de Rate Limiting -->
+        <script src="security/rate-limiting.js"></script>
+        <script src="security/rate-limiting-integration.js"></script>
     </head>
 
     <body>
@@ -1014,13 +1018,27 @@
         
         <!-- Script de Autenticação -->
         <script type="module">
-            // Importar Firebase Auth
+            // Importar Firebase completo
             import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
             import { 
                 getAuth, 
                 onAuthStateChanged,
-                signOut
+                signOut,
+                signInWithEmailAndPassword
             } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+            import {
+                getFirestore,
+                collection,
+                addDoc,
+                getDocs,
+                doc,
+                updateDoc,
+                deleteDoc,
+                query,
+                orderBy,
+                onSnapshot,
+                serverTimestamp
+            } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
             // Importar configuração segura
             import { firebaseConfig, configManager } from "./config/firebase-secure.config.js";
@@ -1054,6 +1072,124 @@
             // Inicializar Firebase
             const app = initializeApp(firebaseConfig);
             const auth = getAuth(app);
+            const db = getFirestore(app);
+            
+            // Criar serviço Firebase simplificado
+            class SimpleFirebaseService {
+                constructor() {
+                    this.db = db;
+                    this.auth = auth;
+                    this.isConnected = false;
+                    this.currentUser = null;
+                    
+                    console.log('🔥 Firebase Service inicializado');
+                    this.testConnection();
+                }
+                
+                async testConnection() {
+                    try {
+                        // Testar conexão básica
+                        await getDocs(query(collection(this.db, 'records')));
+                        this.isConnected = true;
+                        console.log('✅ Firebase conectado com sucesso');
+                        this.updateConnectionStatus('online');
+                    } catch (error) {
+                        console.log('❌ Erro na conexão Firebase:', error.message);
+                        this.isConnected = false;
+                        this.updateConnectionStatus('offline');
+                    }
+                }
+                
+                updateConnectionStatus(status) {
+                    const statusElement = document.getElementById('connectionStatus');
+                    if (statusElement) {
+                        if (status === 'online') {
+                            statusElement.innerHTML = '<i class="fas fa-cloud text-green-500"></i> Online';
+                            statusElement.className = 'text-sm text-green-600';
+                        } else {
+                            statusElement.innerHTML = '<i class="fas fa-cloud-slash text-red-500"></i> Offline';
+                            statusElement.className = 'text-sm text-red-600';
+                        }
+                    }
+                }
+                
+                async loadRecords() {
+                    try {
+                        const q = query(collection(this.db, 'records'), orderBy('createdAt', 'desc'));
+                        const querySnapshot = await getDocs(q);
+                        const records = [];
+                        
+                        querySnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            records.push({
+                                ...data,
+                                firebaseId: doc.id,
+                                createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt
+                            });
+                        });
+                        
+                        console.log(`☁️ ${records.length} registros carregados do Firebase`);
+                        return records;
+                    } catch (error) {
+                        console.error('❌ Erro ao carregar registros:', error);
+                        return [];
+                    }
+                }
+                
+                async saveRecord(record) {
+                    try {
+                        const docRef = await addDoc(collection(this.db, 'records'), {
+                            ...record,
+                            createdAt: serverTimestamp(),
+                            updatedAt: serverTimestamp()
+                        });
+                        
+                        console.log('✅ Registro salvo no Firebase:', docRef.id);
+                        return docRef.id;
+                    } catch (error) {
+                        console.error('❌ Erro ao salvar registro:', error);
+                        throw error;
+                    }
+                }
+                
+                setupRealtimeSync() {
+                    if (!this.isConnected) return;
+                    
+                    try {
+                        const q = query(collection(this.db, 'records'), orderBy('createdAt', 'desc'));
+                        return onSnapshot(q, (querySnapshot) => {
+                            const records = [];
+                            querySnapshot.forEach((doc) => {
+                                const data = doc.data();
+                                records.push({
+                                    ...data,
+                                    firebaseId: doc.id,
+                                    createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt
+                                });
+                            });
+                            
+                            // Atualizar dados globais se disponível
+                            if (typeof appData !== 'undefined') {
+                                appData.records = records;
+                                if (typeof updateUI === 'function') {
+                                    updateUI();
+                                }
+                            }
+                            
+                            console.log('🔄 Dados sincronizados em tempo real');
+                        });
+                    } catch (error) {
+                        console.error('❌ Erro na sincronização em tempo real:', error);
+                    }
+                }
+            }
+            
+            // Criar instância global do serviço
+            window.firebaseService = new SimpleFirebaseService();
+            
+            // Disponibilizar Firebase globalmente para debug
+            window.firebase = { app, auth, db };
+            window.firebaseConfig = firebaseConfig;
 
             // Elementos DOM
             const userInfo = document.getElementById('userInfo');
