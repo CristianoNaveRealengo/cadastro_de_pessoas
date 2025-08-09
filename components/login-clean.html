@@ -62,16 +62,84 @@
         </div>
     </div>
 
+    <!-- Meta tags para configuração segura do Firebase -->
+    <meta name="firebase-api-key" content="">
+    <meta name="firebase-auth-domain" content="appcadastrodepessoas-2c20b.firebaseapp.com">
+    <meta name="firebase-project-id" content="appcadastrodepessoas-2c20b">
+    <meta name="firebase-storage-bucket" content="appcadastrodepessoas-2c20b.firebasestorage.app">
+    <meta name="firebase-messaging-sender-id" content="789674139888">
+    <meta name="firebase-app-id" content="1:789674139888:web:0e21d7ba75c10bd6086235">
+
     <script type="module">
-        // Configuração Firebase direta (sem imports para evitar conflitos)
-        const firebaseConfig = {
-            apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
-            authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
-            projectId: "appcadastrodepessoas-2c20b",
-            storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
-            messagingSenderId: "789674139888",
-            appId: "1:789674139888:web:0e21d7ba75c10bd6086235"
-        };
+        /**
+         * Função para obter configuração segura do Firebase
+         * Prioridade: Meta tags > Variáveis de ambiente > Fallback local
+         */
+        function getSecureFirebaseConfig() {
+            // Função auxiliar para obter valor de meta tag
+            const getMetaContent = (name) => {
+                const meta = document.querySelector(`meta[name="${name}"]`);
+                return meta ? meta.getAttribute('content') : null;
+            };
+
+            // Configuração base (valores não sensíveis)
+            const config = {
+                authDomain: getMetaContent('firebase-auth-domain') || 'appcadastrodepessoas-2c20b.firebaseapp.com',
+                projectId: getMetaContent('firebase-project-id') || 'appcadastrodepessoas-2c20b',
+                storageBucket: getMetaContent('firebase-storage-bucket') || 'appcadastrodepessoas-2c20b.firebasestorage.app',
+                messagingSenderId: getMetaContent('firebase-messaging-sender-id') || '789674139888',
+                appId: getMetaContent('firebase-app-id') || '1:789674139888:web:0e21d7ba75c10bd6086235'
+            };
+
+            // Obter API Key de forma segura
+            let apiKey = null;
+            
+            // 1. Tentar obter de meta tag
+            apiKey = getMetaContent('firebase-api-key');
+            
+            // 2. Tentar obter de variável de ambiente (se disponível)
+            if (!apiKey && typeof process !== 'undefined' && process.env) {
+                apiKey = process.env.FIREBASE_API_KEY;
+            }
+            
+            // 3. Tentar obter de localStorage (apenas para desenvolvimento)
+            if (!apiKey && window.location.hostname === 'localhost') {
+                apiKey = localStorage.getItem('FIREBASE_API_KEY');
+                if (apiKey) {
+                    console.warn('🔒 Usando API Key do localStorage (apenas desenvolvimento)');
+                }
+            }
+            
+            // 4. Fallback para arquivo de configuração local (desenvolvimento)
+            if (!apiKey && window.location.hostname === 'localhost') {
+                try {
+                    // Tentar carregar configuração local (se existir)
+                    const localConfig = window.FIREBASE_LOCAL_CONFIG;
+                    if (localConfig && localConfig.apiKey) {
+                        apiKey = localConfig.apiKey;
+                        console.warn('🔒 Usando configuração local (apenas desenvolvimento)');
+                    }
+                } catch (error) {
+                    console.warn('Configuração local não encontrada');
+                }
+            }
+            
+            // Validar se API Key foi encontrada
+            if (!apiKey || apiKey.trim() === '') {
+                throw new Error('🚨 ERRO DE SEGURANÇA: API Key do Firebase não configurada!\n\n' +
+                    'Configure a API Key usando um dos métodos seguros:\n' +
+                    '1. Meta tag: <meta name="firebase-api-key" content="sua_chave">\n' +
+                    '2. Variável de ambiente: FIREBASE_API_KEY\n' +
+                    '3. localStorage (apenas desenvolvimento): localStorage.setItem("FIREBASE_API_KEY", "sua_chave")\n\n' +
+                    'NUNCA hardcode chaves API no código!');
+            }
+            
+            config.apiKey = apiKey;
+            return config;
+        }
+
+        // Obter configuração segura do Firebase
+        const firebaseConfig = getSecureFirebaseConfig();
 
         // Importar apenas o necessário
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");

@@ -72,20 +72,38 @@ class FirebaseConfigManager {
 	}
 
 	loadDevelopmentConfig() {
-		// Em desenvolvimento, usar configuração local (apenas para desenvolvimento)
+		// Em desenvolvimento, usar variáveis de ambiente ou meta tags
+		// NUNCA hardcode chaves API no código!
 		this.config = {
-			apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM",
-			authDomain: "appcadastrodepessoas-2c20b.firebaseapp.com",
-			projectId: "appcadastrodepessoas-2c20b",
-			storageBucket: "appcadastrodepessoas-2c20b.firebasestorage.app",
-			messagingSenderId: "789674139888",
-			appId: "1:789674139888:web:0e21d7ba75c10bd6086235",
+			apiKey: this.getEnvVar("FIREBASE_API_KEY") || this.getMetaTag("firebase-api-key"),
+			authDomain: this.getEnvVar("FIREBASE_AUTH_DOMAIN") || this.getMetaTag("firebase-auth-domain"),
+			projectId: this.getEnvVar("FIREBASE_PROJECT_ID") || this.getMetaTag("firebase-project-id"),
+			storageBucket: this.getEnvVar("FIREBASE_STORAGE_BUCKET") || this.getMetaTag("firebase-storage-bucket"),
+			messagingSenderId: this.getEnvVar("FIREBASE_MESSAGING_SENDER_ID") || this.getMetaTag("firebase-messaging-sender-id"),
+			appId: this.getEnvVar("FIREBASE_APP_ID") || this.getMetaTag("firebase-app-id"),
 		};
 
-		console.log("🛠️ Configuração de desenvolvimento carregada");
-		console.warn(
-			"⚠️ ATENÇÃO: Usando chaves de desenvolvimento. Configure variáveis de ambiente para produção!"
-		);
+		// Verificar se todas as configurações foram carregadas
+		const missingConfigs = Object.entries(this.config)
+			.filter(([key, value]) => !value)
+			.map(([key]) => key);
+
+		if (missingConfigs.length > 0) {
+			console.error("❌ ERRO: Configurações Firebase não encontradas:", missingConfigs);
+			console.error("💡 Configure as variáveis de ambiente ou meta tags:");
+			console.error("   - Variáveis: FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, etc.");
+			console.error("   - Meta tags: <meta name='firebase-api-key' content='sua_chave'>");
+			console.error("   - Ou use o arquivo env.config.js (não commitado)");
+			
+			// Usar configuração de fallback apenas para desenvolvimento local
+			if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+				this.loadFallbackConfig();
+			} else {
+				throw new Error('Configurações Firebase não encontradas. Verifique as variáveis de ambiente.');
+			}
+		} else {
+			console.log("🛠️ Configuração de desenvolvimento carregada com segurança");
+		}
 	}
 
 	/**
@@ -122,8 +140,33 @@ class FirebaseConfigManager {
 		console.log("🧪 Configuração de teste carregada (emuladores)");
 	}
 
+	/**
+	 * Carrega configuração de fallback apenas para desenvolvimento local
+	 * Esta função só deve ser usada em localhost para facilitar o desenvolvimento
+	 */
+	loadFallbackConfig() {
+		console.warn("⚠️ USANDO CONFIGURAÇÃO DE FALLBACK - APENAS PARA DESENVOLVIMENTO LOCAL");
+		console.warn("🔒 Configure as variáveis de ambiente para maior segurança");
+		
+		// Tentar carregar do arquivo env.config.js (se existir)
+		try {
+			// Importação dinâmica para evitar erro se o arquivo não existir
+			import('./env.config.js').then(envConfig => {
+				if (envConfig.default) {
+					this.config = envConfig.default;
+					console.log("📁 Configuração carregada do arquivo env.config.js");
+				}
+			}).catch(() => {
+				console.warn("📁 Arquivo env.config.js não encontrado");
+				console.warn("💡 Crie o arquivo baseado em env.example.js");
+			});
+		} catch (error) {
+			console.warn("⚠️ Não foi possível carregar configuração de fallback");
+		}
+	}
+
 	getEnvVar(name) {
-		// Tentar obter de diferentes fontes
+		// Tentar obter de diferentes fontes seguras
 		return (
 			process?.env?.[name] ||
 			window?.[name] ||
@@ -139,8 +182,11 @@ class FirebaseConfigManager {
 	}
 
 	getFromLocalStorage(name) {
-		// Buscar no localStorage (configuração local temporária)
-		return localStorage.getItem(`config_${name}`);
+		// Apenas para desenvolvimento - nunca usar em produção
+		if (this.environmentInfo.type === 'development' || this.environmentInfo.type === 'local-file') {
+			return localStorage.getItem(`config_${name}`);
+		}
+		return null;
 	}
 
 	validateConfig() {

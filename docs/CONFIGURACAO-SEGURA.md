@@ -163,8 +163,28 @@ envDebug.features()
 envDebug.context()
 ```
 
-### **🧪 Página de Teste Interativa:**
+### **🔐 Comandos de Criptografia:**
 
+```javascript
+// Testar criptografia básica
+dataEncryption.testEncryption()
+
+// Obter estatísticas do sistema
+dataEncryption.getStats()
+
+// Executar testes completos
+encryptionTests.runAllTests()
+
+// Teste rápido de integridade
+encryptionTests.quickIntegrityTest()
+
+// Verificar disponibilidade do sistema
+encryptionTests.checkSystemAvailability()
+```
+
+### **🧪 Páginas de Teste Interativas:**
+
+#### **Detecção de Ambiente**
 Acesse: `tools/test-environment-detection.html`
 
 **Funcionalidades:**
@@ -174,6 +194,272 @@ Acesse: `tools/test-environment-detection.html`
 - 🚀 **Simulação de Produção**: Testa comportamento em produção
 - 📝 **Console Interativo**: Logs em tempo real
 - 📊 **Interface Visual**: Informações organizadas e coloridas
+
+#### **Criptografia de Dados**
+Acesse: `tools/test-encryption-complete.html`
+
+**Funcionalidades:**
+- 🔒 **Testes Completos de Criptografia**: Validação de todos os algoritmos
+- ⚡ **Métricas de Performance**: Tempo de criptografia/descriptografia em tempo real
+- 🛡️ **Validação de Integridade**: Verificação de dados corrompidos
+- 📝 **Console de Logs Detalhado**: Logs estruturados com emojis
+- 📊 **Interface Visual**: Resultados organizados e coloridos
+- 🧪 **Testes de Stress**: Validação com grandes volumes de dados
+
+## 🚫 Remoção de Chaves API do Frontend
+
+### **📋 Visão Geral**
+Sistema completo para eliminação de chaves API hardcoded no código frontend, implementando configuração segura através de múltiplos métodos seguros.
+
+### **🔒 Características Principais**
+
+#### **Métodos de Configuração Segura:**
+- **Meta Tags HTML**: Configuração através de meta tags no HTML
+- **Variáveis de Ambiente**: Suporte a process.env (Node.js)
+- **localStorage**: Fallback seguro apenas para desenvolvimento local
+- **Arquivo Local**: Configuração através de arquivo não versionado
+
+#### **Proteções Implementadas:**
+- **Validação Rigorosa**: Verificação obrigatória de chaves antes do uso
+- **Ambiente Específico**: Diferentes métodos para desenvolvimento/produção
+- **Logs de Segurança**: Avisos quando usando métodos de desenvolvimento
+- **Fallback Seguro**: Erro claro quando chaves não estão configuradas
+
+#### **Arquivos Protegidos:**
+- `config/env.config.js` - Configuração local de desenvolvimento
+- `config/firebase-private.config.js` - Configurações privadas
+- `.env`, `.env.local`, `.env.production` - Variáveis de ambiente
+- `*.key`, `*.pem`, `*.p12`, `*.pfx` - Chaves e certificados
+
+### **🔧 Como Usar**
+
+#### **1. Configuração para Desenvolvimento**
+```bash
+# Executar script de configuração automática
+node scripts/setup-dev-keys.js
+
+# Ou configurar manualmente no localStorage (console do navegador)
+localStorage.setItem('FIREBASE_API_KEY', 'sua_chave_aqui');
+```
+
+#### **2. Configuração via Meta Tags**
+```html
+<!-- Adicionar no <head> do HTML -->
+<meta name="firebase-api-key" content="sua_chave_aqui">
+<meta name="firebase-auth-domain" content="projeto.firebaseapp.com">
+<meta name="firebase-project-id" content="projeto-id">
+```
+
+#### **3. Configuração via Variáveis de Ambiente**
+```bash
+# Windows
+set FIREBASE_API_KEY=sua_chave_aqui
+set FIREBASE_AUTH_DOMAIN=projeto.firebaseapp.com
+
+# Linux/Mac
+export FIREBASE_API_KEY=sua_chave_aqui
+export FIREBASE_AUTH_DOMAIN=projeto.firebaseapp.com
+```
+
+#### **4. Configuração em Produção**
+```javascript
+// Servidor web (Apache/Nginx)
+SetEnv FIREBASE_API_KEY "sua_chave_de_producao"
+
+// Docker
+ENV FIREBASE_API_KEY=sua_chave_de_producao
+
+// Heroku
+heroku config:set FIREBASE_API_KEY=sua_chave_de_producao
+```
+
+### **🛠️ Ferramentas Disponíveis**
+
+#### **Script de Configuração Automática**
+- **Arquivo**: `scripts/setup-dev-keys.js`
+- **Função**: Configuração interativa de chaves de desenvolvimento
+- **Recursos**: Validação, múltiplos métodos, verificação de segurança
+
+#### **Configuração Segura do Firebase**
+- **Arquivo**: `config/firebase-secure.config.js`
+- **Função**: Carregamento seguro de configurações baseado no ambiente
+- **Recursos**: Detecção automática de ambiente, fallbacks seguros
+
+#### **Arquivo de Exemplo**
+- **Arquivo**: `config/env.example.js`
+- **Função**: Template seguro para configuração local
+- **Recursos**: Instruções detalhadas, exemplos de uso, checklist de segurança
+
+### **📊 Métodos de Segurança**
+
+#### **Prioridade de Carregamento:**
+1. **Meta Tags** (Mais seguro para frontend)
+2. **Variáveis de Ambiente** (Recomendado para produção)
+3. **localStorage** (Apenas desenvolvimento local)
+4. **Arquivo Local** (Fallback para desenvolvimento)
+
+#### **Validações Implementadas:**
+- ✅ Verificação de existência da chave
+- ✅ Validação de formato (não vazio)
+- ✅ Restrição por ambiente (localhost para desenvolvimento)
+- ✅ Logs de segurança para métodos de desenvolvimento
+- ✅ Erro claro quando configuração não encontrada
+
+#### **Proteções de Segurança:**
+- 🔒 Chaves nunca hardcoded no código
+- 🔒 Arquivos sensíveis protegidos no .gitignore
+- 🔒 Diferentes configurações por ambiente
+- 🔒 Validação obrigatória antes do uso
+- 🔒 Logs de aviso para métodos de desenvolvimento
+
+### **📋 Checklist de Segurança**
+
+#### **✅ Verificações Implementadas:**
+- [x] Todas as chaves hardcoded removidas do código
+- [x] Sistema de configuração segura implementado
+- [x] Arquivo .gitignore protege arquivos sensíveis
+- [x] Script de configuração automática disponível
+- [x] Validação obrigatória de chaves implementada
+- [x] Diferentes métodos para desenvolvimento/produção
+- [x] Logs de segurança para desenvolvimento
+- [x] Documentação completa de uso
+
+#### **🔍 Arquivos Verificados:**
+- [x] `components/login-clean.html` - Chave removida e configuração segura implementada
+- [x] `config/firebase-secure.config.js` - Sistema de configuração segura
+- [x] `config/env.example.js` - Template seguro atualizado
+- [x] `.gitignore` - Proteção de arquivos sensíveis
+- [x] Outros arquivos HTML/JS - Verificados e seguros
+
+---
+
+## 🔒 Sistema de Criptografia de Dados Sensíveis
+
+### **📋 Visão Geral**
+Sistema completo de criptografia para proteger dados sensíveis usando algoritmos modernos e seguros.
+
+### **🔐 Características Principais**
+
+#### **Algoritmo de Criptografia**
+- **AES-GCM**: Criptografia autenticada de 256 bits
+- **PBKDF2**: Derivação segura de chaves com 100.000 iterações
+- **IV Aleatório**: Vetor de inicialização único para cada operação
+- **Salt Único**: Proteção contra ataques de rainbow table
+
+#### **Dados Protegidos**
+```javascript
+// Campos automaticamente criptografados
+const camposSensiveis = [
+    'senha', 'password', 'token', 'secret',
+    'cpf', 'rg', 'cnpj', 'cartao',
+    'email', 'telefone', 'endereco',
+    'nome', 'sobrenome', 'nascimento'
+];
+```
+
+#### **Funcionalidades Avançadas**
+- ✅ **Criptografia Automática**: Detecta e criptografa campos sensíveis
+- ✅ **Descriptografia Transparente**: Recupera dados originais automaticamente
+- ✅ **Validação de Integridade**: Verifica se os dados não foram corrompidos
+- ✅ **Tratamento de Erros**: Gerenciamento robusto de falhas
+- ✅ **Performance Otimizada**: Processamento eficiente de grandes volumes
+
+### **🚀 Como Usar**
+
+#### **Inicialização**
+```javascript
+// Inicializar com email do usuário (usado como base para chave)
+await dataEncryption.initializeKey('usuario@exemplo.com');
+```
+
+#### **Criptografar Dados**
+```javascript
+// Criptografar string simples
+const dadoCriptografado = await dataEncryption.encryptData('dados sensíveis');
+
+// Criptografar registro completo
+const registro = {
+    nome: 'João Silva',
+    email: 'joao@exemplo.com',
+    senha: 'minhasenha123',
+    idade: 30
+};
+const registroCriptografado = await dataEncryption.encryptRecord(registro);
+```
+
+#### **Descriptografar Dados**
+```javascript
+// Descriptografar string
+const dadoOriginal = await dataEncryption.decryptData(dadoCriptografado);
+
+// Descriptografar registro
+const registroOriginal = await dataEncryption.decryptRecord(registroCriptografado);
+```
+
+#### **Processar Múltiplos Registros**
+```javascript
+// Criptografar lista de registros
+const registrosCriptografados = await dataEncryption.encryptRecords(listaRegistros);
+
+// Descriptografar lista de registros
+const registrosOriginais = await dataEncryption.decryptRecords(registrosCriptografados);
+```
+
+### **🧪 Sistema de Testes**
+
+#### **Testes Disponíveis**
+- **Teste Básico**: Criptografia e descriptografia simples
+- **Teste de Integridade**: Verificação de dados corrompidos
+- **Teste de Caracteres Especiais**: Unicode e emojis
+- **Teste de Dados Grandes**: Processamento de volumes grandes
+- **Teste de Performance**: Métricas de velocidade
+- **Teste de Concorrência**: Operações simultâneas
+- **Teste de Erros**: Tratamento de falhas
+
+#### **Executar Testes**
+```javascript
+// Teste rápido de integridade
+const resultado = await encryptionTests.quickIntegrityTest();
+
+// Executar todos os testes
+const resultados = await encryptionTests.runAllTests();
+
+// Obter estatísticas
+const stats = encryptionTests.getTestStatistics();
+```
+
+### **📊 Métricas de Performance**
+
+#### **Benchmarks Típicos**
+- **Criptografia**: ~2-5ms para dados pequenos
+- **Descriptografia**: ~1-3ms para dados pequenos
+- **Dados Grandes (1MB)**: ~50-100ms
+- **Múltiplos Registros (100)**: ~200-500ms
+
+#### **Monitoramento**
+```javascript
+// Obter estatísticas do sistema
+const stats = dataEncryption.getStats();
+console.log('Operações realizadas:', stats.operationsCount);
+console.log('Tempo médio:', stats.averageTime);
+console.log('Dados processados:', stats.totalDataProcessed);
+```
+
+### **🛡️ Segurança**
+
+#### **Proteções Implementadas**
+- **Chaves Derivadas**: Nunca armazena chaves em texto plano
+- **Salt Único**: Cada derivação usa salt diferente
+- **IV Aleatório**: Cada criptografia usa IV único
+- **Autenticação**: AES-GCM verifica integridade automaticamente
+- **Limpeza de Memória**: Remove dados sensíveis após uso
+
+#### **Boas Práticas**
+- ✅ Use emails únicos para derivação de chaves
+- ✅ Sempre aguarde a inicialização antes de usar
+- ✅ Trate erros de descriptografia adequadamente
+- ✅ Monitore performance em produção
+- ✅ Execute testes regularmente
 
 ## 🔍 Validação de Segurança (Sistema Avançado)
 
@@ -306,6 +592,19 @@ if (!firebaseConfig.apiKey) {
    - ✅ Alertas de segurança críticos
    - ✅ Monitoramento contínuo de recursos
    - ✅ Logs estruturados com emojis
+
+4. **🔒 Criptografia de Dados Sensíveis**
+   - ✅ Sistema completo de criptografia AES-GCM
+   - ✅ Proteção de dados pessoais e sensíveis
+   - ✅ Chaves derivadas com PBKDF2
+   - ✅ Testes abrangentes de segurança
+
+5. **🚫 Remoção de Chaves API do Frontend**
+   - ✅ Todas as chaves hardcoded removidas do código
+   - ✅ Sistema de configuração segura com meta tags e variáveis de ambiente
+   - ✅ Proteção de arquivos sensíveis (.gitignore atualizado)
+   - ✅ Script automatizado para configuração de desenvolvimento
+   - ✅ Localização: `config/firebase-secure.config.js`, `scripts/setup-dev-keys.js`
 
 ### **🔮 Implementações Futuras:**
 

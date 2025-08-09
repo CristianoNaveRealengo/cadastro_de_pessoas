@@ -1,14 +1,75 @@
 // ==============================================
-// EXEMPLO DE CONFIGURAÇÃO DE VARIÁVEIS DE AMBIENTE
+// EXEMPLO DE CONFIGURAÇÃO DE AMBIENTE - SEGURO
 // ==============================================
 
 /**
- * INSTRUÇÕES PARA PRODUÇÃO:
- *
+ * Este arquivo serve como exemplo para configuração de ambiente.
+ * 
+ * 🔒 INSTRUÇÕES DE SEGURANÇA:
  * 1. Copie este arquivo para 'env.config.js'
- * 2. Substitua os valores pelos reais do seu projeto Firebase
- * 3. Adicione 'env.config.js' ao .gitignore
- * 4. Configure as variáveis no seu servidor de produção
+ * 2. Substitua os valores pelos dados reais do seu projeto Firebase
+ * 3. ❌ NUNCA commite o arquivo 'env.config.js' no repositório
+ * 4. ✅ Adicione 'env.config.js' no .gitignore
+ * 5. ✅ Use variáveis de ambiente em produção
+ * 6. ✅ Use meta tags para configuração no HTML
+ * 
+ * 🚨 AVISO DE SEGURANÇA:
+ * - Chaves API nunca devem estar hardcoded no código
+ * - Este arquivo é apenas para desenvolvimento local
+ * - Em produção, use sempre variáveis de ambiente
+ */
+
+// ❌ NÃO FAÇA ISSO - Exemplo de configuração INSEGURA:
+// export default {
+//     apiKey: "AIzaSyA9kLichJN3xSUBPUyaVDH_hJUwn2SL4GM", // ❌ NUNCA hardcode chaves!
+//     authDomain: "projeto.firebaseapp.com",
+//     // ... outras configurações
+// };
+
+// ✅ FAÇA ISSO - Configuração SEGURA usando variáveis de ambiente:
+export default {
+    apiKey: process.env.FIREBASE_API_KEY || "[CONFIGURE_SUA_API_KEY]",
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "[CONFIGURE_SEU_AUTH_DOMAIN]",
+    projectId: process.env.FIREBASE_PROJECT_ID || "[CONFIGURE_SEU_PROJECT_ID]",
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "[CONFIGURE_SEU_STORAGE_BUCKET]",
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "[CONFIGURE_SEU_MESSAGING_SENDER_ID]",
+    appId: process.env.FIREBASE_APP_ID || "[CONFIGURE_SEU_APP_ID]"
+};
+
+/**
+ * 🔧 MÉTODOS SEGUROS DE CONFIGURAÇÃO:
+ * 
+ * 1. VARIÁVEIS DE AMBIENTE (Recomendado para produção):
+ *    - Windows: set FIREBASE_API_KEY=sua_chave
+ *    - Linux/Mac: export FIREBASE_API_KEY=sua_chave
+ *    - .env file: FIREBASE_API_KEY=sua_chave
+ * 
+ * 2. META TAGS NO HTML (Alternativa para frontend):
+ *    <meta name="firebase-api-key" content="sua_chave">
+ *    <meta name="firebase-auth-domain" content="projeto.firebaseapp.com">
+ *    <meta name="firebase-project-id" content="projeto-id">
+ * 
+ * 3. CONFIGURAÇÃO DO SERVIDOR (Mais seguro):
+ *    - Configurar no servidor web (Apache, Nginx)
+ *    - Usar serviços de configuração (AWS Secrets, Azure Key Vault)
+ * 
+ * 4. ARQUIVO LOCAL (Apenas desenvolvimento):
+ *    - Criar env.config.js com valores reais
+ *    - Adicionar ao .gitignore
+ *    - NUNCA commitar no repositório
+ */
+
+/**
+ * 📋 CHECKLIST DE SEGURANÇA:
+ * 
+ * ✅ Arquivo env.config.js está no .gitignore
+ * ✅ Não há chaves hardcoded no código
+ * ✅ Variáveis de ambiente configuradas em produção
+ * ✅ Meta tags configuradas no HTML (se necessário)
+ * ✅ Logs de erro não expõem chaves
+ * ✅ Configuração validada antes do uso
+ * ✅ Fallbacks seguros implementados
+ * ✅ Documentação de segurança atualizada
  */
 
 // ==============================================

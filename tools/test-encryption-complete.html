@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Completo de Criptografia - Sistema de Segurança</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .test-passed { @apply bg-green-100 border-green-500 text-green-800; }
+        .test-failed { @apply bg-red-100 border-red-500 text-red-800; }
+        .test-running { @apply bg-yellow-100 border-yellow-500 text-yellow-800; }
+        .console-log { @apply font-mono text-sm bg-gray-900 text-green-400 p-4 rounded-lg overflow-auto max-h-96; }
+        .metric-card { @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg; }
+        .progress-bar { transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center">
+                <i class="fas fa-shield-alt text-blue-500 mr-3"></i>
+                Teste Completo de Criptografia
+            </h1>
+            <p class="text-gray-600">Sistema avançado de testes para validação da criptografia de dados sensíveis</p>
+        </header>
+
+        <!-- Status do Sistema -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-info-circle text-blue-500 mr-2"></i>
+                Status do Sistema
+            </h2>
+            <div id="systemStatus" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-center p-3 bg-gray-100 rounded-lg">
+                    <span id="cryptoStatus" class="w-4 h-4 bg-gray-300 rounded-full mr-3"></span>
+                    <span>Web Crypto API</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-100 rounded-lg">
+                    <span id="encryptionStatus" class="w-4 h-4 bg-gray-300 rounded-full mr-3"></span>
+                    <span>Sistema de Criptografia</span>
+                </div>
+                <div class="flex items-center p-3 bg-gray-100 rounded-lg">
+                    <span id="testsStatus" class="w-4 h-4 bg-gray-300 rounded-full mr-3"></span>
+                    <span>Sistema de Testes</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles de Teste -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-play-circle text-green-500 mr-2"></i>
+                Controles de Teste
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button id="runQuickTest" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-bolt mr-2"></i>
+                    Teste Rápido
+                </button>
+                <button id="runFullTest" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-flask mr-2"></i>
+                    Teste Completo
+                </button>
+                <button id="runPerformanceTest" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tachometer-alt mr-2"></i>
+                    Performance
+                </button>
+                <button id="clearResults" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-trash mr-2"></i>
+                    Limpar
+                </button>
+            </div>
+        </div>
+
+        <!-- Progresso dos Testes -->
+        <div id="testProgress" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-line text-orange-500 mr-2"></i>
+                Progresso dos Testes
+            </h2>
+            <div class="mb-4">
+                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                    <span id="progressText">Preparando testes...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-500 h-2 rounded-full progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="currentTest" class="text-sm text-gray-600"></div>
+        </div>
+
+        <!-- Métricas de Performance -->
+        <div id="performanceMetrics" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-bar text-purple-500 mr-2"></i>
+                Métricas de Performance
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="metric-card">
+                    <div class="text-sm opacity-80">Criptografia Média</div>
+                    <div id="encryptionTime" class="text-2xl font-bold">-</div>
+                    <div class="text-xs opacity-60">milissegundos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-sm opacity-80">Descriptografia Média</div>
+                    <div id="decryptionTime" class="text-2xl font-bold">-</div>
+                    <div class="text-xs opacity-60">milissegundos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-sm opacity-80">Dados Grandes</div>
+                    <div id="largeDataTime" class="text-2xl font-bold">-</div>
+                    <div class="text-xs opacity-60">milissegundos</div>
+                </div>
+                <div class="metric-card">
+                    <div class="text-sm opacity-80">Múltiplos Registros</div>
+                    <div id="multipleRecordsTime" class="text-2xl font-bold">-</div>
+                    <div class="text-xs opacity-60">milissegundos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultados dos Testes -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-list-check text-green-500 mr-2"></i>
+                Resultados dos Testes
+            </h2>
+            <div id="testResults" class="space-y-2">
+                <div class="text-gray-500 text-center py-8">
+                    <i class="fas fa-play-circle text-4xl mb-4"></i>
+                    <p>Execute um teste para ver os resultados aqui</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumo Final -->
+        <div id="testSummary" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-chart-pie text-blue-500 mr-2"></i>
+                Resumo Final
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div class="text-center p-4 bg-blue-50 rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600" id="totalTests">0</div>
+                    <div class="text-sm text-gray-600">Total de Testes</div>
+                </div>
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-2xl font-bold text-green-600" id="passedTests">0</div>
+                    <div class="text-sm text-gray-600">Testes Aprovados</div>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <div class="text-2xl font-bold text-red-600" id="failedTests">0</div>
+                    <div class="text-sm text-gray-600">Testes Falharam</div>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                    <div class="text-2xl font-bold text-purple-600" id="successRate">0%</div>
+                    <div class="text-sm text-gray-600">Taxa de Sucesso</div>
+                </div>
+            </div>
+            <div id="summaryMessage" class="p-4 rounded-lg text-center font-semibold"></div>
+        </div>
+
+        <!-- Console de Logs -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                <i class="fas fa-terminal text-gray-500 mr-2"></i>
+                Console de Logs
+                <button id="clearLogs" class="ml-auto bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+                    <i class="fas fa-trash mr-1"></i>
+                    Limpar
+                </button>
+            </h2>
+            <div id="console" class="console-log">
+                <div class="text-green-400">🔐 Sistema de testes de criptografia carregado</div>
+                <div class="text-blue-400">💡 Execute um teste para ver os logs detalhados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../security/data-encryption.js"></script>
+    <script src="../security/encryption-tests.js"></script>
+    <script>
+        class EncryptionTestUI {
+            constructor() {
+                this.isTestRunning = false;
+                this.currentTestIndex = 0;
+                this.totalTests = 0;
+                this.initializeUI();
+                this.checkSystemStatus();
+            }
+
+            /**
+             * Inicializa a interface do usuário
+             */
+            initializeUI() {
+                // Botões de controle
+                document.getElementById('runQuickTest').addEventListener('click', () => this.runQuickTest());
+                document.getElementById('runFullTest').addEventListener('click', () => this.runFullTest());
+                document.getElementById('runPerformanceTest').addEventListener('click', () => this.runPerformanceTest());
+                document.getElementById('clearResults').addEventListener('click', () => this.clearResults());
+                document.getElementById('clearLogs').addEventListener('click', () => this.clearLogs());
+
+                // Interceptar console.log para mostrar no UI
+                this.interceptConsole();
+
+                console.log('🎨 Interface de testes inicializada');
+            }
+
+            /**
+             * Verifica o status dos sistemas
+             */
+            async checkSystemStatus() {
+                // Web Crypto API
+                const cryptoStatus = document.getElementById('cryptoStatus');
+                if (window.crypto && window.crypto.subtle) {
+                    cryptoStatus.className = 'w-4 h-4 bg-green-500 rounded-full mr-3';
+                } else {
+                    cryptoStatus.className = 'w-4 h-4 bg-red-500 rounded-full mr-3';
+                }
+
+                // Sistema de Criptografia
+                const encryptionStatus = document.getElementById('encryptionStatus');
+                if (window.dataEncryption) {
+                    encryptionStatus.className = 'w-4 h-4 bg-green-500 rounded-full mr-3';
+                    try {
+                        await window.dataEncryption.initializeKey('test@exemplo.com');
+                    } catch (error) {
+                        encryptionStatus.className = 'w-4 h-4 bg-red-500 rounded-full mr-3';
+                    }
+                } else {
+                    encryptionStatus.className = 'w-4 h-4 bg-red-500 rounded-full mr-3';
+                }
+
+                // Sistema de Testes
+                const testsStatus = document.getElementById('testsStatus');
+                if (window.encryptionTests) {
+                    testsStatus.className = 'w-4 h-4 bg-green-500 rounded-full mr-3';
+                } else {
+                    testsStatus.className = 'w-4 h-4 bg-red-500 rounded-full mr-3';
+                }
+            }
+
+            /**
+             * Intercepta console.log para mostrar no UI
+             */
+            interceptConsole() {
+                const originalLog = console.log;
+                const consoleElement = document.getElementById('console');
+
+                console.log = (...args) => {
+                    originalLog.apply(console, args);
+                    
+                    const message = args.map(arg => 
+                        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                    ).join(' ');
+                    
+                    const logEntry = document.createElement('div');
+                    logEntry.className = 'mb-1';
+                    
+                    // Colorir baseado no conteúdo
+                    if (message.includes('✅')) {
+                        logEntry.className += ' text-green-400';
+                    } else if (message.includes('❌')) {
+                        logEntry.className += ' text-red-400';
+                    } else if (message.includes('⚠️')) {
+                        logEntry.className += ' text-yellow-400';
+                    } else if (message.includes('🔍')) {
+                        logEntry.className += ' text-blue-400';
+                    } else {
+                        logEntry.className += ' text-gray-300';
+                    }
+                    
+                    logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                    consoleElement.appendChild(logEntry);
+                    consoleElement.scrollTop = consoleElement.scrollHeight;
+                };
+            }
+
+            /**
+             * Executa teste rápido
+             */
+            async runQuickTest() {
+                if (this.isTestRunning) return;
+                
+                this.isTestRunning = true;
+                this.showProgress('Executando teste rápido...', 0);
+                
+                try {
+                    const result = await window.encryptionTests.quickIntegrityTest();
+                    this.updateProgress(100);
+                    this.displayQuickTestResult(result);
+                } catch (error) {
+                    console.error('Erro no teste rápido:', error);
+                } finally {
+                    this.isTestRunning = false;
+                    this.hideProgress();
+                }
+            }
+
+            /**
+             * Executa teste completo
+             */
+            async runFullTest() {
+                if (this.isTestRunning) return;
+                
+                this.isTestRunning = true;
+                this.clearResults();
+                this.showProgress('Iniciando testes completos...', 0);
+                
+                try {
+                    // Simular progresso durante os testes
+                    this.simulateTestProgress();
+                    
+                    const results = await window.encryptionTests.runAllTests();
+                    this.updateProgress(100);
+                    this.displayFullTestResults(results);
+                    this.displayPerformanceMetrics(results.performanceMetrics);
+                    this.displayTestSummary(results);
+                } catch (error) {
+                    console.error('Erro nos testes completos:', error);
+                } finally {
+                    this.isTestRunning = false;
+                    setTimeout(() => this.hideProgress(), 1000);
+                }
+            }
+
+            /**
+             * Executa teste de performance
+             */
+            async runPerformanceTest() {
+                if (this.isTestRunning) return;
+                
+                this.isTestRunning = true;
+                this.showProgress('Executando testes de performance...', 0);
+                
+                try {
+                    // Executar apenas testes de performance
+                    await window.encryptionTests.checkSystemAvailability();
+                    await window.encryptionTests.testPerformance();
+                    await window.encryptionTests.testLargeData();
+                    await window.encryptionTests.testMultipleRecords();
+                    
+                    this.updateProgress(100);
+                    const stats = window.encryptionTests.getTestStatistics();
+                    this.displayPerformanceMetrics(stats.performanceMetrics);
+                    
+                    console.log('🚀 Testes de performance concluídos');
+                } catch (error) {
+                    console.error('Erro nos testes de performance:', error);
+                } finally {
+                    this.isTestRunning = false;
+                    this.hideProgress();
+                }
+            }
+
+            /**
+             * Simula progresso dos testes
+             */
+            simulateTestProgress() {
+                const testNames = [
+                    'Verificando disponibilidade do sistema',
+                    'Testando criptografia básica',
+                    'Testando descriptografia básica',
+                    'Verificando integridade',
+                    'Testando caracteres especiais',
+                    'Testando valores nulos e vazios',
+                    'Testando dados grandes',
+                    'Testando dados Unicode',
+                    'Testando criptografia de registros',
+                    'Testando múltiplos registros',
+                    'Testando derivação de chaves',
+                    'Testando unicidade da criptografia',
+                    'Testando chaves incorretas',
+                    'Testando performance',
+                    'Testando tratamento de erros',
+                    'Testando operações concorrentes'
+                ];
+                
+                let currentTest = 0;
+                const interval = setInterval(() => {
+                    if (currentTest < testNames.length && this.isTestRunning) {
+                        const progress = (currentTest / testNames.length) * 90; // 90% para deixar espaço para finalização
+                        this.updateProgress(progress, testNames[currentTest]);
+                        currentTest++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            /**
+             * Mostra barra de progresso
+             */
+            showProgress(text, percent) {
+                document.getElementById('testProgress').classList.remove('hidden');
+                this.updateProgress(percent, text);
+            }
+
+            /**
+             * Atualiza progresso
+             */
+            updateProgress(percent, text = null) {
+                document.getElementById('progressBar').style.width = `${percent}%`;
+                document.getElementById('progressPercent').textContent = `${Math.round(percent)}%`;
+                
+                if (text) {
+                    document.getElementById('progressText').textContent = text;
+                    document.getElementById('currentTest').textContent = text;
+                }
+            }
+
+            /**
+             * Esconde barra de progresso
+             */
+            hideProgress() {
+                document.getElementById('testProgress').classList.add('hidden');
+            }
+
+            /**
+             * Exibe resultado do teste rápido
+             */
+            displayQuickTestResult(passed) {
+                const resultsContainer = document.getElementById('testResults');
+                resultsContainer.innerHTML = '';
+                
+                const resultElement = document.createElement('div');
+                resultElement.className = `p-4 rounded-lg border-l-4 ${passed ? 'test-passed' : 'test-failed'}`;
+                resultElement.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas ${passed ? 'fa-check-circle' : 'fa-times-circle'} mr-3 text-lg"></i>
+                        <div>
+                            <div class="font-semibold">Teste Rápido de Integridade</div>
+                            <div class="text-sm">${passed ? 'Sistema funcionando corretamente' : 'Sistema com problemas'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                resultsContainer.appendChild(resultElement);
+            }
+
+            /**
+             * Exibe resultados completos dos testes
+             */
+            displayFullTestResults(results) {
+                const resultsContainer = document.getElementById('testResults');
+                resultsContainer.innerHTML = '';
+                
+                results.testResults.forEach(test => {
+                    const resultElement = document.createElement('div');
+                    resultElement.className = `p-4 rounded-lg border-l-4 ${test.passed ? 'test-passed' : 'test-failed'}`;
+                    resultElement.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas ${test.passed ? 'fa-check-circle' : 'fa-times-circle'} mr-3 text-lg"></i>
+                                <div>
+                                    <div class="font-semibold">${test.name}</div>
+                                    <div class="text-sm">${test.message}</div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${new Date(test.timestamp).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    `;
+                    
+                    resultsContainer.appendChild(resultElement);
+                });
+            }
+
+            /**
+             * Exibe métricas de performance
+             */
+            displayPerformanceMetrics(metrics) {
+                document.getElementById('performanceMetrics').classList.remove('hidden');
+                
+                document.getElementById('encryptionTime').textContent = 
+                    metrics.encryptionAverage ? `${metrics.encryptionAverage.toFixed(2)}` : '-';
+                
+                document.getElementById('decryptionTime').textContent = 
+                    metrics.decryptionAverage ? `${metrics.decryptionAverage.toFixed(2)}` : '-';
+                
+                document.getElementById('largeDataTime').textContent = 
+                    metrics.largeDataProcessing ? `${metrics.largeDataProcessing.toFixed(2)}` : '-';
+                
+                document.getElementById('multipleRecordsTime').textContent = 
+                    metrics.multipleRecordsProcessing ? `${metrics.multipleRecordsProcessing.toFixed(2)}` : '-';
+            }
+
+            /**
+             * Exibe resumo dos testes
+             */
+            displayTestSummary(results) {
+                document.getElementById('testSummary').classList.remove('hidden');
+                
+                document.getElementById('totalTests').textContent = results.totalTests;
+                document.getElementById('passedTests').textContent = results.passedTests;
+                document.getElementById('failedTests').textContent = results.failedTests;
+                document.getElementById('successRate').textContent = `${results.successRate}%`;
+                
+                const summaryMessage = document.getElementById('summaryMessage');
+                summaryMessage.textContent = results.summary.message;
+                summaryMessage.className = `p-4 rounded-lg text-center font-semibold ${
+                    results.failedTests === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`;
+            }
+
+            /**
+             * Limpa resultados
+             */
+            clearResults() {
+                document.getElementById('testResults').innerHTML = `
+                    <div class="text-gray-500 text-center py-8">
+                        <i class="fas fa-play-circle text-4xl mb-4"></i>
+                        <p>Execute um teste para ver os resultados aqui</p>
+                    </div>
+                `;
+                
+                document.getElementById('testSummary').classList.add('hidden');
+                document.getElementById('performanceMetrics').classList.add('hidden');
+            }
+
+            /**
+             * Limpa logs do console
+             */
+            clearLogs() {
+                document.getElementById('console').innerHTML = `
+                    <div class="text-green-400">🔐 Console limpo</div>
+                    <div class="text-blue-400">💡 Execute um teste para ver os logs detalhados</div>
+                `;
+            }
+        }
+
+        // Inicializar interface quando a página carregar
+        window.addEventListener('load', () => {
+            new EncryptionTestUI();
+        });
+    </script>
+</body>
+</html>
