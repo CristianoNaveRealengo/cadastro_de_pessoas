@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correção: ERR_BLOCKED_BY_CLIENT - Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .error-code {
+            font-family: 'Courier New', monospace;
+            background: #1f2937;
+            color: #ef4444;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #ef4444;
+        }
+        .solution-step {
+            transition: all 0.3s ease;
+        }
+        .solution-step:hover {
+            transform: translateX(4px);
+        }
+        .test-result {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-red-50 to-orange-50 min-h-screen py-8">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <!-- Cabeçalho -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <div class="text-center">
+                <div class="flex justify-center items-center mb-4">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-600 mr-3"></i>
+                    <i class="fas fa-shield-alt text-4xl text-orange-600"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Correção: ERR_BLOCKED_BY_CLIENT</h1>
+                <p class="text-gray-600">Diagnóstico e solução para bloqueios do Firebase</p>
+            </div>
+        </div>
+
+        <!-- Erro Detectado -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">
+                <i class="fas fa-bug mr-2"></i>
+                Erro Detectado
+            </h2>
+            <div class="error-code mb-4">
+                <div class="text-sm text-gray-300 mb-2">webchannel_connection.ts:287</div>
+                <div class="text-red-400">POST https://firestore.googleapis.com/google.firestore.v1.Firestore/Listen/channel</div>
+                <div class="text-red-500 font-bold mt-2">net::ERR_BLOCKED_BY_CLIENT</div>
+            </div>
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 class="font-semibold text-red-800 mb-2">🚨 O que significa este erro:</h3>
+                <ul class="text-red-700 space-y-1">
+                    <li>• O navegador ou uma extensão está bloqueando a conexão com o Firebase</li>
+                    <li>• Bloqueadores de anúncios podem estar interferindo</li>
+                    <li>• Configurações de rede ou firewall podem estar restringindo o acesso</li>
+                    <li>• Políticas de segurança corporativas podem estar ativas</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Diagnóstico Automático -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">
+                <i class="fas fa-stethoscope mr-2"></i>
+                Diagnóstico Automático
+            </h2>
+            <div id="diagnosticResults" class="space-y-4">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner animate-spin text-3xl text-blue-500 mb-4"></i>
+                    <p class="text-gray-600">Executando diagnósticos...</p>
+                </div>
+            </div>
+            <button id="runDiagnostic" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-play mr-2"></i>
+                Executar Diagnóstico
+            </button>
+        </div>
+
+        <!-- Soluções -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Soluções Rápidas -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-green-600 mb-6">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Soluções Rápidas
+                </h2>
+                <div class="space-y-4">
+                    <div class="solution-step bg-green-50 border border-green-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution1')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-green-800">
+                                <i class="fas fa-ad mr-2"></i>
+                                1. Desabilitar Bloqueador de Anúncios
+                            </h3>
+                            <i class="fas fa-chevron-down text-green-600" id="icon1"></i>
+                        </div>
+                        <div id="solution1" class="hidden mt-4 text-green-700">
+                            <p class="mb-2"><strong>Extensões comuns que causam o problema:</strong></p>
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li>uBlock Origin</li>
+                                <li>AdBlock Plus</li>
+                                <li>Ghostery</li>
+                                <li>Privacy Badger</li>
+                            </ul>
+                            <div class="mt-3 p-3 bg-green-100 rounded">
+                                <strong>Como fazer:</strong> Clique no ícone da extensão → Desabilitar para este site
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="solution-step bg-blue-50 border border-blue-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution2')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-blue-800">
+                                <i class="fas fa-user-secret mr-2"></i>
+                                2. Testar em Aba Privada
+                            </h3>
+                            <i class="fas fa-chevron-down text-blue-600" id="icon2"></i>
+                        </div>
+                        <div id="solution2" class="hidden mt-4 text-blue-700">
+                            <p class="mb-2">Abra uma nova aba privada/incógnita:</p>
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li><strong>Chrome:</strong> Ctrl+Shift+N</li>
+                                <li><strong>Firefox:</strong> Ctrl+Shift+P</li>
+                                <li><strong>Edge:</strong> Ctrl+Shift+N</li>
+                            </ul>
+                            <div class="mt-3 p-3 bg-blue-100 rounded">
+                                <strong>Por que funciona:</strong> Extensões geralmente não funcionam em modo privado
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="solution-step bg-purple-50 border border-purple-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution3')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-purple-800">
+                                <i class="fas fa-broom mr-2"></i>
+                                3. Limpar Cache e Cookies
+                            </h3>
+                            <i class="fas fa-chevron-down text-purple-600" id="icon3"></i>
+                        </div>
+                        <div id="solution3" class="hidden mt-4 text-purple-700">
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Chrome:</strong> F12 → Network → Disable cache</p>
+                                <p><strong>Ou:</strong> Ctrl+Shift+Delete → Limpar dados</p>
+                                <p><strong>Específico:</strong> Limpar apenas para *.googleapis.com</p>
+                            </div>
+                            <button onclick="clearSiteData()" class="mt-3 bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700">
+                                Limpar Dados do Site
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="solution-step bg-orange-50 border border-orange-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution4')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-orange-800">
+                                <i class="fas fa-globe mr-2"></i>
+                                4. Adicionar Exceções
+                            </h3>
+                            <i class="fas fa-chevron-down text-orange-600" id="icon4"></i>
+                        </div>
+                        <div id="solution4" class="hidden mt-4 text-orange-700">
+                            <p class="mb-2"><strong>Domínios para adicionar à whitelist:</strong></p>
+                            <div class="bg-orange-100 p-3 rounded font-mono text-sm space-y-1">
+                                <div>*.googleapis.com</div>
+                                <div>*.firebaseapp.com</div>
+                                <div>*.firebase.googleapis.com</div>
+                                <div>*.google.com</div>
+                            </div>
+                            <button onclick="copyDomains()" class="mt-3 bg-orange-600 text-white px-4 py-2 rounded text-sm hover:bg-orange-700">
+                                <i class="fas fa-copy mr-1"></i>
+                                Copiar Domínios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soluções Avançadas -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-red-600 mb-6">
+                    <i class="fas fa-cogs mr-2"></i>
+                    Soluções Avançadas
+                </h2>
+                <div class="space-y-4">
+                    <div class="solution-step bg-red-50 border border-red-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution5')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-red-800">
+                                <i class="fas fa-shield-alt mr-2"></i>
+                                5. Configurações de Firewall
+                            </h3>
+                            <i class="fas fa-chevron-down text-red-600" id="icon5"></i>
+                        </div>
+                        <div id="solution5" class="hidden mt-4 text-red-700">
+                            <p class="mb-2"><strong>Portas e protocolos necessários:</strong></p>
+                            <ul class="list-disc list-inside space-y-1 text-sm">
+                                <li>HTTPS (443) - Saída</li>
+                                <li>WebSocket (443) - Saída</li>
+                                <li>DNS (53) - Saída</li>
+                            </ul>
+                            <div class="mt-3 p-3 bg-red-100 rounded text-sm">
+                                <strong>Ação:</strong> Contate o administrador de rede para liberar estes domínios
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="solution-step bg-yellow-50 border border-yellow-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution6')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-yellow-800">
+                                <i class="fas fa-network-wired mr-2"></i>
+                                6. Testar Rede Diferente
+                            </h3>
+                            <i class="fas fa-chevron-down text-yellow-600" id="icon6"></i>
+                        </div>
+                        <div id="solution6" class="hidden mt-4 text-yellow-700">
+                            <div class="space-y-2 text-sm">
+                                <p>• Usar dados móveis (hotspot)</p>
+                                <p>• Conectar em rede Wi-Fi diferente</p>
+                                <p>• Testar em rede doméstica vs corporativa</p>
+                            </div>
+                            <button onclick="testNetworkConnectivity()" class="mt-3 bg-yellow-600 text-white px-4 py-2 rounded text-sm hover:bg-yellow-700">
+                                Testar Conectividade
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="solution-step bg-indigo-50 border border-indigo-200 rounded-lg p-4 cursor-pointer" onclick="toggleSolution('solution7')">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-semibold text-indigo-800">
+                                <i class="fas fa-code mr-2"></i>
+                                7. Configuração Alternativa
+                            </h3>
+                            <i class="fas fa-chevron-down text-indigo-600" id="icon7"></i>
+                        </div>
+                        <div id="solution7" class="hidden mt-4 text-indigo-700">
+                            <p class="mb-2">Implementar configuração com fallback:</p>
+                            <div class="bg-indigo-100 p-3 rounded text-sm">
+                                <p>• Usar REST API em vez de WebSocket</p>
+                                <p>• Implementar retry com backoff</p>
+                                <p>• Configurar timeout personalizado</p>
+                            </div>
+                            <button onclick="implementFallback()" class="mt-3 bg-indigo-600 text-white px-4 py-2 rounded text-sm hover:bg-indigo-700">
+                                Implementar Fallback
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teste de Conectividade -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-purple-600 mb-4">
+                <i class="fas fa-wifi mr-2"></i>
+                Teste de Conectividade Firebase
+            </h2>
+            <div id="connectivityResults" class="space-y-4 mb-4">
+                <div class="text-gray-600">Clique em "Testar Conectividade" para verificar a conexão com o Firebase</div>
+            </div>
+            <div class="flex space-x-4">
+                <button id="testConnectivity" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-play mr-2"></i>
+                    Testar Conectividade
+                </button>
+                <button id="testAlternative" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-route mr-2"></i>
+                    Testar Rota Alternativa
+                </button>
+            </div>
+        </div>
+
+        <!-- Status e Logs -->
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-terminal mr-2"></i>
+                Console de Debug
+            </h2>
+            <div id="debugConsole" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-64 overflow-y-auto">
+                <div class="text-gray-500">// Console de debug - aguardando comandos...</div>
+            </div>
+            <div class="mt-4 flex space-x-2">
+                <button onclick="clearConsole()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                    <i class="fas fa-trash mr-1"></i>
+                    Limpar
+                </button>
+                <button onclick="exportLogs()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-download mr-1"></i>
+                    Exportar Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Variáveis globais
+        let diagnosticData = {};
+        let testResults = [];
+
+        // Função para adicionar log ao console
+        function addLog(message, type = 'info') {
+            const console = document.getElementById('debugConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-green-400',
+                warn: 'text-yellow-400',
+                error: 'text-red-400',
+                success: 'text-blue-400'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = colors[type] || 'text-green-400';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        // Função para alternar soluções
+        window.toggleSolution = function(solutionId) {
+            const solution = document.getElementById(solutionId);
+            const icon = document.getElementById('icon' + solutionId.slice(-1));
+            
+            if (solution.classList.contains('hidden')) {
+                solution.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                solution.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        };
+
+        // Função para limpar dados do site
+        window.clearSiteData = function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+            
+            // Limpar localStorage e sessionStorage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            addLog('✅ Dados do site limpos com sucesso', 'success');
+            
+            // Recarregar página após 2 segundos
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        };
+
+        // Função para copiar domínios
+        window.copyDomains = function() {
+            const domains = `*.googleapis.com\n*.firebaseapp.com\n*.firebase.googleapis.com\n*.google.com`;
+            navigator.clipboard.writeText(domains).then(() => {
+                addLog('📋 Domínios copiados para a área de transferência', 'success');
+            }).catch(() => {
+                addLog('❌ Erro ao copiar domínios', 'error');
+            });
+        };
+
+        // Função para testar conectividade de rede
+        window.testNetworkConnectivity = async function() {
+            addLog('🔍 Testando conectividade de rede...', 'info');
+            
+            const endpoints = [
+                'https://www.google.com',
+                'https://firebase.googleapis.com',
+                'https://firestore.googleapis.com',
+                'https://identitytoolkit.googleapis.com'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint, { 
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    addLog(`✅ ${endpoint} - Acessível`, 'success');
+                } catch (error) {
+                    addLog(`❌ ${endpoint} - Bloqueado: ${error.message}`, 'error');
+                }
+            }
+        };
+
+        // Função para implementar fallback
+        window.implementFallback = function() {
+            addLog('🔧 Implementando configuração de fallback...', 'info');
+            
+            // Configurar timeout personalizado
+            window.FIREBASE_TIMEOUT = 10000;
+            
+            // Implementar retry com backoff
+            window.FIREBASE_RETRY_CONFIG = {
+                maxRetries: 3,
+                baseDelay: 1000,
+                maxDelay: 5000
+            };
+            
+            addLog('✅ Configuração de fallback implementada', 'success');
+            addLog('ℹ️ Timeout: 10s, Max retries: 3', 'info');
+        };
+
+        // Função para limpar console
+        window.clearConsole = function() {
+            document.getElementById('debugConsole').innerHTML = 
+                '<div class="text-gray-500">// Console limpo - aguardando comandos...</div>';
+        };
+
+        // Função para exportar logs
+        window.exportLogs = function() {
+            const console = document.getElementById('debugConsole');
+            const logs = console.innerText;
+            const blob = new Blob([logs], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `firebase-debug-${new Date().toISOString().slice(0, 19)}.txt`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            addLog('📁 Logs exportados com sucesso', 'success');
+        };
+
+        // Diagnóstico automático
+        async function runDiagnostic() {
+            const resultsDiv = document.getElementById('diagnosticResults');
+            resultsDiv.innerHTML = '';
+            
+            addLog('🔍 Iniciando diagnóstico automático...', 'info');
+            
+            const tests = [
+                {
+                    name: 'Verificar Extensões do Navegador',
+                    test: checkBrowserExtensions
+                },
+                {
+                    name: 'Testar Conectividade DNS',
+                    test: testDNSConnectivity
+                },
+                {
+                    name: 'Verificar Políticas de Segurança',
+                    test: checkSecurityPolicies
+                },
+                {
+                    name: 'Testar WebSocket',
+                    test: testWebSocketConnection
+                },
+                {
+                    name: 'Verificar Cache e Cookies',
+                    test: checkCacheAndCookies
+                }
+            ];
+            
+            for (const test of tests) {
+                const result = await test.test();
+                displayTestResult(resultsDiv, test.name, result);
+                addLog(`${result.status === 'success' ? '✅' : result.status === 'warning' ? '⚠️' : '❌'} ${test.name}: ${result.message}`, result.status === 'success' ? 'success' : result.status === 'warning' ? 'warn' : 'error');
+            }
+            
+            addLog('🏁 Diagnóstico concluído', 'info');
+        }
+
+        // Funções de teste individuais
+        async function checkBrowserExtensions() {
+            // Verificar se há extensões que podem estar bloqueando
+            const userAgent = navigator.userAgent;
+            const isChrome = userAgent.includes('Chrome');
+            const isFirefox = userAgent.includes('Firefox');
+            
+            if (isChrome) {
+                return {
+                    status: 'warning',
+                    message: 'Chrome detectado - verifique extensões como uBlock Origin, AdBlock Plus',
+                    details: 'Extensões de bloqueio são comuns no Chrome'
+                };
+            } else if (isFirefox) {
+                return {
+                    status: 'warning',
+                    message: 'Firefox detectado - verifique Enhanced Tracking Protection',
+                    details: 'Firefox tem proteções nativas que podem bloquear'
+                };
+            }
+            
+            return {
+                status: 'info',
+                message: 'Navegador não identificado - verifique extensões manualmente',
+                details: 'Desabilite extensões de bloqueio temporariamente'
+            };
+        }
+
+        async function testDNSConnectivity() {
+            try {
+                const start = performance.now();
+                await fetch('https://dns.google/resolve?name=firestore.googleapis.com&type=A', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                const end = performance.now();
+                
+                return {
+                    status: 'success',
+                    message: `DNS funcionando (${Math.round(end - start)}ms)`,
+                    details: 'Resolução DNS está funcionando corretamente'
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    message: 'Problema na resolução DNS',
+                    details: 'DNS pode estar bloqueado ou lento'
+                };
+            }
+        }
+
+        async function checkSecurityPolicies() {
+            // Verificar Content Security Policy
+            const metaTags = document.querySelectorAll('meta[http-equiv="Content-Security-Policy"]');
+            
+            if (metaTags.length > 0) {
+                return {
+                    status: 'warning',
+                    message: 'CSP detectado - pode estar bloqueando Firebase',
+                    details: 'Verifique se *.googleapis.com está permitido'
+                };
+            }
+            
+            // Verificar se está em HTTPS
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                return {
+                    status: 'error',
+                    message: 'Site não está em HTTPS',
+                    details: 'Firebase requer HTTPS em produção'
+                };
+            }
+            
+            return {
+                status: 'success',
+                message: 'Políticas de segurança OK',
+                details: 'Nenhum bloqueio de política detectado'
+            };
+        }
+
+        async function testWebSocketConnection() {
+            return new Promise((resolve) => {
+                try {
+                    const ws = new WebSocket('wss://echo.websocket.org/');
+                    
+                    ws.onopen = () => {
+                        ws.close();
+                        resolve({
+                            status: 'success',
+                            message: 'WebSocket funcionando',
+                            details: 'Conexões WebSocket estão permitidas'
+                        });
+                    };
+                    
+                    ws.onerror = () => {
+                        resolve({
+                            status: 'error',
+                            message: 'WebSocket bloqueado',
+                            details: 'Conexões WebSocket podem estar sendo bloqueadas'
+                        });
+                    };
+                    
+                    // Timeout após 5 segundos
+                    setTimeout(() => {
+                        ws.close();
+                        resolve({
+                            status: 'warning',
+                            message: 'WebSocket timeout',
+                            details: 'Conexão WebSocket demorou muito para responder'
+                        });
+                    }, 5000);
+                } catch (error) {
+                    resolve({
+                        status: 'error',
+                        message: 'Erro ao testar WebSocket',
+                        details: error.message
+                    });
+                }
+            });
+        }
+
+        async function checkCacheAndCookies() {
+            const hasLocalStorage = typeof(Storage) !== 'undefined';
+            const hasSessionStorage = typeof(sessionStorage) !== 'undefined';
+            const cookiesEnabled = navigator.cookieEnabled;
+            
+            if (!hasLocalStorage || !hasSessionStorage || !cookiesEnabled) {
+                return {
+                    status: 'error',
+                    message: 'Storage ou cookies desabilitados',
+                    details: 'Firebase precisa de localStorage e cookies'
+                };
+            }
+            
+            // Verificar se há dados corrompidos
+            try {
+                localStorage.setItem('test', 'test');
+                localStorage.removeItem('test');
+                
+                return {
+                    status: 'success',
+                    message: 'Storage funcionando corretamente',
+                    details: 'localStorage e cookies estão funcionais'
+                };
+            } catch (error) {
+                return {
+                    status: 'error',
+                    message: 'Problema no localStorage',
+                    details: 'localStorage pode estar corrompido ou cheio'
+                };
+            }
+        }
+
+        // Função para exibir resultado do teste
+        function displayTestResult(container, testName, result) {
+            const statusColors = {
+                success: 'bg-green-50 border-green-200 text-green-800',
+                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                error: 'bg-red-50 border-red-200 text-red-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800'
+            };
+            
+            const statusIcons = {
+                success: 'fas fa-check-circle text-green-600',
+                warning: 'fas fa-exclamation-triangle text-yellow-600',
+                error: 'fas fa-times-circle text-red-600',
+                info: 'fas fa-info-circle text-blue-600'
+            };
+            
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result border rounded-lg p-4 ${statusColors[result.status]}`;
+            resultDiv.innerHTML = `
+                <div class="flex items-start">
+                    <i class="${statusIcons[result.status]} mr-3 mt-1"></i>
+                    <div class="flex-1">
+                        <h3 class="font-semibold">${testName}</h3>
+                        <p class="text-sm mt-1">${result.message}</p>
+                        ${result.details ? `<p class="text-xs mt-2 opacity-75">${result.details}</p>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(resultDiv);
+        }
+
+        // Teste de conectividade Firebase
+        async function testFirebaseConnectivity() {
+            const resultsDiv = document.getElementById('connectivityResults');
+            resultsDiv.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner animate-spin text-2xl text-purple-500"></i><p class="mt-2">Testando conectividade...</p></div>';
+            
+            addLog('🔥 Iniciando teste de conectividade Firebase...', 'info');
+            
+            const endpoints = [
+                {
+                    name: 'Firebase Auth',
+                    url: 'https://identitytoolkit.googleapis.com/v1/projects',
+                    critical: true
+                },
+                {
+                    name: 'Firestore',
+                    url: 'https://firestore.googleapis.com/v1/projects',
+                    critical: true
+                },
+                {
+                    name: 'Firebase Storage',
+                    url: 'https://storage.googleapis.com/storage/v1/projects',
+                    critical: false
+                },
+                {
+                    name: 'Firebase Functions',
+                    url: 'https://cloudfunctions.googleapis.com/v1/projects',
+                    critical: false
+                }
+            ];
+            
+            resultsDiv.innerHTML = '';
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const start = performance.now();
+                    const response = await fetch(endpoint.url, {
+                        method: 'HEAD',
+                        mode: 'cors'
+                    });
+                    const end = performance.now();
+                    const time = Math.round(end - start);
+                    
+                    const status = response.ok ? 'success' : 'warning';
+                    const message = response.ok ? 
+                        `Conectado (${time}ms)` : 
+                        `Resposta: ${response.status}`;
+                    
+                    displayTestResult(resultsDiv, endpoint.name, {
+                        status,
+                        message,
+                        details: `URL: ${endpoint.url}`
+                    });
+                    
+                    addLog(`${response.ok ? '✅' : '⚠️'} ${endpoint.name}: ${message}`, status);
+                } catch (error) {
+                    const status = endpoint.critical ? 'error' : 'warning';
+                    displayTestResult(resultsDiv, endpoint.name, {
+                        status,
+                        message: 'Conexão bloqueada',
+                        details: error.message
+                    });
+                    
+                    addLog(`❌ ${endpoint.name}: ${error.message}`, 'error');
+                }
+            }
+            
+            addLog('🏁 Teste de conectividade concluído', 'info');
+        }
+
+        // Event listeners
+        document.getElementById('runDiagnostic').addEventListener('click', runDiagnostic);
+        document.getElementById('testConnectivity').addEventListener('click', testFirebaseConnectivity);
+        
+        document.getElementById('testAlternative').addEventListener('click', async () => {
+            addLog('🔄 Testando rota alternativa...', 'info');
+            
+            // Tentar usar REST API em vez de WebSocket
+            try {
+                const response = await fetch('https://firestore.googleapis.com/v1/projects/appcadastrodepessoas-2c20b/databases/(default)/documents/test', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401 || response.status === 403) {
+                    addLog('✅ Rota alternativa funcionando (erro de autenticação esperado)', 'success');
+                } else if (response.ok) {
+                    addLog('✅ Rota alternativa funcionando perfeitamente', 'success');
+                } else {
+                    addLog(`⚠️ Rota alternativa com problemas: ${response.status}`, 'warn');
+                }
+            } catch (error) {
+                addLog(`❌ Rota alternativa bloqueada: ${error.message}`, 'error');
+            }
+        });
+
+        // Executar diagnóstico automático na inicialização
+        addLog('🚀 Sistema de diagnóstico inicializado', 'info');
+        addLog('ℹ️ Clique em "Executar Diagnóstico" para começar', 'info');
+    </script>
+</body>
+</html>

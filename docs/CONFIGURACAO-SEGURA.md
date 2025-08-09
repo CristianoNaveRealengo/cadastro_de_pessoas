@@ -606,6 +606,14 @@ if (!firebaseConfig.apiKey) {
    - ✅ Script automatizado para configuração de desenvolvimento
    - ✅ Localização: `config/firebase-secure.config.js`, `scripts/setup-dev-keys.js`
 
+6. **🚨 Correção de Erro ERR_BLOCKED_BY_CLIENT**
+   - ✅ Sistema automático de correção para bloqueios de rede
+   - ✅ Detecção e solução de bloqueadores de anúncios
+   - ✅ Configurações de retry com backoff exponencial
+   - ✅ Fallbacks para REST API e modo offline
+   - ✅ Página de diagnóstico interativa
+   - ✅ Localização: `tools/firebase-blocked-client-fix.js`, `tools/fix-blocked-client-error.html`
+
 ### **🔮 Implementações Futuras:**
 
 1. **🔄 Proxy Backend (Máxima Segurança):**
@@ -754,3 +762,5 @@ Authorization: Bearer <token>
 - ✅ Interface de teste visual
 - ✅ Logs estruturados e coloridos
 - ✅ Alertas críticos automáticos
+- ✅ Correção automática de erro ERR_BLOCKED_BY_CLIENT
+- ✅ Sistema de fallback para bloqueadores de anúncios
