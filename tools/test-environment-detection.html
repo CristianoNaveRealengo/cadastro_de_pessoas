@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Detecção Automática de Ambiente</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #4facfe;
+            background: #f8f9fa;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #4facfe;
+        }
+
+        .info-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background: #28a745; }
+        .status-warning { background: #ffc107; }
+        .status-error { background: #dc3545; }
+        .status-info { background: #17a2b8; }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .log-info { background: rgba(23, 162, 184, 0.2); }
+        .log-success { background: rgba(40, 167, 69, 0.2); }
+        .log-warning { background: rgba(255, 193, 7, 0.2); }
+        .log-error { background: rgba(220, 53, 69, 0.2); }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Detecção Automática de Ambiente</h1>
+            <p>Sistema avançado de detecção e configuração de ambiente</p>
+        </div>
+
+        <div class="content">
+            <!-- Informações do Ambiente -->
+            <div class="section">
+                <h2>📊 Informações do Ambiente</h2>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>🌍 Ambiente Detectado</h3>
+                        <p id="environment-type">Carregando...</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🔒 Status de Segurança</h3>
+                        <p id="security-status">Carregando...</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>🌐 Informações de Rede</h3>
+                        <p id="network-info">Carregando...</p>
+                    </div>
+                    <div class="info-card">
+                        <h3>💻 Contexto de Execução</h3>
+                        <p id="execution-context">Carregando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recursos Disponíveis -->
+            <div class="section">
+                <h2>⚡ Recursos Disponíveis</h2>
+                <div class="feature-list" id="features-list">
+                    <!-- Preenchido dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Configurações Recomendadas -->
+            <div class="section">
+                <h2>⚙️ Configurações Recomendadas</h2>
+                <div class="info-card">
+                    <div id="recommended-config">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Testes e Ações -->
+            <div class="section">
+                <h2>🧪 Testes e Ações</h2>
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="testEnvironmentDetection()">🔍 Testar Detecção</button>
+                    <button class="btn btn-secondary" onclick="checkAllFeatures()">⚡ Verificar Recursos</button>
+                    <button class="btn btn-success" onclick="testFirebaseConfig()">🔥 Testar Firebase</button>
+                    <button class="btn btn-warning" onclick="simulateProduction()">🚀 Simular Produção</button>
+                    <button class="btn btn-primary" onclick="reloadEnvironment()">🔄 Recarregar</button>
+                    <button class="btn btn-secondary" onclick="clearLogs()">🧹 Limpar Logs</button>
+                </div>
+            </div>
+
+            <!-- Console de Logs -->
+            <div class="section">
+                <h2>📝 Console de Logs</h2>
+                <div class="log-container" id="log-container">
+                    <div class="log-entry log-info">Sistema iniciado. Aguardando testes...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        // Importar os módulos necessários
+        import { environmentDetector } from '../config/environment-detector.js';
+        import { firebaseConfig, configManager } from '../config/firebase-secure.config.js';
+
+        // Variáveis globais
+        let logContainer;
+        let environmentInfo;
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            logContainer = document.getElementById('log-container');
+            initializeEnvironmentInfo();
+            updateUI();
+            
+            // Interceptar console para mostrar logs
+            interceptConsole();
+            
+            addLog('✅ Sistema de detecção de ambiente carregado', 'success');
+        });
+
+        /**
+         * Inicializa as informações do ambiente
+         */
+        function initializeEnvironmentInfo() {
+            try {
+                environmentInfo = environmentDetector.getEnvironmentInfo();
+                addLog(`🔍 Ambiente detectado: ${environmentInfo.type}`, 'info');
+            } catch (error) {
+                addLog(`❌ Erro ao detectar ambiente: ${error.message}`, 'error');
+                console.error('Erro na detecção de ambiente:', error);
+            }
+        }
+
+        /**
+         * Atualiza a interface com as informações do ambiente
+         */
+        function updateUI() {
+            if (!environmentInfo) {
+                addLog('⚠️ Informações do ambiente não disponíveis', 'warning');
+                return;
+            }
+
+            // Atualizar informações básicas
+            updateEnvironmentType();
+            updateSecurityStatus();
+            updateNetworkInfo();
+            updateExecutionContext();
+            updateFeaturesList();
+            updateRecommendedConfig();
+        }
+
+        /**
+         * Atualiza o tipo de ambiente
+         */
+        function updateEnvironmentType() {
+            const element = document.getElementById('environment-type');
+            const { type, isProduction } = environmentInfo;
+            const emoji = getEnvironmentEmoji(type);
+            
+            element.innerHTML = `
+                <span class="status-indicator ${isProduction ? 'status-error' : 'status-success'}"></span>
+                ${emoji} ${type.toUpperCase()}
+                ${isProduction ? '<br><small>🚀 Ambiente de Produção</small>' : '<br><small>🛠️ Ambiente de Desenvolvimento</small>'}
+            `;
+        }
+
+        /**
+         * Atualiza o status de segurança
+         */
+        function updateSecurityStatus() {
+            const element = document.getElementById('security-status');
+            const { isSecure, availableFeatures, type } = environmentInfo;
+            
+            let status = 'success';
+            let message = '🔒 Seguro';
+            
+            if (type === 'insecure-production') {
+                status = 'error';
+                message = '🚨 Produção Insegura';
+            } else if (!isSecure) {
+                status = 'warning';
+                message = '⚠️ Não Seguro (HTTP)';
+            } else if (!availableFeatures.secureContext) {
+                status = 'warning';
+                message = '⚠️ Contexto Inseguro';
+            }
+            
+            element.innerHTML = `
+                <span class="status-indicator status-${status}"></span>
+                ${message}
+                <br><small>HTTPS: ${isSecure ? '✅' : '❌'} | Contexto Seguro: ${availableFeatures.secureContext ? '✅' : '❌'}</small>
+            `;
+        }
+
+        /**
+         * Atualiza informações de rede
+         */
+        function updateNetworkInfo() {
+            const element = document.getElementById('network-info');
+            const { protocol, hostname, port } = environmentInfo;
+            
+            element.innerHTML = `
+                <strong>Protocolo:</strong> ${protocol}<br>
+                <strong>Host:</strong> ${hostname}<br>
+                <strong>Porta:</strong> ${port || 'Padrão'}
+            `;
+        }
+
+        /**
+         * Atualiza contexto de execução
+         */
+        function updateExecutionContext() {
+            const element = document.getElementById('execution-context');
+            const { executionContext } = environmentInfo;
+            
+            const contexts = [];
+            if (executionContext.isPWA) contexts.push('📱 PWA');
+            if (executionContext.isElectron) contexts.push('⚡ Electron');
+            if (executionContext.isMobile) contexts.push('📱 Mobile');
+            if (executionContext.isTablet) contexts.push('📱 Tablet');
+            if (executionContext.isDesktop) contexts.push('💻 Desktop');
+            
+            element.innerHTML = `
+                <strong>Plataforma:</strong> ${contexts.join(', ') || '💻 Web'}<br>
+                <strong>Navegador:</strong> ${executionContext.browser}<br>
+                <strong>SO:</strong> ${executionContext.os}
+            `;
+        }
+
+        /**
+         * Atualiza lista de recursos
+         */
+        function updateFeaturesList() {
+            const container = document.getElementById('features-list');
+            const { availableFeatures } = environmentInfo;
+            
+            container.innerHTML = '';
+            
+            Object.entries(availableFeatures).forEach(([feature, available]) => {
+                const featureElement = document.createElement('div');
+                featureElement.className = 'feature-item';
+                featureElement.innerHTML = `
+                    <span class="status-indicator ${available ? 'status-success' : 'status-error'}"></span>
+                    ${getFeatureName(feature)}
+                `;
+                container.appendChild(featureElement);
+            });
+        }
+
+        /**
+         * Atualiza configurações recomendadas
+         */
+        function updateRecommendedConfig() {
+            const element = document.getElementById('recommended-config');
+            const { recommendedConfig } = environmentInfo;
+            
+            const configHtml = Object.entries(recommendedConfig)
+                .map(([key, value]) => `<strong>${getConfigName(key)}:</strong> ${value}`)
+                .join('<br>');
+            
+            element.innerHTML = configHtml;
+        }
+
+        /**
+         * Obtém emoji do ambiente
+         */
+        function getEnvironmentEmoji(type) {
+            const emojis = {
+                production: '🚀',
+                staging: '🎭',
+                development: '🛠️',
+                test: '🧪',
+                'local-file': '📁',
+                'insecure-production': '🚨'
+            };
+            return emojis[type] || '❓';
+        }
+
+        /**
+         * Obtém nome amigável do recurso
+         */
+        function getFeatureName(feature) {
+            const names = {
+                serviceWorker: 'Service Worker',
+                pushNotifications: 'Push Notifications',
+                geolocation: 'Geolocalização',
+                camera: 'Câmera',
+                offlineStorage: 'Armazenamento Offline',
+                indexedDB: 'IndexedDB',
+                crypto: 'Web Crypto API',
+                secureContext: 'Contexto Seguro',
+                onlineStatus: 'Status Online',
+                connection: 'Network Information',
+                performanceAPI: 'Performance API',
+                webWorkers: 'Web Workers'
+            };
+            return names[feature] || feature;
+        }
+
+        /**
+         * Obtém nome amigável da configuração
+         */
+        function getConfigName(config) {
+            const names = {
+                debugMode: 'Modo Debug',
+                logging: 'Nível de Log',
+                caching: 'Cache',
+                minification: 'Minificação',
+                securityLevel: 'Nível de Segurança',
+                analytics: 'Analytics'
+            };
+            return names[config] || config;
+        }
+
+        /**
+         * Intercepta console para mostrar logs na interface
+         */
+        function interceptConsole() {
+            const originalLog = console.log;
+            const originalWarn = console.warn;
+            const originalError = console.error;
+            const originalInfo = console.info;
+
+            console.log = function(...args) {
+                originalLog.apply(console, args);
+                addLog(args.join(' '), 'info');
+            };
+
+            console.warn = function(...args) {
+                originalWarn.apply(console, args);
+                addLog(args.join(' '), 'warning');
+            };
+
+            console.error = function(...args) {
+                originalError.apply(console, args);
+                addLog(args.join(' '), 'error');
+            };
+
+            console.info = function(...args) {
+                originalInfo.apply(console, args);
+                addLog(args.join(' '), 'info');
+            };
+        }
+
+        /**
+         * Adiciona log à interface
+         */
+        function addLog(message, type = 'info') {
+            if (!logContainer) return;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Funções globais para os botões
+        window.testEnvironmentDetection = function() {
+            addLog('🔍 Iniciando teste de detecção de ambiente...', 'info');
+            
+            try {
+                // Recarregar informações
+                environmentInfo = environmentDetector.getEnvironmentInfo();
+                updateUI();
+                
+                // Mostrar informações detalhadas
+                console.table({
+                    'Tipo de Ambiente': environmentInfo.type,
+                    'É Produção': environmentInfo.isProduction,
+                    'É Seguro (HTTPS)': environmentInfo.isSecure,
+                    'É PWA': environmentInfo.executionContext.isPWA,
+                    'Navegador': environmentInfo.executionContext.browser,
+                    'Sistema Operacional': environmentInfo.executionContext.os
+                });
+                
+                addLog('✅ Teste de detecção concluído com sucesso', 'success');
+            } catch (error) {
+                addLog(`❌ Erro no teste: ${error.message}`, 'error');
+            }
+        };
+
+        window.checkAllFeatures = function() {
+            addLog('⚡ Verificando todos os recursos disponíveis...', 'info');
+            
+            const features = environmentInfo.availableFeatures;
+            let availableCount = 0;
+            let totalCount = 0;
+            
+            Object.entries(features).forEach(([feature, available]) => {
+                totalCount++;
+                if (available) availableCount++;
+                
+                const status = available ? '✅' : '❌';
+                addLog(`${status} ${getFeatureName(feature)}: ${available}`, available ? 'success' : 'warning');
+            });
+            
+            addLog(`📊 Resumo: ${availableCount}/${totalCount} recursos disponíveis`, 'info');
+        };
+
+        window.testFirebaseConfig = function() {
+            addLog('🔥 Testando configuração do Firebase...', 'info');
+            
+            try {
+                const config = configManager.getConfig();
+                const securityInfo = configManager.getSecurityInfo();
+                
+                addLog(`✅ Configuração carregada para ambiente: ${securityInfo.environment}`, 'success');
+                addLog(`🔒 Fonte da configuração: ${securityInfo.configSource}`, 'info');
+                addLog(`🛡️ Nível de segurança: ${securityInfo.recommendedConfig.securityLevel}`, 'info');
+                
+                // Verificar se todas as chaves estão presentes
+                const requiredKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+                const missingKeys = requiredKeys.filter(key => !config[key]);
+                
+                if (missingKeys.length === 0) {
+                    addLog('✅ Todas as chaves obrigatórias estão presentes', 'success');
+                } else {
+                    addLog(`⚠️ Chaves faltando: ${missingKeys.join(', ')}`, 'warning');
+                }
+                
+            } catch (error) {
+                addLog(`❌ Erro ao testar Firebase: ${error.message}`, 'error');
+            }
+        };
+
+        window.simulateProduction = function() {
+            addLog('🚀 Simulando ambiente de produção...', 'warning');
+            
+            try {
+                // Usar função de debug se disponível
+                if (window.configDebug && window.configDebug.simulateProduction) {
+                    window.configDebug.simulateProduction();
+                    
+                    // Atualizar informações
+                    setTimeout(() => {
+                        environmentInfo = environmentDetector.getEnvironmentInfo();
+                        updateUI();
+                        addLog('✅ Simulação de produção ativada', 'success');
+                        addLog('💡 Use "Recarregar" para restaurar o ambiente original', 'info');
+                    }, 100);
+                } else {
+                    addLog('⚠️ Função de simulação não disponível', 'warning');
+                }
+            } catch (error) {
+                addLog(`❌ Erro na simulação: ${error.message}`, 'error');
+            }
+        };
+
+        window.reloadEnvironment = function() {
+            addLog('🔄 Recarregando detecção de ambiente...', 'info');
+            
+            try {
+                // Recarregar página para restaurar estado original
+                location.reload();
+            } catch (error) {
+                addLog(`❌ Erro ao recarregar: ${error.message}`, 'error');
+            }
+        };
+
+        window.clearLogs = function() {
+            if (logContainer) {
+                logContainer.innerHTML = '<div class="log-entry log-info">Logs limpos. Sistema pronto para novos testes...</div>';
+            }
+        };
+    </script>
+</body>
+</html>

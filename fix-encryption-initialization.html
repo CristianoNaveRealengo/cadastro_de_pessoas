@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Correção - Inicialização da Criptografia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
+                    <i class="fas fa-tools text-blue-600 mr-3"></i>
+                    Correção - Inicialização da Criptografia
+                </h1>
+                <p class="text-gray-600">
+                    Ferramenta para diagnosticar e corrigir problemas de inicialização da chave de criptografia.
+                </p>
+            </div>
+        </header>
+
+        <!-- Problema Identificado -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold text-red-800 mb-3 flex items-center">
+                <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                Problema Identificado
+            </h2>
+            <div class="bg-red-100 p-4 rounded-lg mb-4">
+                <code class="text-red-800 text-sm">
+                    Erro ao criptografar campo 'referenceName': Error: Chave de criptografia não inicializada
+                </code>
+            </div>
+            <div class="text-red-700">
+                <p class="mb-2"><strong>Causa:</strong> O sistema de criptografia está sendo usado antes da chave ser inicializada.</p>
+                <p><strong>Solução:</strong> Garantir que a chave seja inicializada após o login do usuário.</p>
+            </div>
+        </div>
+
+        <!-- Status do Sistema -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Sistema de Criptografia</h3>
+                    <div id="encryptionSystemStatus" class="w-4 h-4 bg-gray-300 rounded-full"></div>
+                </div>
+                <p id="encryptionSystemText" class="text-gray-600 text-sm">Verificando...</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Firebase Auth</h3>
+                    <div id="firebaseAuthStatus" class="w-4 h-4 bg-gray-300 rounded-full"></div>
+                </div>
+                <p id="firebaseAuthText" class="text-gray-600 text-sm">Verificando...</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Chave de Criptografia</h3>
+                    <div id="encryptionKeyStatus" class="w-4 h-4 bg-gray-300 rounded-full"></div>
+                </div>
+                <p id="encryptionKeyText" class="text-gray-600 text-sm">Verificando...</p>
+            </div>
+        </div>
+
+        <!-- Ações -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-cogs text-blue-600 mr-2"></i>
+                Ações de Correção
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <button id="runDiagnostic" class="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Diagnóstico
+                </button>
+                <button id="applyFixes" class="bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-wrench mr-2"></i>
+                    Aplicar Correções
+                </button>
+                <button id="forceInit" class="bg-orange-600 text-white px-4 py-3 rounded-lg hover:bg-orange-700 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-bolt mr-2"></i>
+                    Forçar Inicialização
+                </button>
+                <button id="generateReport" class="bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Gerar Relatório
+                </button>
+            </div>
+        </div>
+
+        <!-- Resultados do Diagnóstico -->
+        <div id="diagnosticResults" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-clipboard-list text-blue-600 mr-2"></i>
+                Resultados do Diagnóstico
+            </h2>
+            <div id="diagnosticContent" class="space-y-4">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Resultados das Correções -->
+        <div id="fixResults" class="bg-white rounded-lg shadow-sm p-6 mb-6 hidden">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-tools text-green-600 mr-2"></i>
+                Resultados das Correções
+            </h2>
+            <div id="fixContent" class="space-y-4">
+                <!-- Conteúdo será inserido dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Console de Logs -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-terminal text-gray-600 mr-2"></i>
+                Console de Logs
+                <button id="clearLogs" class="ml-auto bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition duration-200">
+                    <i class="fas fa-trash mr-1"></i>
+                    Limpar
+                </button>
+            </h2>
+            <div id="logConsole" class="bg-gray-900 text-green-400 p-4 rounded-lg h-64 overflow-y-auto font-mono text-sm">
+                <div class="text-gray-500">Console de logs - aguardando ações...</div>
+            </div>
+        </div>
+
+        <!-- Instruções -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+            <h2 class="text-xl font-semibold text-blue-800 mb-3 flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Como Usar Esta Ferramenta
+            </h2>
+            <ol class="list-decimal list-inside text-blue-700 space-y-2">
+                <li><strong>Execute o Diagnóstico:</strong> Clique em "Diagnóstico" para identificar problemas.</li>
+                <li><strong>Aplique as Correções:</strong> Clique em "Aplicar Correções" para resolver automaticamente.</li>
+                <li><strong>Forçar Inicialização:</strong> Se necessário, force a inicialização da chave de criptografia.</li>
+                <li><strong>Gere um Relatório:</strong> Documente os resultados para referência futura.</li>
+                <li><strong>Recarregue o App:</strong> Após as correções, recarregue a página principal do aplicativo.</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js" type="module"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js" type="module"></script>
+    
+    <!-- Configuração Firebase -->
+    <script src="config/firebase-secure.config.js"></script>
+    
+    <!-- Sistema de Criptografia -->
+    <script src="security/data-encryption.js"></script>
+    
+    <!-- Sistema de Correção -->
+    <script src="fix-encryption-initialization.js"></script>
+    
+    <script>
+        let fixer = null;
+        let logCount = 0;
+
+        // Inicializar quando a página carregar
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeSystem();
+            setupEventListeners();
+            updateSystemStatus();
+        });
+
+        async function initializeSystem() {
+            try {
+                // Aguardar carregamento dos sistemas
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                fixer = new EncryptionInitializationFixer();
+                addLog('✅ Sistema de correção inicializado', 'success');
+                
+            } catch (error) {
+                addLog(`❌ Erro na inicialização: ${error.message}`, 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('runDiagnostic').addEventListener('click', runDiagnostic);
+            document.getElementById('applyFixes').addEventListener('click', applyFixes);
+            document.getElementById('forceInit').addEventListener('click', forceInitialization);
+            document.getElementById('generateReport').addEventListener('click', generateReport);
+            document.getElementById('clearLogs').addEventListener('click', clearLogs);
+        }
+
+        function updateSystemStatus() {
+            // Status do Sistema de Criptografia
+            const encryptionSystemStatus = document.getElementById('encryptionSystemStatus');
+            const encryptionSystemText = document.getElementById('encryptionSystemText');
+            
+            if (window.dataEncryption) {
+                encryptionSystemStatus.className = 'w-4 h-4 bg-green-500 rounded-full';
+                encryptionSystemText.textContent = 'Sistema carregado';
+            } else {
+                encryptionSystemStatus.className = 'w-4 h-4 bg-red-500 rounded-full';
+                encryptionSystemText.textContent = 'Sistema não encontrado';
+            }
+
+            // Status do Firebase Auth
+            const firebaseAuthStatus = document.getElementById('firebaseAuthStatus');
+            const firebaseAuthText = document.getElementById('firebaseAuthText');
+            
+            if (window.auth) {
+                if (window.auth.currentUser) {
+                    firebaseAuthStatus.className = 'w-4 h-4 bg-green-500 rounded-full';
+                    firebaseAuthText.textContent = `Logado: ${window.auth.currentUser.email}`;
+                } else {
+                    firebaseAuthStatus.className = 'w-4 h-4 bg-yellow-500 rounded-full';
+                    firebaseAuthText.textContent = 'Disponível, mas não logado';
+                }
+            } else {
+                firebaseAuthStatus.className = 'w-4 h-4 bg-red-500 rounded-full';
+                firebaseAuthText.textContent = 'Auth não inicializado';
+            }
+
+            // Status da Chave de Criptografia
+            const encryptionKeyStatus = document.getElementById('encryptionKeyStatus');
+            const encryptionKeyText = document.getElementById('encryptionKeyText');
+            
+            if (window.dataEncryption && window.dataEncryption.encryptionKey) {
+                encryptionKeyStatus.className = 'w-4 h-4 bg-green-500 rounded-full';
+                encryptionKeyText.textContent = 'Chave inicializada';
+            } else {
+                encryptionKeyStatus.className = 'w-4 h-4 bg-red-500 rounded-full';
+                encryptionKeyText.textContent = 'Chave não inicializada';
+            }
+        }
+
+        async function runDiagnostic() {
+            if (!fixer) {
+                addLog('❌ Sistema de correção não inicializado', 'error');
+                return;
+            }
+
+            addLog('🔍 Executando diagnóstico...', 'info');
+            
+            try {
+                const results = await fixer.runDiagnostic();
+                displayDiagnosticResults(results);
+                addLog(`✅ Diagnóstico concluído - ${results.length} testes executados`, 'success');
+                updateSystemStatus();
+            } catch (error) {
+                addLog(`❌ Erro no diagnóstico: ${error.message}`, 'error');
+            }
+        }
+
+        async function applyFixes() {
+            if (!fixer) {
+                addLog('❌ Sistema de correção não inicializado', 'error');
+                return;
+            }
+
+            addLog('🔧 Aplicando correções...', 'info');
+            
+            try {
+                const results = await fixer.applyFixes();
+                displayFixResults(results);
+                addLog(`✅ Correções aplicadas - ${results.length} correções executadas`, 'success');
+                updateSystemStatus();
+            } catch (error) {
+                addLog(`❌ Erro nas correções: ${error.message}`, 'error');
+            }
+        }
+
+        async function forceInitialization() {
+            if (!fixer) {
+                addLog('❌ Sistema de correção não inicializado', 'error');
+                return;
+            }
+
+            addLog('🚀 Forçando inicialização...', 'info');
+            
+            try {
+                const result = await fixer.forceInitialization();
+                if (result.success) {
+                    addLog(`✅ ${result.message}`, 'success');
+                } else {
+                    addLog(`❌ ${result.message}`, 'error');
+                }
+                updateSystemStatus();
+            } catch (error) {
+                addLog(`❌ Erro na inicialização forçada: ${error.message}`, 'error');
+            }
+        }
+
+        function generateReport() {
+            if (!fixer) {
+                addLog('❌ Sistema de correção não inicializado', 'error');
+                return;
+            }
+
+            try {
+                const report = fixer.generateReport();
+                const reportJson = JSON.stringify(report, null, 2);
+                
+                // Criar e baixar arquivo
+                const blob = new Blob([reportJson], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `encryption-fix-report-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                addLog('📄 Relatório gerado e baixado', 'success');
+            } catch (error) {
+                addLog(`❌ Erro ao gerar relatório: ${error.message}`, 'error');
+            }
+        }
+
+        function displayDiagnosticResults(results) {
+            const container = document.getElementById('diagnosticResults');
+            const content = document.getElementById('diagnosticContent');
+            
+            container.classList.remove('hidden');
+            content.innerHTML = '';
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'border rounded-lg p-4';
+                
+                let statusClass = '';
+                let statusIcon = '';
+                
+                switch (result.status) {
+                    case 'success':
+                        statusClass = 'border-green-200 bg-green-50';
+                        statusIcon = 'fas fa-check-circle text-green-600';
+                        break;
+                    case 'error':
+                        statusClass = 'border-red-200 bg-red-50';
+                        statusIcon = 'fas fa-times-circle text-red-600';
+                        break;
+                    case 'warning':
+                        statusClass = 'border-yellow-200 bg-yellow-50';
+                        statusIcon = 'fas fa-exclamation-triangle text-yellow-600';
+                        break;
+                    default:
+                        statusClass = 'border-gray-200 bg-gray-50';
+                        statusIcon = 'fas fa-info-circle text-gray-600';
+                }
+                
+                div.className += ` ${statusClass}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <i class="${statusIcon} mr-2"></i>
+                        <h3 class="font-semibold">${result.test}</h3>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        ${result.details.map(detail => `<div>${detail}</div>`).join('')}
+                        ${result.solution ? `<div class="mt-2 p-2 bg-blue-100 rounded text-blue-800"><strong>Solução:</strong> ${result.solution}</div>` : ''}
+                    </div>
+                `;
+                
+                content.appendChild(div);
+            });
+        }
+
+        function displayFixResults(results) {
+            const container = document.getElementById('fixResults');
+            const content = document.getElementById('fixContent');
+            
+            container.classList.remove('hidden');
+            content.innerHTML = '';
+            
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = 'border rounded-lg p-4';
+                
+                let statusClass = '';
+                let statusIcon = '';
+                
+                switch (result.status) {
+                    case 'success':
+                        statusClass = 'border-green-200 bg-green-50';
+                        statusIcon = 'fas fa-check-circle text-green-600';
+                        break;
+                    case 'error':
+                        statusClass = 'border-red-200 bg-red-50';
+                        statusIcon = 'fas fa-times-circle text-red-600';
+                        break;
+                    case 'warning':
+                        statusClass = 'border-yellow-200 bg-yellow-50';
+                        statusIcon = 'fas fa-exclamation-triangle text-yellow-600';
+                        break;
+                    default:
+                        statusClass = 'border-gray-200 bg-gray-50';
+                        statusIcon = 'fas fa-info-circle text-gray-600';
+                }
+                
+                div.className += ` ${statusClass}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <i class="${statusIcon} mr-2"></i>
+                        <h3 class="font-semibold">${result.fix}</h3>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        ${result.details.map(detail => `<div>${detail}</div>`).join('')}
+                        ${result.error ? `<div class="mt-2 p-2 bg-red-100 rounded text-red-800"><strong>Erro:</strong> ${result.error}</div>` : ''}
+                    </div>
+                `;
+                
+                content.appendChild(div);
+            });
+        }
+
+        function addLog(message, type = 'info') {
+            const console = document.getElementById('logConsole');
+            const timestamp = new Date().toLocaleTimeString();
+            logCount++;
+            
+            let color = 'text-green-400';
+            let icon = 'ℹ️';
+            
+            switch (type) {
+                case 'success':
+                    color = 'text-green-400';
+                    icon = '✅';
+                    break;
+                case 'error':
+                    color = 'text-red-400';
+                    icon = '❌';
+                    break;
+                case 'warning':
+                    color = 'text-yellow-400';
+                    icon = '⚠️';
+                    break;
+            }
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `${color} mb-1`;
+            logEntry.innerHTML = `[${timestamp}] ${icon} ${message}`;
+            
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Limitar número de logs
+            if (logCount > 100) {
+                console.removeChild(console.firstChild);
+                logCount--;
+            }
+        }
+
+        function clearLogs() {
+            const console = document.getElementById('logConsole');
+            console.innerHTML = '<div class="text-gray-500">Console de logs - aguardando ações...</div>';
+            logCount = 0;
+        }
+
+        // Atualizar status periodicamente
+        setInterval(updateSystemStatus, 5000);
+    </script>
+</body>
+</html>

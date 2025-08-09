@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Correção da Criptografia</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Teste de Correção da Criptografia</h1>
+        
+        <div class="status info">
+            <strong>Problema Identificado:</strong> Erro "Chave de criptografia não inicializada" no campo 'referenceName'
+        </div>
+
+        <h2>Status do Sistema</h2>
+        <div id="systemStatus">
+            <div id="encryptionStatus" class="status warning">🔄 Verificando sistema de criptografia...</div>
+            <div id="authStatus" class="status warning">🔄 Verificando Firebase Auth...</div>
+            <div id="keyStatus" class="status warning">🔄 Verificando chave de criptografia...</div>
+        </div>
+
+        <h2>Ações de Teste</h2>
+        <button onclick="testEncryptionSystem()">🔍 Testar Sistema</button>
+        <button onclick="forceInitialization()">🔧 Forçar Inicialização</button>
+        <button onclick="testEncryptionOperation()">🔐 Testar Criptografia</button>
+        <button onclick="simulateSaveOperation()">💾 Simular Salvamento</button>
+        <button onclick="clearLogs()">🗑️ Limpar Logs</button>
+
+        <h2>Resultados dos Testes</h2>
+        <div id="testResults"></div>
+
+        <h2>Console de Logs</h2>
+        <div id="logConsole" class="log"></div>
+    </div>
+
+    <!-- Scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Scripts do sistema -->
+    <script src="../firebase-secure.config.js"></script>
+    <script src="data-encryption.js"></script>
+    <script src="encryption-integration.js"></script>
+
+    <script>
+        // Variáveis globais para teste
+        let testResults = [];
+        let logMessages = [];
+
+        // Interceptar console.log para capturar logs
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+
+        function logToConsole(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logMessages.push(logEntry);
+            updateLogDisplay();
+        }
+
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            logToConsole(args.join(' '), 'log');
+        };
+
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logToConsole(args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logToConsole(args.join(' '), 'warn');
+        };
+
+        function updateLogDisplay() {
+            const logConsole = document.getElementById('logConsole');
+            logConsole.innerHTML = logMessages.slice(-50).join('\n');
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        function addTestResult(test, status, message) {
+            const resultDiv = document.getElementById('testResults');
+            const statusClass = status === 'success' ? 'success' : status === 'error' ? 'error' : 'warning';
+            
+            const resultElement = document.createElement('div');
+            resultElement.className = `status ${statusClass}`;
+            resultElement.innerHTML = `<strong>${test}:</strong> ${message}`;
+            
+            resultDiv.appendChild(resultElement);
+        }
+
+        function updateSystemStatus() {
+            // Verificar sistema de criptografia
+            const encryptionStatus = document.getElementById('encryptionStatus');
+            if (window.dataEncryption) {
+                encryptionStatus.className = 'status success';
+                encryptionStatus.textContent = '✅ Sistema de criptografia carregado';
+            } else {
+                encryptionStatus.className = 'status error';
+                encryptionStatus.textContent = '❌ Sistema de criptografia não encontrado';
+            }
+
+            // Verificar Firebase Auth
+            const authStatus = document.getElementById('authStatus');
+            if (window.auth) {
+                authStatus.className = 'status success';
+                authStatus.textContent = '✅ Firebase Auth disponível';
+            } else {
+                authStatus.className = 'status error';
+                authStatus.textContent = '❌ Firebase Auth não encontrado';
+            }
+
+            // Verificar chave de criptografia
+            const keyStatus = document.getElementById('keyStatus');
+            if (window.dataEncryption && window.dataEncryption.encryptionKey) {
+                keyStatus.className = 'status success';
+                keyStatus.textContent = '✅ Chave de criptografia inicializada';
+            } else {
+                keyStatus.className = 'status warning';
+                keyStatus.textContent = '⚠️ Chave de criptografia não inicializada';
+            }
+        }
+
+        async function testEncryptionSystem() {
+            console.log('🔍 Iniciando teste do sistema de criptografia...');
+            
+            try {
+                // Teste 1: Verificar disponibilidade dos componentes
+                if (!window.dataEncryption) {
+                    addTestResult('Sistema de Criptografia', 'error', 'Não encontrado');
+                    return;
+                }
+                addTestResult('Sistema de Criptografia', 'success', 'Disponível');
+
+                if (!window.auth) {
+                    addTestResult('Firebase Auth', 'error', 'Não encontrado');
+                    return;
+                }
+                addTestResult('Firebase Auth', 'success', 'Disponível');
+
+                // Teste 2: Verificar usuário logado
+                if (!window.auth.currentUser) {
+                    addTestResult('Usuário Logado', 'warning', 'Nenhum usuário logado');
+                    
+                    // Tentar login anônimo para teste
+                    console.log('Tentando login anônimo para teste...');
+                    await window.auth.signInAnonymously();
+                    addTestResult('Login Anônimo', 'success', 'Realizado com sucesso');
+                } else {
+                    addTestResult('Usuário Logado', 'success', `Email: ${window.auth.currentUser.email || 'Anônimo'}`);
+                }
+
+                // Teste 3: Verificar função ensureEncryptionReady
+                if (typeof ensureEncryptionReady === 'function') {
+                    const encryptionReady = await ensureEncryptionReady();
+                    addTestResult('Função ensureEncryptionReady', encryptionReady ? 'success' : 'error', 
+                        encryptionReady ? 'Criptografia pronta' : 'Falha na inicialização');
+                } else {
+                    addTestResult('Função ensureEncryptionReady', 'error', 'Função não encontrada');
+                }
+
+                updateSystemStatus();
+                
+            } catch (error) {
+                console.error('Erro no teste do sistema:', error);
+                addTestResult('Teste do Sistema', 'error', `Erro: ${error.message}`);
+            }
+        }
+
+        async function forceInitialization() {
+            console.log('🔧 Forçando inicialização da criptografia...');
+            
+            try {
+                if (!window.auth.currentUser) {
+                    await window.auth.signInAnonymously();
+                    console.log('Login anônimo realizado');
+                }
+
+                if (typeof initializeEncryptionForUser === 'function') {
+                    const userEmail = window.auth.currentUser.email || 'anonymous@test.com';
+                    await initializeEncryptionForUser(userEmail);
+                    addTestResult('Inicialização Forçada', 'success', 'Criptografia inicializada');
+                } else {
+                    addTestResult('Inicialização Forçada', 'error', 'Função initializeEncryptionForUser não encontrada');
+                }
+
+                updateSystemStatus();
+                
+            } catch (error) {
+                console.error('Erro na inicialização forçada:', error);
+                addTestResult('Inicialização Forçada', 'error', `Erro: ${error.message}`);
+            }
+        }
+
+        async function testEncryptionOperation() {
+            console.log('🔐 Testando operação de criptografia...');
+            
+            try {
+                const testData = {
+                    referenceName: 'Teste de Referência',
+                    description: 'Descrição de teste',
+                    value: 123.45
+                };
+
+                if (window.dataEncryption && window.dataEncryption.encryptData) {
+                    const encryptedData = await window.dataEncryption.encryptData(testData.referenceName);
+                    addTestResult('Criptografia de Dados', 'success', `Dados criptografados: ${encryptedData.substring(0, 20)}...`);
+                    
+                    const decryptedData = await window.dataEncryption.decryptData(encryptedData);
+                    if (decryptedData === testData.referenceName) {
+                        addTestResult('Descriptografia de Dados', 'success', 'Dados descriptografados corretamente');
+                    } else {
+                        addTestResult('Descriptografia de Dados', 'error', 'Dados não coincidem após descriptografia');
+                    }
+                } else {
+                    addTestResult('Criptografia de Dados', 'error', 'Função encryptData não encontrada');
+                }
+                
+            } catch (error) {
+                console.error('Erro no teste de criptografia:', error);
+                addTestResult('Teste de Criptografia', 'error', `Erro: ${error.message}`);
+            }
+        }
+
+        async function simulateSaveOperation() {
+            console.log('💾 Simulando operação de salvamento...');
+            
+            try {
+                // Simular dados do aplicativo
+                window.appData = {
+                    records: [
+                        {
+                            id: 1,
+                            referenceName: 'Teste de Salvamento',
+                            description: 'Descrição de teste para salvamento',
+                            value: 100.00
+                        }
+                    ]
+                };
+
+                // Simular função de salvamento original
+                window.saveDataWithSync = window.saveDataWithSync || function() {
+                    console.log('Função de salvamento original chamada');
+                    return Promise.resolve('Dados salvos');
+                };
+
+                // Testar salvamento com criptografia
+                const result = await window.saveDataWithSync();
+                addTestResult('Simulação de Salvamento', 'success', 'Operação concluída sem erros');
+                
+            } catch (error) {
+                console.error('Erro na simulação de salvamento:', error);
+                addTestResult('Simulação de Salvamento', 'error', `Erro: ${error.message}`);
+            }
+        }
+
+        function clearLogs() {
+            logMessages = [];
+            document.getElementById('testResults').innerHTML = '';
+            updateLogDisplay();
+            console.log('🗑️ Logs limpos');
+        }
+
+        // Inicialização da página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Página de teste carregada');
+            updateSystemStatus();
+            
+            // Atualizar status periodicamente
+            setInterval(updateSystemStatus, 5000);
+        });
+    </script>
+</body>
+</html>

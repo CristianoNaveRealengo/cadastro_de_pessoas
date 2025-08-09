@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAVE Backend - Teste de APIs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .config-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .api-section {
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .api-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .api-header h4 {
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .method-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .method-get { background: #28a745; }
+        .method-post { background: #007bff; }
+        .method-put { background: #ffc107; color: #000; }
+        .method-delete { background: #dc3545; }
+
+        .api-body {
+            padding: 20px;
+        }
+
+        .api-description {
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .response-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .response-section h5 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .response-content {
+            background: #2c3e50;
+            color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 NAVE Backend</h1>
+            <p>Teste das APIs das Firebase Cloud Functions</p>
+        </div>
+
+        <div class="content">
+            <!-- Configuração -->
+            <div class="config-section">
+                <h3>⚙️ Configuração</h3>
+                <div class="input-group">
+                    <label for="baseUrl">URL Base das Functions:</label>
+                    <input type="text" id="baseUrl" value="http://localhost:5001/nave-project-dev/us-central1" placeholder="URL base das Cloud Functions">
+                </div>
+            </div>
+
+            <!-- Health Check -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Health Check</h4>
+                    <span class="method-badge method-get">GET</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Verifica o status de saúde do sistema</div>
+                    <button class="btn" onclick="testHealthCheck()">🔍 Testar Health Check</button>
+                    <div id="healthResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Record -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Criar Registro</h4>
+                    <span class="method-badge method-post">POST</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Cria um novo registro no sistema</div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Nome Completo:</label>
+                            <input type="text" id="createFullName" value="João Silva" placeholder="Nome completo">
+                        </div>
+                        <div class="input-group">
+                            <label>Origem:</label>
+                            <input type="text" id="createOrigin" value="Website" placeholder="Origem do cadastro">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Idade:</label>
+                            <input type="number" id="createAge" value="30" placeholder="Idade">
+                        </div>
+                        <div class="input-group">
+                            <label>Cidade:</label>
+                            <input type="text" id="createCity" value="São Paulo" placeholder="Cidade">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>JSON Personalizado (opcional):</label>
+                        <textarea id="createCustomJson" placeholder='{ "education": "Ensino Superior", "status": "Em Análise" }'></textarea>
+                    </div>
+                    <button class="btn" onclick="testCreateRecord()">➕ Criar Registro</button>
+                    <div id="createResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Get Records -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Listar Registros</h4>
+                    <span class="method-badge method-get">GET</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Lista registros com filtros e paginação</div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Página:</label>
+                            <input type="number" id="getPage" value="1" min="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Limite:</label>
+                            <input type="number" id="getLimit" value="10" min="1" max="100">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Filtro Status:</label>
+                            <input type="text" id="getStatus" placeholder="Ex: Em Análise">
+                        </div>
+                        <div class="input-group">
+                            <label>Filtro Cidade:</label>
+                            <input type="text" id="getCity" placeholder="Ex: São Paulo">
+                        </div>
+                    </div>
+                    <button class="btn" onclick="testGetRecords()">📋 Listar Registros</button>
+                    <div id="getResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Get Record by ID -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Buscar Registro por ID</h4>
+                    <span class="method-badge method-get">GET</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Busca um registro específico pelo ID</div>
+                    <div class="input-group">
+                        <label>ID do Registro:</label>
+                        <input type="text" id="getRecordId" placeholder="ID do registro">
+                    </div>
+                    <button class="btn" onclick="testGetRecord()">🔍 Buscar Registro</button>
+                    <div id="getRecordResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Record -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Atualizar Registro</h4>
+                    <span class="method-badge method-put">PUT</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Atualiza um registro existente</div>
+                    <div class="input-group">
+                        <label>ID do Registro:</label>
+                        <input type="text" id="updateRecordId" placeholder="ID do registro">
+                    </div>
+                    <div class="input-group">
+                        <label>Dados para Atualização (JSON):</label>
+                        <textarea id="updateData" placeholder='{ "status": "Aprovado", "notes": "Documentação verificada" }'></textarea>
+                    </div>
+                    <button class="btn" onclick="testUpdateRecord()">✏️ Atualizar Registro</button>
+                    <div id="updateResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Record -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Deletar Registro</h4>
+                    <span class="method-badge method-delete">DELETE</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Remove um registro do sistema</div>
+                    <div class="input-group">
+                        <label>ID do Registro:</label>
+                        <input type="text" id="deleteRecordId" placeholder="ID do registro">
+                    </div>
+                    <button class="btn" onclick="testDeleteRecord()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">🗑️ Deletar Registro</button>
+                    <div id="deleteResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Estatísticas</h4>
+                    <span class="method-badge method-get">GET</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Gera estatísticas dos registros</div>
+                    <button class="btn" onclick="testGetStatistics()">📊 Gerar Estatísticas</button>
+                    <div id="statsResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validate Data -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Validar Dados</h4>
+                    <span class="method-badge method-post">POST</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Valida dados sem salvar no sistema</div>
+                    <div class="input-group">
+                        <label>Dados para Validação (JSON):</label>
+                        <textarea id="validateData" placeholder='{ "fullName": "João Silva", "age": 30, "city": "São Paulo" }'></textarea>
+                    </div>
+                    <button class="btn" onclick="testValidateData()">✅ Validar Dados</button>
+                    <div id="validateResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup -->
+            <div class="api-section">
+                <div class="api-header">
+                    <h4>Backup de Dados</h4>
+                    <span class="method-badge method-post">POST</span>
+                </div>
+                <div class="api-body">
+                    <div class="api-description">Cria um backup de todos os dados</div>
+                    <button class="btn" onclick="testBackupData()">💾 Criar Backup</button>
+                    <div id="backupResponse" class="response-section" style="display: none;">
+                        <h5>Resposta:</h5>
+                        <div class="response-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função utilitária para fazer requisições
+        async function makeRequest(endpoint, method = 'GET', body = null) {
+            const baseUrl = document.getElementById('baseUrl').value;
+            const url = `${baseUrl}${endpoint}`;
+            
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+                
+                return {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    statusText: 'Network Error',
+                    data: { error: error.message }
+                };
+            }
+        }
+        
+        // Função para exibir resposta
+        function displayResponse(elementId, response) {
+            const element = document.getElementById(elementId);
+            const content = element.querySelector('.response-content');
+            
+            const statusClass = response.status >= 200 && response.status < 300 ? 'status-success' : 'status-error';
+            
+            content.innerHTML = `<span class="status-indicator ${statusClass}"></span>Status: ${response.status} ${response.statusText}\n\n${JSON.stringify(response.data, null, 2)}`;
+            element.style.display = 'block';
+        }
+        
+        // Função para mostrar loading
+        function showLoading(button) {
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span>' + button.innerHTML.replace(/^.*?\s/, '');
+        }
+        
+        // Função para esconder loading
+        function hideLoading(button, originalText) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+        
+        // Testes das APIs
+        async function testHealthCheck() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const response = await makeRequest('/healthCheck');
+            displayResponse('healthResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testCreateRecord() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const data = {
+                fullName: document.getElementById('createFullName').value,
+                origin: document.getElementById('createOrigin').value,
+                age: parseInt(document.getElementById('createAge').value),
+                city: document.getElementById('createCity').value
+            };
+            
+            // Adicionar JSON personalizado se fornecido
+            const customJson = document.getElementById('createCustomJson').value;
+            if (customJson.trim()) {
+                try {
+                    const customData = JSON.parse(customJson);
+                    Object.assign(data, customData);
+                } catch (e) {
+                    alert('JSON personalizado inválido: ' + e.message);
+                    hideLoading(button, originalText);
+                    return;
+                }
+            }
+            
+            const response = await makeRequest('/createRecord', 'POST', data);
+            displayResponse('createResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testGetRecords() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const params = new URLSearchParams();
+            params.append('page', document.getElementById('getPage').value);
+            params.append('limit', document.getElementById('getLimit').value);
+            
+            const status = document.getElementById('getStatus').value;
+            if (status) params.append('status', status);
+            
+            const city = document.getElementById('getCity').value;
+            if (city) params.append('city', city);
+            
+            const response = await makeRequest(`/getRecords?${params.toString()}`);
+            displayResponse('getResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testGetRecord() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const recordId = document.getElementById('getRecordId').value;
+            if (!recordId) {
+                alert('Por favor, informe o ID do registro');
+                hideLoading(button, originalText);
+                return;
+            }
+            
+            const response = await makeRequest(`/getRecord?id=${recordId}`);
+            displayResponse('getRecordResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testUpdateRecord() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const recordId = document.getElementById('updateRecordId').value;
+            if (!recordId) {
+                alert('Por favor, informe o ID do registro');
+                hideLoading(button, originalText);
+                return;
+            }
+            
+            const updateDataText = document.getElementById('updateData').value;
+            if (!updateDataText.trim()) {
+                alert('Por favor, informe os dados para atualização');
+                hideLoading(button, originalText);
+                return;
+            }
+            
+            try {
+                const updateData = JSON.parse(updateDataText);
+                const response = await makeRequest(`/updateRecord?id=${recordId}`, 'PUT', updateData);
+                displayResponse('updateResponse', response);
+            } catch (e) {
+                alert('JSON inválido: ' + e.message);
+            }
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testDeleteRecord() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            const recordId = document.getElementById('deleteRecordId').value;
+            if (!recordId) {
+                alert('Por favor, informe o ID do registro');
+                return;
+            }
+            
+            if (!confirm('Tem certeza que deseja deletar este registro?')) {
+                return;
+            }
+            
+            showLoading(button);
+            
+            const response = await makeRequest(`/deleteRecord?id=${recordId}`, 'DELETE');
+            displayResponse('deleteResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testGetStatistics() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const response = await makeRequest('/getStatistics');
+            displayResponse('statsResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testValidateData() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const validateDataText = document.getElementById('validateData').value;
+            if (!validateDataText.trim()) {
+                alert('Por favor, informe os dados para validação');
+                hideLoading(button, originalText);
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(validateDataText);
+                const response = await makeRequest('/validateData', 'POST', data);
+                displayResponse('validateResponse', response);
+            } catch (e) {
+                alert('JSON inválido: ' + e.message);
+            }
+            
+            hideLoading(button, originalText);
+        }
+        
+        async function testBackupData() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            showLoading(button);
+            
+            const response = await makeRequest('/backupData', 'POST');
+            displayResponse('backupResponse', response);
+            
+            hideLoading(button, originalText);
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 NAVE Backend API Tester carregado!');
+            console.log('Configure a URL base e teste as APIs das Cloud Functions.');
+        });
+    </script>
+</body>
+</html>

@@ -10,6 +10,9 @@
 document.addEventListener("DOMContentLoaded", function () {
 	// Aguardar inicialização do Firebase e autenticação
 	setTimeout(initializeEncryptionIntegration, 3000);
+	
+	// Verificar periodicamente se a inicialização é necessária
+	setInterval(checkAndInitializeEncryption, 10000);
 });
 
 /**
@@ -32,7 +35,8 @@ async function initializeEncryptionIntegration() {
 			// Aguardar login
 			if (window.auth) {
 				window.auth.onAuthStateChanged(async (user) => {
-					if (user) {
+					if (user && !window.dataEncryption.encryptionKey) {
+						console.log("🔐 Usuário logado, inicializando criptografia...");
 						await initializeEncryptionForUser(user.email);
 					}
 				});
@@ -51,6 +55,61 @@ async function initializeEncryptionIntegration() {
 			"❌ Erro ao inicializar integração de criptografia:",
 			error
 		);
+	}
+}
+
+/**
+ * Verifica e inicializa a criptografia se necessário
+ */
+async function checkAndInitializeEncryption() {
+	try {
+		// Verificar se todos os componentes estão disponíveis
+		if (!window.dataEncryption || !window.auth) {
+			return;
+		}
+
+		// Verificar se há usuário logado e chave não inicializada
+		if (window.auth.currentUser && !window.dataEncryption.encryptionKey) {
+			console.log("🔄 Detectada necessidade de inicialização da criptografia");
+			await initializeEncryptionForUser(window.auth.currentUser.email);
+		}
+	} catch (error) {
+		console.error("❌ Erro na verificação automática de criptografia:", error);
+	}
+}
+
+/**
+ * Garante que a criptografia esteja inicializada antes de operações críticas
+ * @returns {Promise<boolean>} true se a criptografia estiver pronta, false caso contrário
+ */
+async function ensureEncryptionReady() {
+	try {
+		// Verificar se o sistema de criptografia existe
+		if (!window.dataEncryption) {
+			console.error("❌ Sistema de criptografia não disponível");
+			return false;
+		}
+
+		// Se a chave já estiver inicializada, retornar true
+		if (window.dataEncryption.encryptionKey) {
+			return true;
+		}
+
+		// Verificar se há usuário logado
+		if (!window.auth || !window.auth.currentUser) {
+			console.warn("⚠️ Usuário não logado, não é possível inicializar criptografia");
+			return false;
+		}
+
+		// Tentar inicializar a criptografia
+		console.log("🔐 Inicializando criptografia para operação crítica...");
+		await initializeEncryptionForUser(window.auth.currentUser.email);
+
+		// Verificar se a inicialização foi bem-sucedida
+		return !!window.dataEncryption.encryptionKey;
+	} catch (error) {
+		console.error("❌ Erro ao garantir inicialização da criptografia:", error);
+		return false;
 	}
 }
 
@@ -97,7 +156,14 @@ function interceptSaveFunctions() {
 		const originalSaveData = window.saveData;
 		window.saveData = async function () {
 			try {
-				console.log("🔒 Criptografando dados antes de salvar...");
+					console.log("🔒 Criptografando dados antes de salvar...");
+
+					// Garantir que a criptografia esteja pronta
+					const encryptionReady = await ensureEncryptionReady();
+					if (!encryptionReady) {
+						console.warn("⚠️ Criptografia não disponível, salvando sem criptografia");
+						return originalSaveData.call(this);
+					}
 
 				// Criptografar registros antes de salvar
 				const encryptedRecords =
@@ -127,7 +193,14 @@ function interceptSaveFunctions() {
 		const originalSaveDataWithSync = window.saveDataWithSync;
 		window.saveDataWithSync = async function () {
 			try {
-				console.log("🔒 Criptografando dados antes de sincronizar...");
+					console.log("🔒 Criptografando dados antes de sincronizar...");
+
+					// Garantir que a criptografia esteja pronta
+					const encryptionReady = await ensureEncryptionReady();
+					if (!encryptionReady) {
+						console.warn("⚠️ Criptografia não disponível, sincronizando sem criptografia");
+						return originalSaveDataWithSync.call(this);
+					}
 
 				// Criptografar registros antes de sincronizar
 				const encryptedRecords =
